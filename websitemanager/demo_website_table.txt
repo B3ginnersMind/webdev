@@ -1,0 +1,27 @@
+siteName    save wwwSubdir    dbName       dbUser    dbPassWord   comment
+# ----------------------------------------------------------------------------
+# Copy this file to website_table.txt and edit it.
+# Do not enter a comment line above the header line!
+# Here, 3 websites are indicated:
+# ----------------------------------------------------------------------------
+mydomain.org  0  mydrupal     drupaldb     cmsuser1  "password1"  "My Drupal" 
+example.org   1  myjoomla     joomladb     cmsuser2  "password2"  "My Joomla" 
+demo.org      1  mywordpress  wordpressdb  cmsuser3  "password3"  "My Wordpress"
+# ----------------------------------------------------------------------------
+# The table must consist of 7 columns separated by spaces.
+# The first line must be the header with the column names. Do not change them.
+# Comment lines are indicated with a # at the beginning.
+#
+# siteName    an identifier of the website
+# save        0: omit website from bulk backup, 1: include it
+# wwwSubdir   subdirectory (under webroot) containing the web files
+# dbName      name of the CMS database
+# dbUser      database user which has access to the CMS database
+# dbPassWord  password of this database user
+# comment     a short comment concerning about website
+#
+# Backup archives are saved as siteName.timeStamp.tar.gz where
+# siteName is the site identifier and timeStamp is the backup time.
+# Snapshot timestamps have the format YYYY-MM-DD_hh-mm.
+# Bulk backup timestamps have the format wd#, w# or m# where # is integer.
+# ----------------------------------------------------------------------------

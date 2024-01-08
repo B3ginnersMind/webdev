@@ -1,0 +1,58 @@
+param          value
+# ----------------------------------------------------------------
+# Copy this file to website_manager_params.txt and edit it.
+# ----------------------------------------------------------------
+# Specifies whether root privileges are tested before execution.
+# ----------------------------------------------------------------
+runasroot      true
+# ----------------------------------------------------------------
+# Define the Linux shell commands which are used.
+# Specify full paths to be ready for cron usage.
+# ----------------------------------------------------------------
+scp            /usr/bin/scp
+sql            /usr/bin/mysql
+sqldump        /usr/bin/mysqldump
+# ----------------------------------------------------------------
+# Specify options to use when dumping a database.
+# ----------------------------------------------------------------
+sqldumpoptions " --single-transaction --allow-keywords --complete-insert --insert-ignore --routines --events --force "
+# ----------------------------------------------------------------
+# sqlmainuser is a privileged MySQL user for adding missing
+# databases or adding missing specific site MySQL users. 
+#
+# sqlmainpw is the full path to the password file for this user.
+# For MySQL8 it is:
+#
+# [client]
+# password="XXX"
+#
+# Replace XXX with the current password.
+# If the database and the website user of the database 
+# already exist, these parameters can be omitted.
+# ----------------------------------------------------------------
+sqlmainuser    root
+sqlmainpw      /path/.mypasswd
+# ----------------------------------------------------------------
+# Directories
+# sitedumpdir:   where bulk website backups are stored
+# snapshotdir:   where website snapshots are stored
+# wwwroot:       root folder where folders of webfiles are located
+# ----------------------------------------------------------------
+sitedumpdir     /mybackup/sitedumps
+snapshotdir     /mybackup/snapshots
+wwwroot         /var/www
+# ----------------------------------------------------------------
+# This parameter is only used when restoring a website.
+# If wwwusergroup is "none", nothing is done. Otherwise:
+# A recursive chown command is applied to the restored files:
+# chown -R wwwusergroup /path/to/webfilesfolder
+# wwwusergroup is replaced with its content.
+# ----------------------------------------------------------------
+wwwusergroup    www-data:www-data
+#wwwusergroup    none
+# ----------------------------------------------------------------
+# Location for additional remote bulk backup with scp:
+# e.g. "user.your-storagebox.de:directory"
+# or "none" if there is no remote location.
+# ----------------------------------------------------------------
+remotelocation  none

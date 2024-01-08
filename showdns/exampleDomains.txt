@@ -1,0 +1,10 @@
+# This is a comment.
+# Here are sample domains:
+amazon.de                Amazon online shopping
+wikipedia.org
+
+# Further domains:
+zeit.de                  Zeit Newspaper
+computerbase.de
+hardwareluxx.de          Hardware forum
+eforum.de                Computer forum

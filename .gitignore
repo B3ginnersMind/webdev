@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Files creaded by test runs
+show_ips_exampleDomains.txt
+show_dns_exampleDomains.txt
+
 # C extensions
 *.so
 

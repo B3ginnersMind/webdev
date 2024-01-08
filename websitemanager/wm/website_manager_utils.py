@@ -142,7 +142,7 @@ class Parameters:
         # test file existence within the same directory
         if not os.path.exists(paramTable):
             abort('parameter table file "' + paramTable + '"is missing')  
-        self.data = pandas.read_csv(paramTable, comment='#', sep='\s+', header=0)
+        self.data = pandas.read_csv(paramTable, comment='#', sep=r'\s+', header=0)
         checkTable(self.data, paramTable, ['param', 'value'])
         self.data.set_index("param", inplace = True)
     def get(self, param):
@@ -180,7 +180,7 @@ class WebSiteData:
 class WebSiteTable:
     def __init__(self, tableName):
         columns = ['siteName', 'save', 'wwwSubdir', 'dbName', 'dbUser', 'dbPassWord', 'comment']
-        self.websites = pandas.read_csv(tableName, comment='#', sep='\s+', header=0)
+        self.websites = pandas.read_csv(tableName, comment='#', sep=r'\s+', header=0)
         checkTable(self.websites, tableName, columns)
         self.numWebsites = len(self.websites)
         self.rowDict = {}

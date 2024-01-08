@@ -1,23 +1,32 @@
 #!/usr/bin/env python
 # Note:  "!/usr/bin/env python3" does not work on Windows!
 """
-Manage backup and restoration of virtual host websites.
+-----------------------------------------------------------------
+Manage backup and recovery of websites which use a database.
 Each website backup is stored in a zipped archive.
-Both the SQL dump and all the webfiles are saved.
+Both the SQL dump and all the web files are saved.
+Tested with MySQL 8 and MariaDB 15.
 
-Two whitespace separated tables have to be present
-in the same directory as this skript:
-website_manager_params - contains configuration parameters
-website_table.txt      - contains the data for each website
+The following features are supported:
+- saveall: bulk backup of the sites in the website table
+- snapshot: save only one website
+- replace: recover one website from a backup archive
+- replace after snapshot: take a snapshot first, then recover
+- prepare database: add missing database and DB user of a website
+
+There must be two files which contain tables separated by spaces
+in the same directory as this script:
+website_manager_params.txt - contains configuration parameters
+website_table.txt          - contains the data for each website
 
 - Without argument the interactive mode is entered.
-  Website restoration is only possible in the interactive mode.
-- Use saveall (a) option to run daily autosave batch over all sites.
-  Autosave mode will overwrite older archives from same day.
-  Backups are stored in the directory given by parameter sitedumpdir.
-- Use spapshot (s) option to create a time-stamped backup of a website
-  which has to be specified by its name in the website table.
-  Backup is stored in the directory given by parameter snapshotdir.
+  Website recovery is only possible in the interactive mode.
+- Use the saveall option to run an autosave batch over all sites.
+  Autosave mode overwrites older archives from the same day.
+  Backups are stored in the directory specified by the sitedumpdir parameter.
+- Use the spapshot option to create a time-stamped backup of a website
+  which must be specified by its identifier in the website table.
+  Backups are stored in the directory specified by the snapshotdir parameter.
 """
 
 import argparse, glob, os, textwrap
@@ -26,6 +35,7 @@ from wm.website_manager_worker import backup, dumpwebsite, restore, prepare_data
 # Table processing in website_manager_utils by module pandas.
 import wm.website_manager_utils as u
 from wm.website_manager_utils import Parameters, WebSiteTable, WebSiteData
+__version__ = "1.0"
 
 WRAP_LENGTH = 65
 # Modes of operation:
@@ -36,9 +46,10 @@ SNAPSHOT = 2
 REPLACE_AFTER_SNAPSHOT = 3
 REPLACE = 4
 DBEXIST = 5
-# set names of configuration files
-WEBSITETABLE = 'website_table.txt'
-WEBSITEPARAMS = 'website_manager_params.txt'
+# specify configuration files
+script_folder = os.path.dirname(os.path.realpath(__file__))
+websitesfile = script_folder + '/website_table.txt'
+paramsfile = script_folder + '/website_manager_params.txt'
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
@@ -50,6 +61,8 @@ g.add_argument("-s", "--spapshot", help="make a time-stamped snapshot",
                action="store_true")
 p.add_argument("siteName", nargs='?', default='none', type=str,
                help="site name of a single treated website")
+p.add_argument("-v", "--version", action='version', 
+               version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
 
 mode = UNKNOWN
@@ -65,10 +78,10 @@ os.chdir(source_dir)
 u.print_line()
 print('Current working directory:', os. getcwd())
 # create congiguration table objects
-websites = WebSiteTable(WEBSITETABLE)
+websites = WebSiteTable(websitesfile)
 numSites = websites.getNumWebsites()
 
-params = Parameters(WEBSITEPARAMS)
+params = Parameters(paramsfile)
 if params.get('runasroot') != 'false':
     u.check_root_user()
 
@@ -98,7 +111,7 @@ if mode in [SAVEALL, BATCH_SAVEALL]:
 
 siteName = args.siteName
 if siteName != 'none' and not websites.hasSite(siteName):
-    print('Entered', siteName, 'not present in website table', WEBSITETABLE)
+    print('Entered', siteName, 'not present in website table', websitesfile)
     siteName = 'none'
 if siteName == 'none':
     u.print_line()

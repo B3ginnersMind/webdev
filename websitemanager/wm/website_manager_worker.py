@@ -105,8 +105,9 @@ def backup(params : Parameters, site : WebSiteData, sitedump):
         print('Gzip archive written: ', zipPath)
         if not sitedump:
             logFile = backupDir + '/' + site.siteName + '.txt'
+            comment = input('Comment on snapshot:  ')
             with open(logFile, 'a') as f:
-                f.write(tag + ' saved: \n')
+                f.write(tag + ' saved: ' + comment + '\n')
             print('Comment added in:     ', logFile)
     else:
         u.abort('Gzip archive missing: ', zipPath)
