@@ -5,6 +5,7 @@ Simple Python 3 tools for managing websites.
 Download a zip file of the latest version from https://github.com/B3ginnersMind/webdev/zipball/main/
 
 Download this zip file from a Linux console using curl:
+
     curl -L -o webdev.zip https://github.com/B3ginnersMind/webdev/zipball/main/
 
 ## show_dns.py in folder showdns
