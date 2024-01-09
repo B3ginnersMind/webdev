@@ -2,6 +2,11 @@
 
 Simple Python 3 tools for managing websites.
 
+Download a zip file of the latest version from https://github.com/B3ginnersMind/webdev/zipball/main/
+
+Download this zip file from a Linux console using curl:
+    curl -L -o webdev.zip https://github.com/B3ginnersMind/webdev/zipball/main/
+
 ## show_dns.py in folder showdns
 
 - Requires at least dnspython 2.x.
@@ -11,12 +16,12 @@ Simple Python 3 tools for managing websites.
 - exampleDomains.txt is a demo domain file.
 - exampleHosts.txt is a demo file with knows hosts.
 
-Feasible commands resulting in file show_ips_exampleDomains.txt:
+Possible commands resulting in file show_ips_exampleDomains.txt:
 
     show_dns.py exampleDomains.txt -ip
     show_dns.py exampleDomains.txt -k exampleHosts.txt -ns 8.8.8.8  -ip
 
-Feasible commands resulting in file show_dns_exampleDomains.txt:
+Possible commands resulting in file show_dns_exampleDomains.txt:
 
     show_dns.py exampleDomains.txt
     show_dns.py exampleDomains.txt -k exampleHosts.txt -ns 8.8.8.8
@@ -38,10 +43,10 @@ Initial version
 - Both automatic and interactive modes are supported.
 - Two configuration files must be present in the same directory
   as website_manager.py:
-  + `website_manager_params.txt` with the script configurations.
-  + `website_table.txt contains` with the data of the managed websites.
-- Copy and rename `demo_website_manager_params.txt` and 
-  `demo_website_table.txt` to create your own configuration.
+  + *website_manager_params.txt* with the script configurations.
+  + *website_table.txt* with the data of the managed websites.
+- Copy and rename *demo_website_manager_params.txt* and 
+  *demo_website_table.txt* to create your own configuration.
   These demo files contain further documentation.
 - Website manager has been successfully applied with 
   MySQL 8 and MariaDB 15.
@@ -57,7 +62,8 @@ The following features are supported:
 Snapshots are time stamped. Bulk backups are kept daily for a week,
 weekly for a month, and monthly for a year. They are labeled with
 wd#, w# and m# where # is an integer, wd denotes weekday, w denotes
-week and m denotes month.
+week and m denotes month. Bulk backups are intended to be run as 
+nightly cronjobs.
 
 ### Version 1.0
 
