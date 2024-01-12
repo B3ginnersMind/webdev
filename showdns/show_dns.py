@@ -29,7 +29,7 @@ Manfred Koerkel, 06.01.2024
 """
 import argparse, dns.resolver, os, pathlib, platform, sys, time, warnings
 from subprocess import PIPE, run
-__version__ = "1.0"
+__version__ = "1.01"
 
 def is_platform_linux():
     """return True if platform is Linux"""
@@ -120,7 +120,8 @@ class MyResolver:
             return
         try:
             # returns object of type dns.resolver.Answer
-            answers = self.res.query(domain, 'A')
+            # query works with dnspython 1.16
+            answers = self.res.resolve(domain, 'A')
             for record in answers:
                 r = record.to_text()
                 r = replace_byname(self.hosts, r)
@@ -192,10 +193,11 @@ myResolver = MyResolver(hostlist=knownhosts, nameserver=args.nameServer, output=
 #========================================================================
 # start procedure
 #========================================================================
-print('== DNS-Records von GWUP-Domains ==', '\n', file=o)
-print(' Records were queried by Python script "' + script_name + '"', file=o)
-print(' Applied version of dnspython: ', dns.__version__, file=o)
-print(' On output known IPs are replaced by its below names.', file=o)
+print('== Query DNS records of a list of domains ==', '\n', file=o)
+print(' This is Python script', script_name, 'version', __version__ , file=o)
+print(' Applied was dnspython version', dns.__version__, file=o)
+print(' On output, known IPs are replaced with their names.', file=o)
+
 print('\n Query time:', currenttime, file=o)
 print(' Nameserver:', myResolver.get_nameservers(), file=o)
 
