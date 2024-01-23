@@ -3,8 +3,7 @@ import glob, importlib.util, os, requests, zipfile
 
 # download webdev archive
 # curl -L -o webdev.zip https://github.com/B3ginnersMind/webdev/zipball/main/
-#url = 'https://github.com/B3ginnersMind/webdev/zipball/main/'
-url = 'https://github.com/B3ginnersMind/webdev/zipball/dev/'
+url = 'https://github.com/B3ginnersMind/webdev/zipball/main/'
 response = requests.get(url)
 with open('webdev.zip', 'wb') as f:
     f.write(response.content)
