@@ -1,12 +1,34 @@
 # webdev
 
+## Installation
+
 Simple Python 3 tools for managing websites.
+
+### Manual
 
 Download a zip file of the latest version from https://github.com/B3ginnersMind/webdev/zipball/main/
 
-Download this zip file from a Linux console using curl:
+Download and unzip this zip file e.g. from a console using curl (use curl.exe in Powershell):
 
     curl -L -o webdev.zip https://github.com/B3ginnersMind/webdev/zipball/main/
+    unzip webdev.zip
+
+Go to the newly created subfolder *B3ginnersMind-webdev-xxxxxx* where xxxxxx is the tag of the downloaded revision. Copy the content to the desired location.
+
+### Script supported
+
+This is especially useful if you want to update webdev. Get the download script:
+
+    curl -LJO https://raw.githubusercontent.com/B3ginnersMind/webdev/main/download_webdev.py
+
+This script requires the Python "requests" package to perform the download. 
+
+- Run *download_webdev.py*.
+- The archive is then downloaded and unzipped.
+- You will be asked whether you want to run the install script.
+- If you run the install script, only the python files will be updated.
+- This means that the readme and the sample files will not be copied.
+- You can run *install_webdev.py* any time when you want to copy the python files again.
 
 ## show_dns.py in folder showdns
 
