@@ -2,9 +2,9 @@
 
 ## Installation
 
-Simple Python 3 tools for managing websites.
+Simple Python tools for managing websites. Tested with Python 3.10.12.
 
-### Manual
+### Manual installation
 
 Download a zip file of the latest version from https://github.com/B3ginnersMind/webdev/zipball/main/
 
@@ -15,7 +15,7 @@ Download and unzip this zip file e.g. from a console using curl (use curl.exe in
 
 Go to the newly created subfolder *B3ginnersMind-webdev-xxxxxx* where xxxxxx is the tag of the downloaded revision. Copy the content to the desired location.
 
-### Script supported
+### Script supported installation
 
 This is especially useful if you want to update webdev. Get the download script:
 
@@ -91,3 +91,10 @@ nightly cronjobs.
 ### Version 1.0
 
 Initial version
+
+### Version 1.1
+
+- Treated website may be entered by argument for all modes dealing with a single website.
+- An alternative folder path for snapshots may be entered.
+- Improved output of available backup archives in the restore mode.
+- Improved logfile handling. The logfile folder may be configured.

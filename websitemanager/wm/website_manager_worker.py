@@ -1,9 +1,11 @@
 
 import glob, os, datetime, platform, shutil, tarfile
-from pathlib import Path
 import wm.website_manager_utils as u
 import wm.website_manager_dbutils as db
 from wm.website_manager_utils import  Parameters, TimerElapsed, WebSiteData
+
+BAN_OTHERS_RECURSIVE = "chmod -R o-rwx "
+BAN_OTHERS_SINGLE = "chmod o-rwx "
 
 def dumpwebsite(p : Parameters, d : WebSiteData):
     if d.save != 1:
@@ -13,12 +15,29 @@ def dumpwebsite(p : Parameters, d : WebSiteData):
     dailydump = True
     backup(p, d, dailydump)
 
-def backup(params : Parameters, site : WebSiteData, sitedump):
+def get_archive_dir(params : Parameters, timestamp, altdir = 'none') -> str:
+    logdir = params.get('logdir')
+    u.ensure_dir(logdir)
+    archiveDir = 'none'
+    if u.isSnapshot(timestamp):
+        if altdir != 'none':
+            archiveDir = altdir
+            u.is_dir_or_abort(archiveDir)
+        else:
+            archiveDir = params.get('snapshotdir')
+            u.ensure_dir(archiveDir)
+    else:
+        archiveDir = params.get('sitedumpdir')
+        u.ensure_dir(archiveDir)
+    return archiveDir
+
+def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir = "none"):
     """
     Arguments:
       params:     Parameters object with general settings
       data:       WebSiteData object containing the website data
       sitedump:   True - daily dump, False - timed snapshot
+      altdir:     If entered, alternative target directory
     """
     timer = TimerElapsed()
     # Used Linux shell commands. Full path due to cron usage.
@@ -26,19 +45,6 @@ def backup(params : Parameters, site : WebSiteData, sitedump):
     mySqldump = params.get('sqldump')
     mySqldumpOptions = params.get('sqldumpoptions')
     
-    # Define global directories:
-    wwwRoot = params.get('wwwroot')            # Web files' root directory
-    dumpDir = params.get('sitedumpdir')        # Where local backups are stored
-    snapshotDir = params.get('snapshotdir')    # Where local snapshots are stored
-    remoteLocation = params.get('remotelocation') # remote backup location
-    
-    # Set up directories and file names
-    backupDir = snapshotDir
-    if sitedump:
-        backupDir = dumpDir
-    u.ensure_dir(backupDir)
-    wwwDir = wwwRoot + '/' + site.wwwSubdir
-
     # Current weekday time stamp wd0 ... wd6
     weekday = u.get_weekday()
     # year-month-day_hour-min
@@ -47,11 +53,16 @@ def backup(params : Parameters, site : WebSiteData, sitedump):
     if sitedump:
         tag = weekday
 
+    # Define directories:
+    wwwRoot = params.get('wwwroot')                # web files' root directory
+    remoteLocation = params.get('remotelocation')  # remote backup location
+    wwwDir = wwwRoot + '/' + site.wwwSubdir        # website files' directory
+    backupDir = get_archive_dir(params, tag, altdir) # backup archive target dir
+
     # Database and archive files
     sqlFile = site.siteName  + '.sql'
     dbPass = db.get_database_pw(site)
     zipArchive = site.siteName + '.' + tag + '.tar.gz'
-    backupSubdir = str(os.path.basename(backupDir))
     zipPath = backupDir + '/' + zipArchive
 
     # will a longterm backup be created?
@@ -102,13 +113,13 @@ def backup(params : Parameters, site : WebSiteData, sitedump):
     u.delete_dir(tempDir)
 
     if os.path.exists(zipPath):
+        if params.get('wwwbanothers') == 'true':
+           u.RUNNER.do(BAN_OTHERS_SINGLE + zipPath)
         print('Gzip archive written: ', zipPath)
+        # no log on bulk backup
         if not sitedump:
-            logFile = backupDir + '/' + site.siteName + '.txt'
-            comment = input('Comment on snapshot:  ')
-            with open(logFile, 'a') as f:
-                f.write(tag + ' saved: ' + comment + '\n')
-            print('Comment added in:     ', logFile)
+            logFile = params.get('logdir') + '/' + site.siteName + '.txt'
+            u.append_logfile(logFile, tag + ' saved: ')
     else:
         u.abort('Gzip archive missing: ', zipPath)
 
@@ -117,7 +128,6 @@ def backup(params : Parameters, site : WebSiteData, sitedump):
 
     timer.show_total_elapsed('Backup time elapsed')
     print('Finished:             ', u.get_current_time())
-
 
 # Will a long-term backup archive be saved? If yes, the oldest
 # daily archive will be renamed instead of overwritten. Each month
@@ -182,32 +192,58 @@ def prepare_database(params : Parameters, site : WebSiteData):
     print('Check whether database already exists...')
     db.ensure_database_exists(params, site)
 
-def restore(params : Parameters, site : WebSiteData, timestamp):
+def get_archive_timestamp(params : Parameters, site : WebSiteData, altdir = 'none') -> str:
+    """
+    Show available backup archives. Query the timestamp of the archive to be restored.
+    Arguments:
+      params:    Parameters object with general settings
+      site:      WebSiteData object containing the website data
+      altdir:    If entered, alternative snapshot archive directory
+    """
+    # "root_dir=DIRECTORY_PATH" is not yet in glob with Python 3.8:
+    cwd = os.getcwd()
+    dumpDir = params.get('sitedumpdir') 
+    os.chdir(dumpDir)
+    sitedumps = glob.glob(site.siteName + '*tar.gz')
+    datedDumps = u.get_dated_files(sitedumps)
+    u.print_timestamps(datedDumps, site.siteName, 'Sitedumps in ' + dumpDir + ' :')
+
+    snapshotDir = params.get('snapshotdir') 
+    if altdir != 'none':
+        snapshotDir = altdir
+    os.chdir(snapshotDir)
+    snapshots = glob.glob(site.siteName + '*tar.gz')
+    os.chdir(cwd)
+    u.print_timestamps(snapshots, site.siteName, 'Snapshots in ' + snapshotDir + ' :')
+    
+    print('Snapshot timestamps have format YYYY-MM-DD_hh-mm')
+    print('Sitedump labels have format wd#, w# or m# where # is integer')
+    print('Only enter the label without date and parens for a sitedump!')
+    timestamp = input('Enter timestamp or label of "' + site.siteName 
+                      + '" archive to be restored: ')
+    if timestamp == '' or ' ' in timestamp or timestamp.isspace():
+        print('Timestamp may not contain whitespace.')
+        u.abort('invalid timestamp entered')
+    print('Try restoring from archive', site.siteName + '.' + timestamp + '.tar.gz')
+    return timestamp
+
+def restore(params : Parameters, site : WebSiteData, timestamp, backupDir):
     """
     Arguments:
       params:     Parameters object with general settings
-      data:       WebSiteData object containing the website data
-      sitedump:   True - daily dump, False - timed snapshot
+      site:       WebSiteData object containing the website data
+      timestamp:  timestamp of the archive to be restored
+      backupDir:  backup archive directory
     """
-    # Used Linux shell commands. Full path due to cron usage.
+    # Used Linux shell commands.
     sql = params.get('sql')
     wwwUserGroup  = params.get('wwwusergroup') # 'none': do nothing
     # otherwise: change owner and expect user and group e.g. www-data:www-data"
-
-    # Test whether timestamp is from snapshot or cron backup.
-    # "cron" timestamps won't contain the chars '_' and '-'.
-    # Define the backup directory of snapshot or cron backups.
-    mode = "cron"
-    backupDir = params.get('sitedumpdir')
-    if '_' in timestamp or '-' in timestamp:
-        mode="snapshot"
-        backupDir = params.get('snapshotdir')
+    wwwbanothers = params.get('wwwbanothers') == 'true'
     
     # Set up the archive name and global root directories
     archive = backupDir + '/' + site.siteName + '.' + timestamp + '.tar.gz'
     wwwPath = params.get('wwwroot') + '/' + site.wwwSubdir
-    # This logfile will only be used in snapshot mode:
-    logFile = site.siteName + '.txt'
     u.print_line()
     print('Restored webpage:', site.siteName)
     print('Restored web directory:', wwwPath)
@@ -280,8 +316,11 @@ def restore(params : Parameters, site : WebSiteData, timestamp):
     print('Webdir replaced:', wwwPath)
     print('By this:', tempWwwPath)
     chowncommand = 'chown -R ' + wwwUserGroup + ' ' + wwwPath
+    banotherscommand = BAN_OTHERS_RECURSIVE + wwwPath
     if wwwUserGroup != 'none':
         print(chowncommand)
+        if wwwbanothers:
+            print(banotherscommand)
     u.query_continue()
     
     # restore all webfiles
@@ -289,13 +328,16 @@ def restore(params : Parameters, site : WebSiteData, timestamp):
     shutil.move(tempWwwPath, wwwPath)
     if wwwUserGroup != 'none':
         u.RUNNER.do(chowncommand)
-
+        if wwwbanothers:
+            u.RUNNER.do(banotherscommand)
     # Remove temp directory
     u.delete_dir(tempDir)
 
-    # This log is only for snapshot backups
-    if mode == 'snapshot':
-        logFile = backupDir + '/' + site.siteName + '.txt'
-        with open(logFile, 'a') as f:
-            f.write(timestamp + ' restored\n')
+    logFile = params.get('logdir') + '/' + site.siteName + '.txt'
+    msg = timestamp + ' restored: '
+    if not u.isSnapshot(timestamp):
+        date = u.get_date_of_file(archive)
+        msg = date + '(' + timestamp + ') restored: '
+    u.append_logfile(logFile, msg)        
+
     print('...', site.siteName, 'restore', timestamp, 'complete.')

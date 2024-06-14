@@ -36,20 +36,31 @@ sqlmainpw      /path/.mypasswd
 # Directories
 # sitedumpdir:   where bulk website backups are stored
 # snapshotdir:   where website snapshots are stored
+# logdir:        where the logfiles are stored
 # wwwroot:       root folder where folders of webfiles are located
 # ----------------------------------------------------------------
-sitedumpdir     /mybackup/sitedumps
-snapshotdir     /mybackup/snapshots
-wwwroot         /var/www
+sitedumpdir      /mybackup/sitedumps
+snapshotdir      /mybackup/snapshots
+logdir           /mybackup/logs
+wwwroot          /var/www
 # ----------------------------------------------------------------
 # This parameter is only used when restoring a website.
 # If wwwusergroup is "none", nothing is done. Otherwise:
 # A recursive chown command is applied to the restored files:
-# chown -R wwwusergroup /path/to/webfilesfolder
-# wwwusergroup is replaced with its content.
+# "chown -R wwwusergroup /path/to/webfilesfolder"
+# The wwwusergroup parameter is replaced with its content.
 # ----------------------------------------------------------------
-wwwusergroup    www-data:www-data
-#wwwusergroup    none
+wwwusergroup     www-data:www-data
+#wwwusergroup     none
+# ----------------------------------------------------------------
+# If wwwbanothers == "true" it is also executed:
+# "sudo chmod -R o-rwx /path/to/webfilesfolder"
+# if webfiles are restored and
+# "sudo chmod o-rwx /path/to/archiveFile"
+# if a backup is stored.
+# This removes all permissions of the others group.
+# ----------------------------------------------------------------
+wwwbanothers     true
 # ----------------------------------------------------------------
 # Location for additional remote bulk backup with scp:
 # e.g. "user.your-storagebox.de:directory"
