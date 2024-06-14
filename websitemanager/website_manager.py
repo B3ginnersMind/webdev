@@ -14,42 +14,38 @@ The following features are supported:
 - replace after snapshot: take a snapshot first, then recover
 - prepare database: add missing database and DB user of a website
 
-There must be two files which contain tables separated by spaces
-in the same directory as this script:
+In the same directory as this script, there must be two files 
+containing tables with columns separated by spaces:
 website_manager_params.txt - contains configuration parameters
 website_table.txt          - contains the data for each website
 
 - Without argument the interactive mode is entered.
-  Website recovery is only possible in the interactive mode.
 - Use the saveall option to run an autosave batch over all sites.
   Autosave mode overwrites older archives from the same day.
   Backups are stored in the directory specified by the sitedumpdir parameter.
-- Use the spapshot option to create a time-stamped backup of a website
-  which must be specified by its identifier in the website table.
-  Backups are stored in the directory specified by the snapshotdir parameter.
+  No other arguments are allowed when the saveall option is entered.
+- Use the snapshot option to create a time-stamped backup of just one website
+  which must have been specified by its identifier in the website table.
+  The default storage location of the backups is configured in the parameter file.
+- A website to treat can be selected interactively or entered as the first 
+  positional argument. An alternative location for snapshots can be specified 
+  as the second positional argument.
+- Single website actions are logged in a folder specified in the parameter file.
 """
 
-import argparse, glob, os, textwrap
-from pathlib import Path
+import argparse, os
 from wm.website_manager_worker import backup, dumpwebsite, restore, prepare_database
+from wm.website_manager_worker import get_archive_timestamp, get_archive_dir
 # Table processing in website_manager_utils by module pandas.
 import wm.website_manager_utils as u
-from wm.website_manager_utils import Parameters, WebSiteTable, WebSiteData
-__version__ = "1.0"
+from wm.website_manager_utils import Operation, Parameters, WebSiteTable
+__version__ = "1.1"
 
-WRAP_LENGTH = 65
-# Modes of operation:
-UNKNOWN = 0
-BATCH_SAVEALL = -1
-SAVEALL = 1
-SNAPSHOT = 2
-REPLACE_AFTER_SNAPSHOT = 3
-REPLACE = 4
-DBEXIST = 5
-# specify configuration files
 script_folder = os.path.dirname(os.path.realpath(__file__))
-websitesfile = script_folder + '/website_table.txt'
 paramsfile = script_folder + '/website_manager_params.txt'
+u.is_file_or_abort(paramsfile)
+websitesfile = script_folder + '/website_table.txt'
+u.is_file_or_abort(websitesfile)
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
@@ -57,24 +53,43 @@ p = argparse.ArgumentParser(description=__doc__,
 g = p.add_mutually_exclusive_group()
 g.add_argument("-a", "--saveall", help="batch backup of all websites", 
                action="store_true")
-g.add_argument("-s", "--spapshot", help="make a time-stamped snapshot", 
+g.add_argument("-s", "--snapshot", help="make a time-stamped snapshot", 
+               action="store_true")
+g.add_argument("-r", "--replace", help="recover website from backup archive", 
+               action="store_true")
+g.add_argument("-b", "--back", help="recover after having made a snapshot", 
+               action="store_true")
+g.add_argument("-p", "--prepare", help="prepare database", 
                action="store_true")
 p.add_argument("siteName", nargs='?', default='none', type=str,
-               help="site name of a single treated website")
+               help="site name which is treated")
+p.add_argument("altDir", nargs='?', default='none', type=str,
+               help="alternative path for snapshots")
 p.add_argument("-v", "--version", action='version', 
                version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
 
-mode = UNKNOWN
+siteName = args.siteName
+mode = Operation.UNKNOWN
 if args.saveall:
-    mode = BATCH_SAVEALL
-elif args.spapshot:
-    mode = SNAPSHOT
+    mode = Operation.BATCH_SAVEALL
+    if siteName != 'none':
+        u.abort('Site name argument prohibited for saveall mode')
+elif args.snapshot:
+    mode = Operation.SNAPSHOT
+elif args.replace:
+    mode = Operation.REPLACE
+elif args.back:
+    mode = Operation.REPLACE_AFTER_SNAPSHOT
+elif args.prepare:
+    mode = Operation.DBEXIST
+
+altDir = args.altDir
+if altDir != "none":    
+    u.is_dir_or_abort(altDir)
 
 # ensure that working dir is the source dir
-source_path = Path(__file__).resolve()
-source_dir = source_path.parent
-os.chdir(source_dir)
+os.chdir(script_folder)
 u.print_line()
 print('Current working directory:', os. getcwd())
 # create congiguration table objects
@@ -85,34 +100,35 @@ params = Parameters(paramsfile)
 if params.get('runasroot') != 'false':
     u.check_root_user()
 
-if mode == UNKNOWN:
+if mode == Operation.UNKNOWN:
     print('Select task:')
-    print(UNKNOWN, ': abort')
-    print(SAVEALL, ': saveall')
-    print(SNAPSHOT, ': snapshot')
-    print(REPLACE_AFTER_SNAPSHOT, ': replace after snapshot')
-    print(REPLACE, ': replace')
-    print(DBEXIST, ': prepare database')
-    mode = u.query_int('Enter digit', SAVEALL, DBEXIST)
-    if mode == SAVEALL:
+    print(Operation.UNKNOWN.value, ': abort')
+    print(Operation.SAVEALL.value, ': saveall')
+    print(Operation.SNAPSHOT.value, ': snapshot')
+    print(Operation.REPLACE_AFTER_SNAPSHOT.value, ': replace after snapshot')
+    print(Operation.REPLACE.value, ': replace')
+    print(Operation.DBEXIST.value, ': prepare database')
+    m = u.query_int('Enter digit', mode.min(), mode.max())
+    mode = Operation(m)
+    if mode == Operation.SAVEALL:
         u.print_line()
         websites.show()
         print('=> Entering saveall mode...')
         print('Note: Older archives from this day will be overwritten.')
         u.query_continue()
 
-if mode == UNKNOWN:
+if mode == Operation.UNKNOWN:
     quit()
 
-if mode in [SAVEALL, BATCH_SAVEALL]:
+if mode.isSaveall():
     for row in range(numSites):
         dumpwebsite(params, websites.getData(row))
     quit()
 
-siteName = args.siteName
 if siteName != 'none' and not websites.hasSite(siteName):
-    print('Entered', siteName, 'not present in website table', websitesfile)
-    siteName = 'none'
+    print('Entered "' + siteName + '" not present in website table', websitesfile)
+    u.abort("Retry with existing siteName or use interactive mode.")
+
 if siteName == 'none':
     u.print_line()
     websites.show()
@@ -122,35 +138,18 @@ if siteName == 'none':
 site = websites.getSite(siteName)
 print('=> Treated website:', site.siteName, '"' + site.comment + '"')
 
-if mode in [SNAPSHOT, REPLACE_AFTER_SNAPSHOT]:
+if mode.isSnapshot():
     u.print_line()
     print('=> Create snapshot of', site.siteName)
     dailydump = False
-    backup(params, site, dailydump)
+    backup(params, site, dailydump, altDir)
 
-if mode in [REPLACE_AFTER_SNAPSHOT, REPLACE]:
+if mode.isReplace():
     u.print_line()
     print('=> Replace content of website', site.siteName)
+    timestamp = get_archive_timestamp(params, site, altDir)
+    backupDir = get_archive_dir(params, timestamp, altDir)
+    restore(params, site, timestamp, backupDir)
     
-    # "root_dir=DIRECTORY_PATH" is not yet in glob with Python 3.8:
-    cwd = os.getcwd()
-    os.chdir(params.get('sitedumpdir'))
-    sitedumps = glob.glob(site.siteName + '*tar.gz')
-    os.chdir(params.get('snapshotdir'))
-    snapshots = glob.glob(site.siteName + '*tar.gz')
-    os.chdir(cwd)
-    print('Present sitedumps:', textwrap.fill(" ".join(sitedumps), WRAP_LENGTH))
-    print('Present snapshots:', textwrap.fill(" ".join(snapshots), WRAP_LENGTH))
-    
-    print('Snapshot timestamp has format YYYY-MM-DD_hh-mm')
-    print('Sitedump timestamp has format wd#, w# or m# where # is integer')
-    timestamp = input('Enter timestamp of "' + site.siteName 
-                      + '" archive to be restored: ')
-    if timestamp == '' or ' ' in timestamp or timestamp.isspace():
-        print('Timestamp may not contain whitespace.')
-        u.abort('invalid timestamp entered')
-    print('Try restoring from archive', site.siteName + '.' + timestamp + '.tar.gz')
-    restore(params, site, timestamp)
-    
-if mode == DBEXIST:
+if mode == Operation.DBEXIST:
     prepare_database(params, site)

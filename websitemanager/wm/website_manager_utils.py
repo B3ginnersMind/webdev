@@ -1,5 +1,6 @@
 
-import errno, datetime, os, pandas, platform, shutil, stat, sys, textwrap
+import datetime, os, pandas, platform, shutil, stat, sys, textwrap
+from enum import Enum
 from dataclasses import dataclass
 from pathlib import Path, WindowsPath
 
@@ -25,6 +26,26 @@ class OsCommandRunner:
         return 0
 RUNNER = OsCommandRunner(RUNNER_OPTIONS)
 
+class Operation(Enum):
+    UNKNOWN = 0
+    BATCH_SAVEALL = -1
+    SAVEALL = 1
+    SNAPSHOT = 2
+    REPLACE_AFTER_SNAPSHOT = 3
+    REPLACE = 4
+    DBEXIST = 5
+    @staticmethod
+    def min():
+        return 1
+    @staticmethod
+    def max():
+        return 5
+    def isSaveall(self):
+        return (self == Operation.BATCH_SAVEALL or self == Operation.SAVEALL)
+    def isSnapshot(self):
+        return (self == Operation.SNAPSHOT or self == Operation.REPLACE_AFTER_SNAPSHOT)
+    def isReplace(self):
+        return (self == Operation.REPLACE or self == Operation.REPLACE_AFTER_SNAPSHOT)
 
 def abort(*msg):
     messageLine = '...'
@@ -62,7 +83,8 @@ def ensure_dir(dir):
     if 'simulate' not in RUNNER_OPTIONS:
         os.makedirs(dir, 0o700)
 
-def remove_readonly(func, path, excinfo):
+def remove_readonly(func, path, _):
+    """Remove write protection and continue delete process."""
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
@@ -73,6 +95,7 @@ def delete_dir(dir, usePython=True):
     if not p.is_dir():
         return
     print('Removing', dir, 'directory...')
+    # in Python 3.12 onexc added und onerror deprecated, may be removed in 3.14
     if usePython == True:
         shutil.rmtree(p, onerror=remove_readonly)
     elif platform.system() == 'Windows':
@@ -108,9 +131,45 @@ def get_time_tag() -> str:
 def get_current_time() -> str:
     currently = datetime.datetime.now()
     return currently.strftime('%d.%m.%Y %H:%M')
-    
-# check column names in table header
-def checkTable(table : pandas.DataFrame, tableName, configColumns):
+
+def get_date_of_file(file : str) -> str:
+    ts = os.path.getmtime(file)
+    t = datetime.datetime.fromtimestamp(ts)
+    return t.strftime('%Y.%m.%d')
+
+def get_dated_files(files : list) -> list:
+    datedFiles = []
+    for f in files:
+        ts = os.path.getmtime(f)
+        t = datetime.datetime.fromtimestamp(ts)
+        date = t.strftime('%Y.%m.%d')
+        datedFiles.append(date +'(' + f + ')')
+    return datedFiles
+
+def isSnapshot(timestamp) -> bool:
+    """"
+    Test whether timestamp is from snapshot or cron (saveAll) backup.
+    "cron" timestamps won't contain the chars '_' and '-'.
+    """
+    return ('_' in timestamp or '-' in timestamp)
+
+def print_timestamps(archives : list, sitename : str, msg : str):
+    line = []
+    for a in archives:
+        a = a.replace(sitename +'.', '')
+        a = a.replace('.tar.gz', '')
+        line.append(a)
+    line.sort()
+    print(msg + '\n', textwrap.fill('   '.join(line), WRAP_LENGTH), '\n')
+
+def append_logfile(logFile, tag):
+    print('action:', tag)
+    comment = input('Add comment to action for logfile:  ')
+    with open(logFile, 'a') as f:
+        f.write(tag + comment + '\n')
+    print('Comment added in:     ', logFile)
+
+def checkTableColumns(table : pandas.DataFrame, tableName, configColumns : list):
     nrows = len(table)
     if nrows == 0:
         abort('missing data in table "' + tableName + '"')
@@ -138,13 +197,26 @@ def checkTable(table : pandas.DataFrame, tableName, configColumns):
 # Header is at the top line (0).
 class Parameters:
     def __init__(self, paramTable):
+        print('Reading:', paramTable)
         self.paramTable = paramTable
         # test file existence within the same directory
         if not os.path.exists(paramTable):
             abort('parameter table file "' + paramTable + '"is missing')  
         self.data = pandas.read_csv(paramTable, comment='#', sep=r'\s+', header=0)
-        checkTable(self.data, paramTable, ['param', 'value'])
+        checkTableColumns(self.data, paramTable, ['param', 'value'])
         self.data.set_index("param", inplace = True)
+        params = ['runasroot', 'scp', 'sql', 'sqldump', 'sqldumpoptions',
+                  'sqlmainpw', 'sitedumpdir', 'snapshotdir', 'logdir', 'wwwroot', 
+                  'wwwusergroup', 'wwwbanothers', 'remotelocation']
+        self.checkParams(params)
+    def checkParams(self, params : list):
+        missingParams = ''
+        for p in params:
+            if p not in self.data.index:
+                missingParams += ' ' + p
+        if missingParams != '':
+           abort('missing parameters in "' + self.paramTable 
+                 + '": ' + missingParams)
     def get(self, param):
         # does param exist?
         if param not in self.data.index:
@@ -179,17 +251,22 @@ class WebSiteData:
 
 class WebSiteTable:
     def __init__(self, tableName):
+        print('Reading:', tableName)
         columns = ['siteName', 'save', 'wwwSubdir', 'dbName', 'dbUser', 'dbPassWord', 'comment']
         self.websites = pandas.read_csv(tableName, comment='#', sep=r'\s+', header=0)
-        checkTable(self.websites, tableName, columns)
+        checkTableColumns(self.websites, tableName, columns)
         self.numWebsites = len(self.websites)
         self.rowDict = {}
         for r in range(self.numWebsites):
             self.rowDict[self.websites.at[r,"siteName"]] = r 
         if len(self.rowDict) != self.numWebsites:
             abort('siteName values in "' + tableName + '" are ambiguous')
+        viewColumns = ['siteName', 'save', 'wwwSubdir', 'dbName', 'comment']
+        self.viewedTable = pandas.read_csv(tableName, comment='#', sep=r'\s+', 
+                                           header=0, usecols=viewColumns)
     def show(self):
-        print(self.websites)
+        # print(self.websites)
+        print(self.viewedTable)
     def getNumWebsites(self):
         return self.numWebsites
     def hasSite(self, siteName):
