@@ -39,17 +39,12 @@ from wm.website_manager_worker import get_archive_timestamp, get_archive_dir
 # Table processing in website_manager_utils by module pandas.
 import wm.website_manager_utils as u
 from wm.website_manager_utils import Operation, Parameters, WebSiteTable
-__version__ = "1.1"
-
-script_folder = os.path.dirname(os.path.realpath(__file__))
-paramsfile = script_folder + '/website_manager_params.txt'
-u.is_file_or_abort(paramsfile)
-websitesfile = script_folder + '/website_table.txt'
-u.is_file_or_abort(websitesfile)
+__version__ = "1.2"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
                formatter_class=argparse.RawDescriptionHelpFormatter)
+
 g = p.add_mutually_exclusive_group()
 g.add_argument("-a", "--saveall", help="batch backup of all websites", 
                action="store_true")
@@ -61,13 +56,26 @@ g.add_argument("-b", "--back", help="recover after having made a snapshot",
                action="store_true")
 g.add_argument("-p", "--prepare", help="prepare database", 
                action="store_true")
-p.add_argument("siteName", nargs='?', default='none', type=str,
+
+p.add_argument('-c', '--config', type=str, help='enter alternative parameter file name')
+p.add_argument('-w', '--websites', type=str, help='enter alternative websites file name')
+p.add_argument("siteName", nargs='?', type=str, default='none',
                help="site name which is treated")
-p.add_argument("altDir", nargs='?', default='none', type=str,
+p.add_argument("altDir", nargs='?', type=str, default='none',
                help="alternative path for snapshots")
 p.add_argument("-v", "--version", action='version', 
                version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
+
+script_folder = os.path.dirname(os.path.realpath(__file__))
+paramsfile = script_folder + '/website_manager_params.txt'
+if (args.config):
+    paramsfile = script_folder + '/' + args.config
+u.is_file_or_abort(paramsfile)
+websitesfile = script_folder + '/website_table.txt'
+if (args.websites):
+    websitesfile = script_folder + '/' + args.websites
+u.is_file_or_abort(websitesfile)
 
 siteName = args.siteName
 mode = Operation.UNKNOWN
