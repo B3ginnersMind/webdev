@@ -98,3 +98,8 @@ Initial version
 - An alternative folder path for snapshots may be entered.
 - Improved output of available backup archives in the restore mode.
 - Improved logfile handling. The logfile folder may be configured.
+
+### Version 1.2
+
+- Added Option -c to overwrite default parameter file
+- Added Option -w to overwrite default websites table
