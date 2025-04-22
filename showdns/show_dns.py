@@ -27,9 +27,9 @@ The dnspython toolkit is used for the query tasks.
 Installation on Ubuntu: "sudo apt install python3-dnspython"
 Manfred Koerkel, 06.01.2024
 """
-import argparse, dns.resolver, os, pathlib, platform, sys, time, warnings
+import argparse, dns.resolver, os, pathlib, platform, sys, time 
 from subprocess import PIPE, run
-__version__ = "1.01"
+__version__ = "1.02"
 
 def is_platform_linux():
     """return True if platform is Linux"""

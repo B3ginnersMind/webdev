@@ -1,3 +1,5 @@
+# Ignore local test directory
+/0test/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
