@@ -43,9 +43,15 @@ def make_executable(file):
     os.chmod(file, st.st_mode | stat.S_IEXEC)
     print(file, 'made executable')
 
+def install_pyscript(webdev_path, subdir, pyscript, target_folder):
+    source_file = os.path.join(webdev_path, subdir, pyscript)
+    target_script = os.path.join(target_folder, pyscript)
+    copy_file(source_file, target_script)
+    make_executable(target_script)
+
 def replace_tree(src, dest):
     if not os.path.isdir(src):
-        abort(folder + ' ' + src + ' is missing')
+        abort(' ' + src + ' is missing')
     if os.path.isfile(dest):
         abort(dest + ' is an existing file and not a directory')
     if os.path.isdir(dest):
@@ -88,18 +94,10 @@ def main():
     webdev_path = os.path.dirname(os.path.realpath(__file__))
     print('Install webdev from folder:', webdev_path)
 
-    showdns_file = os.path.join(webdev_path, 'showdns', 'show_dns.py')
-    websitemanager_file = os.path.join(webdev_path, 'websitemanager', 'website_manager.py')
-    #print(showdns_file)
-    #print(websitemanager_file)
-    showdns_dest = os.path.join(target_folder, 'show_dns.py')
-    websitemanager_dest = os.path.join(target_folder, 'website_manager.py')
-
-    copy_file(showdns_file, showdns_dest)
-    copy_file(websitemanager_file, websitemanager_dest)
-    
-    make_executable(showdns_dest)
-    make_executable(websitemanager_dest)
+    install_pyscript(webdev_path, 'showdns', 'show_dns.py', target_folder)
+    install_pyscript(webdev_path, 'parsecerts', 'parse_certificates.py', target_folder)
+    install_pyscript(webdev_path, 'showvhosts', 'show_vhosts.py', target_folder)
+    install_pyscript(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
 
     websitemanager_module = os.path.join(webdev_path, 'websitemanager', 'wm')
     websitemanager_module_dest = os.path.join(target_folder, 'wm')

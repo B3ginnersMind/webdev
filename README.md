@@ -30,6 +30,20 @@ This script requires the Python "requests" package to perform the download.
 - This means that the readme and the sample files will not be copied.
 - You can run *install_webdev.py* any time when you want to copy the python files again.
 
+## parse_certificates.py in folder parsecerts
+
+Display the Letsencrypt certificates in a clear format so that those that need to be renewed soon are at the top.
+
+- Read file "certificates.txt" containing output of "certbot certificates".
+- Shorten the content such that for each certificate only one line remains.
+- Sort the lines such that the oldest certificates are on top.
+- Print this result to stdout.
+
+## show_vhosts.py in folder showvhosts
+
+Utility for an Ubuntu server with Apache2 that prints out the running virtual hosts and the PHP FPM versions used.
+The output is truncated and formatted for clarity.
+
 ## show_dns.py in folder showdns
 
 - Requires at least dnspython 2.x.
@@ -48,10 +62,6 @@ Possible commands resulting in file show_dns_exampleDomains.txt:
 
     show_dns.py exampleDomains.txt
     show_dns.py exampleDomains.txt -k exampleHosts.txt -ns 8.8.8.8
-
-### Version 1.0
-
-Initial version
 
 ## website_manager.py in folder websitemanager
 
