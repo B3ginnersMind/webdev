@@ -30,39 +30,6 @@ This script requires the Python "requests" package to perform the download.
 - This means that the readme and the sample files will not be copied.
 - You can run *install_webdev.py* any time when you want to copy the python files again.
 
-## parse_certificates.py in folder parsecerts
-
-Display the Letsencrypt certificates in a clear format so that those that need to be renewed soon are at the top.
-
-- Read file "certificates.txt" containing output of "certbot certificates".
-- Shorten the content such that for each certificate only one line remains.
-- Sort the lines such that the oldest certificates are on top.
-- Print this result to stdout.
-
-## show_vhosts.py in folder showvhosts
-
-Utility for an Ubuntu server with Apache2 that prints out the running virtual hosts and the PHP FPM versions used.
-The output is truncated and formatted for clarity.
-
-## show_dns.py in folder showdns
-
-- Requires at least dnspython 2.x.
-- Queries DNS records of a list of domains.
-- Writes the results to text files.
-- Show help with option -h and version with -v.
-- exampleDomains.txt is a demo domain file.
-- exampleHosts.txt is a demo file with knows hosts.
-
-Possible commands resulting in file show_ips_exampleDomains.txt:
-
-    show_dns.py exampleDomains.txt -ip
-    show_dns.py exampleDomains.txt -k exampleHosts.txt -ns 8.8.8.8  -ip
-
-Possible commands resulting in file show_dns_exampleDomains.txt:
-
-    show_dns.py exampleDomains.txt
-    show_dns.py exampleDomains.txt -k exampleHosts.txt -ns 8.8.8.8
-
 ## website_manager.py in folder websitemanager
 
 - Requires the pandas package to read ASCII tables.
@@ -111,5 +78,53 @@ Initial version
 
 ### Version 1.2
 
-- Added Option -c to overwrite default parameter file
-- Added Option -w to overwrite default websites table
+- Added -c option to overwrite default parameter file
+- Added -w option to overwrite default websites table
+
+### Version 1.3
+
+- Added -t option to specify a snapshot timestamp to be used to locate
+  the backup archive from which a site is being restored.
+
+## Further tiny tools
+
+### load_site_from_ftp.py
+
+- Overwrite a website with the content of a remote backup archive.
+- A local configuration file of the site may be saved and restored again.
+- The timestamp tag of the archive has to contain yyyy-mm-dd.
+- This little helper utility is intended to refresh a local dev installation.
+
+### parse_certificates.py in folder parsecerts
+
+Display the Letsencrypt certificates in a clear format so that those that need to be renewed soon are at the top.
+
+- Read file "certificates.txt" containing output of "certbot certificates".
+- Shorten the content such that for each certificate only one line remains.
+- Sort the lines such that the oldest certificates are on top.
+- Print this result to stdout.
+
+### show_vhosts.py in folder showvhosts
+
+Utility for an Ubuntu server with Apache2 that prints out the running virtual 
+hosts and the PHP FPM versions used. The output is truncated and formatted for
+clarity.
+
+### show_dns.py in folder showdns
+
+- Requires at least dnspython 2.x.
+- Queries DNS records of a list of domains.
+- Writes the results to text files.
+- Show help with option -h and version with -v.
+- exampleDomains.txt is a demo domain file.
+- exampleHosts.txt is a demo file with knows hosts.
+
+Possible commands resulting in file show_ips_exampleDomains.txt:
+
+    show_dns.py exampleDomains.txt -ip
+    show_dns.py exampleDomains.txt -k exampleHosts.txt -ns 8.8.8.8  -ip
+
+Possible commands resulting in file show_dns_exampleDomains.txt:
+
+    show_dns.py exampleDomains.txt
+    show_dns.py exampleDomains.txt -k exampleHosts.txt -ns 8.8.8.8

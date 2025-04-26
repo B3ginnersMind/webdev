@@ -216,7 +216,7 @@ def get_archive_timestamp(params : Parameters, site : WebSiteData, altdir = 'non
     os.chdir(cwd)
     u.print_timestamps(snapshots, site.siteName, 'Snapshots in ' + snapshotDir + ' :')
     
-    print('Snapshot timestamps have format YYYY-MM-DD_hh-mm')
+    print('Snapshot timestamps have format YYYY-MM-DD_hh-mm or YYYY-MM-DD')
     print('Sitedump labels have format wd#, w# or m# where # is integer')
     print('Only enter the label without date and parens for a sitedump!')
     timestamp = input('Enter timestamp or label of "' + site.siteName 

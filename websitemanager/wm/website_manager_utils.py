@@ -128,6 +128,10 @@ def get_time_tag() -> str:
     currently = datetime.datetime.now()
     return currently.strftime('%Y-%m-%d_%H-%M')
 
+def get_date_tag() -> str:
+    currently = datetime.datetime.now()
+    return currently.strftime('%Y-%m-%d')
+
 def get_current_time() -> str:
     currently = datetime.datetime.now()
     return currently.strftime('%d.%m.%Y %H:%M')
@@ -149,7 +153,7 @@ def get_dated_files(files : list) -> list:
 def isSnapshot(timestamp) -> bool:
     """"
     Test whether timestamp is from snapshot or cron (saveAll) backup.
-    "cron" timestamps won't contain the chars '_' and '-'.
+    "Cron" daily, weekly, monthly staggered backups won't contain '_' or '-'.
     """
     return ('_' in timestamp or '-' in timestamp)
 

@@ -30,6 +30,7 @@ website_table.txt          - contains the data for each website
 - A website to treat can be selected interactively or entered as the first 
   positional argument. An alternative location for snapshots can be specified 
   as the second positional argument.
+- The timestamp of the website recovery archive is an optional argument.
 - Single website actions are logged in a folder specified in the parameter file.
 """
 
@@ -39,11 +40,11 @@ from wm.website_manager_worker import get_archive_timestamp, get_archive_dir
 # Table processing in website_manager_utils by module pandas.
 import wm.website_manager_utils as u
 from wm.website_manager_utils import Operation, Parameters, WebSiteTable
-__version__ = "1.2"
+__version__ = "1.3"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
-               formatter_class=argparse.RawDescriptionHelpFormatter)
+               formatter_class=argparse.RawTextHelpFormatter)
 
 g = p.add_mutually_exclusive_group()
 g.add_argument("-a", "--saveall", help="batch backup of all websites", 
@@ -56,6 +57,9 @@ g.add_argument("-b", "--back", help="recover after having made a snapshot",
                action="store_true")
 g.add_argument("-p", "--prepare", help="prepare database", 
                action="store_true")
+g.add_argument('-t', '--timestamp', type=str, 
+               help='''enter timestamp and recover from associated backup
+- timestamp format: YYYY-MM-DD_hh-mm or YYYY-MM-DD''')
 
 p.add_argument('-c', '--config', type=str, help='enter alternative parameter file name')
 p.add_argument('-w', '--websites', type=str, help='enter alternative websites file name')
@@ -79,18 +83,21 @@ u.is_file_or_abort(websitesfile)
 
 siteName = args.siteName
 mode = Operation.UNKNOWN
-if args.saveall:
-    mode = Operation.BATCH_SAVEALL
-    if siteName != 'none':
-        u.abort('Site name argument prohibited for saveall mode')
-elif args.snapshot:
-    mode = Operation.SNAPSHOT
-elif args.replace:
+if (args.timestamp):
     mode = Operation.REPLACE
-elif args.back:
-    mode = Operation.REPLACE_AFTER_SNAPSHOT
-elif args.prepare:
-    mode = Operation.DBEXIST
+else:
+    if args.saveall:
+        mode = Operation.BATCH_SAVEALL
+        if siteName != 'none':
+            u.abort('Site name argument prohibited for saveall mode')
+    elif args.snapshot:
+        mode = Operation.SNAPSHOT
+    elif args.replace:
+        mode = Operation.REPLACE
+    elif args.back:
+        mode = Operation.REPLACE_AFTER_SNAPSHOT
+    elif args.prepare:
+        mode = Operation.DBEXIST
 
 altDir = args.altDir
 if altDir != "none":    
@@ -155,7 +162,10 @@ if mode.isSnapshot():
 if mode.isReplace():
     u.print_line()
     print('=> Replace content of website', site.siteName)
-    timestamp = get_archive_timestamp(params, site, altDir)
+    if (args.timestamp):
+        timestamp = args.timestamp
+    else:
+        timestamp = get_archive_timestamp(params, site, altDir)
     backupDir = get_archive_dir(params, timestamp, altDir)
     restore(params, site, timestamp, backupDir)
     
