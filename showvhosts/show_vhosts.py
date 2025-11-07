@@ -27,18 +27,6 @@ def get_output(command):
 print('Run', __file__)
 print('Query date:', datetime.today().strftime('%Y-%m-%d'))
 
-vhosts = get_output("apache2ctl -S")
-for l in vhosts:
-    if (l.startswith('VirtualHost')):
-       print(l)
-    elif (l.startswith('*:')):
-       print(l)
-    elif (l.startswith('port')):
-       l = re.sub('/etc/apache2/sites-enabled/', '', l)
-       print(l)
-    elif (l.startswith('alias')):
-       print('     '+l)
-
 phpversions = get_output("systemctl | grep PHP")
 for l in phpversions:
     print(l)
@@ -63,3 +51,15 @@ for l in usedphp_shortened:
     conf, phpversion = l.split()
     line_aligned = f"{conf.ljust(max_len_conf)} {phpversion}"
     print(line_aligned)
+
+vhosts = get_output("apache2ctl -S")
+for l in vhosts:
+    if (l.startswith('VirtualHost')):
+       print(l)
+    elif (l.startswith('*:')):
+       print(l)
+    elif (l.startswith('port')):
+       l = re.sub('/etc/apache2/sites-enabled/', '', l)
+       print(l)
+    elif (l.startswith('alias')):
+       print('     '+l)
