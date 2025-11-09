@@ -9,7 +9,7 @@ Manfred Koerkel, 22.04.2025
 from subprocess import PIPE, run
 from datetime import datetime
 import re
-__version__ = "1.00"
+__version__ = "1.01"
 
 def get_output(command):
     """runs shell command and returns output as list of strings"""
@@ -19,7 +19,7 @@ def get_output(command):
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True,
                  shell=True)
     result.stdout.strip()
-    lines = result.stdout.splitlines()    
+    lines = result.stdout.splitlines()
     lines = [l.strip() for l in lines]
     lines = [" ".join(l.split()) for l in lines]
     return lines
@@ -31,15 +31,23 @@ phpversions = get_output("systemctl | grep PHP")
 for l in phpversions:
     print(l)
 
+# search only over enabled configs
 search_used_php_versions = (
-    "find /etc/apache2/sites-available -type f -name '*.conf'"
-    " -exec grep 'fpm.sock' {} +"   
+    "find -L /etc/apache2/sites-enabled -name '*.conf'"
+    " -exec grep 'fpm.sock' {} +"
 )
+# search over all configs
+# search_used_php_versions = (
+#    "find /etc/apache2/sites-available -type f -name '*.conf'"
+#    " -exec grep 'fpm.sock' {} +"
+#)
+
 usedphp_raw = get_output(search_used_php_versions)
 # shortend output
 usedphp_shortened = []
 for l in usedphp_raw:
-    l = re.sub('/etc/apache2/sites-available/', '', l)
+    l = re.sub('/etc/apache2/sites-enabled/', '', l)
+#   l = re.sub('/etc/apache2/sites-available/', '', l)
     l = re.sub('proxy:unix:/var/run/php/', '', l)
     l = re.sub('SetHandler ', '', l)
     l = re.sub('.sock\|fcgi://localhost/', '', l)
