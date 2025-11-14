@@ -98,6 +98,7 @@ def main():
     install_pyscript(webdev_path, 'parsecerts', 'parse_certificates.py', target_folder)
     install_pyscript(webdev_path, 'showvhosts', 'show_vhosts.py', target_folder)
     install_pyscript(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
+    install_pyscript(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
 
     websitemanager_module = os.path.join(webdev_path, 'websitemanager', 'wm')
     websitemanager_module_dest = os.path.join(target_folder, 'wm')

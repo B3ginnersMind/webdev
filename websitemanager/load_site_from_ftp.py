@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """
 Load backup archive from server and overwrite local website with it.
+Optionally, preserve a local configuration file during the process.
+Optionally, a time stamp can be given to load an older archive.
+Requires paramiko module for SFTP transfer.
+Depends on website_manager.py to restore the website from the downloaded archive.
 """
 # =====================================================================
 # module paramiko necessary
@@ -8,11 +12,19 @@ Load backup archive from server and overwrite local website with it.
 # apt list --installed | grep python3-paramiko
 # sudo apt install python3-paramiko
 # =====================================================================
-import argparse,paramiko, getpass, os, tempfile, shutil
+import argparse, paramiko, getpass, os, tempfile, shutil
 import wm.website_manager_utils as u
 import subprocess
 
 def get_names(siteName : str):
+    """
+    Get important names and paths from parameter and website table files.
+    Returns:
+    wwwroot from the parameter file 
+    site.wwwSubdir from the website table file suing siteName
+    local_snapshot_dir from the parameter file
+    www_user_group from the parameter file
+    """
     script_folder = os.path.dirname(os.path.realpath(__file__))
     os.chdir(script_folder)
     paramsfile = script_folder + '/website_manager_params.txt'
@@ -67,20 +79,20 @@ p = argparse.ArgumentParser(description=__doc__,
                formatter_class=argparse.RawTextHelpFormatter)
 
 p.add_argument("host",
-               help="ssh and sftp host name")
+               help="name of remote ssh and sftp host")
 p.add_argument("user",
-               help="sftp and ssh user")
+               help="sftp and ssh user on remote host")
 p.add_argument("sshPort",
-               help="ssh port")
+               help="ssh port on remote host")
 p.add_argument("remoteDir",
                help="remote directory")
 p.add_argument("remoteSiteName",
                help="remote site name of the downloaded archive")
 p.add_argument("localSiteName",
-               help="remote site name of the downloaded archive")
+               help="local site name of the downloaded archive")
 
 p.add_argument('-c', '--config', type=str,
-               help='relative path of config file to be preserved')
+               help='relative path of local website config file to be preserved')
 p.add_argument('-t', '--timestamp', type=str,
                help='timestamp of archive to be downloaded')
 args = p.parse_args()
@@ -93,20 +105,16 @@ port = args.sshPort
 remote_dir = args.remoteDir
 remote_site_name = args.remoteSiteName
 tag = args.timestamp
+# if no tag given, use current date tag
 if not tag:
     tag = u.get_date_tag()
-print(remote_site_name, tag)
 remote_archive_filename = remote_site_name + '.' + tag + '.tar.gz'
 remote_archive_path = f"{remote_dir}/{remote_archive_filename}"
 
 local_site_name = args.localSiteName
 local_archive_site_name = local_site_name + '.' + tag + '.tar.gz'
-names = get_names(local_site_name)
-wwwroot = names[0]
-wwwsubdir = names[1]
-local_snapshot_dir = names[2]
-local_archive_path = os.path.join(local_snapshot_dir, local_archive_site_name)  
-www_user_group = names[3]
+wwwroot, wwwsubdir, local_snapshot_dir, www_user_group = get_names(local_site_name)
+local_archive_path = os.path.join(local_snapshot_dir, local_archive_site_name)
 
 config_path = 'none'
 tempdir = 'none'
@@ -130,8 +138,8 @@ print('local snapshot directory:', local_snapshot_dir)
 print('local website name:', local_site_name)
 print('local archive path ', local_archive_path)
 print('temporary directory:', tempdir)
-print('configuration path:', config_path)
-print('configuration temp path:', config_temp_path)
+print('local config path:', config_path)
+print('cached config file:', config_temp_path)
 print('user:group for webfiles:', www_user_group)
 u.print_line()
 u.is_file_or_abort(config_path)
@@ -142,7 +150,7 @@ if args.config:
     print('save', args.config, 'to temp directory')
     shutil.copy2(config_path, config_temp_path)
 
-subprocess.run(['python', 'website_manager.py', 'scitemporg', '--timestamp', tag])
+subprocess.run(['python', 'website_manager.py', local_site_name, '--timestamp', tag])
 
 if args.config:
     print('restore local config file')
