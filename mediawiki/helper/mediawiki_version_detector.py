@@ -1,13 +1,15 @@
 import logging, os, re
 from pathlib import Path
+from helper.dataclasses import Release
 
-def detect_mediawiki_version(folder: Path) -> str:
+def detect_mediawiki_version(folder: Path) -> Release:
     """
     folder is the root of a MediaWiki installation.
     Look within includes/Defines.php after:
         define( 'MW_VERSION', 'VERSION' );
     und return VERSION zurück (e.g. '1.43.6').
     """
+    logging.info("============================ detect_mediawiki_version:")
     defines_path: Path = folder / "includes" / "Defines.php"
     
     if not defines_path.is_file():
@@ -22,9 +24,10 @@ def detect_mediawiki_version(folder: Path) -> str:
             match = pattern.search(line)
             if match:
                 release = match.group(1)
-                logging.info("In MW folder:%s", folder)
-                logging.info("Found Mediawiki release:%s", release)
-                return release
+                logging.info(f"In MW folder: {folder}")
+                logging.info(f"Found Mediawiki release: {release}")
+                logging.info(85 *"=")
+                return Release(release)
 
     raise ValueError("Constant MW_VERSION not found in Defines.php")
 

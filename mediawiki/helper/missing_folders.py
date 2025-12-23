@@ -1,18 +1,21 @@
 import logging
 from pathlib import Path
+from helper.dataclasses import UpdateData
 
-def get_missing_folders(folder_live: Path, folder_new: Path, subfolder: str) -> list[str]:
+#def get_missing_folders(folder_live: Path, folder_new: Path, subfolder: str) -> list[str]:
+def get_missing_folders(d: UpdateData, subfolder: str) -> list[str]:
     """
     Iterates through all subfolders of folder_live/subfolder
     and checks if they exist in folder_new/subfolder.
     Returns a list of missing folder names.
     """
-    base_live: Path = folder_live / subfolder
-    base_new: Path = folder_new / subfolder
+    logging.info(f"============================ get_missing_folders: {subfolder}")
+    base_live: Path =  d.mw_folder_live / subfolder
+    base_new: Path = d.mw_folder_new / subfolder
     logging.info(85 *"-")
-    logging.info("Live release    : %s", folder_live)
-    logging.info("New release     : %s", folder_new)
-    logging.info("Tested subfolder: %s", subfolder)
+    logging.info(f"Live release    : {d.mw_folder_live}")
+    logging.info(f"New release     : {d.mw_folder_new}" )
+    logging.info(f"Tested subfolder: {subfolder}")
     logging.info("Which subfolders are missing in the new release?")
 
     if not  base_live.is_dir():
@@ -35,7 +38,7 @@ def get_missing_folders(folder_live: Path, folder_new: Path, subfolder: str) -> 
     if not missing:
         logging.info("=> Nothing is missing.")
     else:
-        logging.info("=> Missing: %s", missing)
+        logging.info(f"=> Missing: {missing}")
   
-    logging.info(85 *"-")
+    logging.info(85 *"=")
     return missing

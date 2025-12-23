@@ -30,19 +30,24 @@ def get_extension_link(url: str, prefix: str) -> str | None:
     :param prefix: prefix to match links against
     :return: download link or None
     """
+    logging.info("============================ get_extension_link:")
     try:
         resp = requests.get(url)
         resp.raise_for_status()
         html = resp.text
     except requests.RequestException as e:
-        logging.warning("Failed to fetch %s: %s", url, e)
+        logging.warning(f"Failed to fetch {url}: {e}")
         return None
 
     parser = LinkParser(url, prefix)
     parser.feed(html)
     if len(parser.links) > 1:
-        logging.warning("Multiple links found for prefix %s", prefix)
+        logging.warning(f"Multiple links found for prefix {prefix}")
     if parser.links:
-        logging.info("Found archive: %s", parser.links[0])
+        logging.info(f"Link: {parser.links[0]}")
+        logging.info(85 *"=")
         return parser.links[0]
+
+    logging.info("No archive link found:")
+    logging.info(85 *"=")
     return None
