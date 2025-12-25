@@ -1,6 +1,7 @@
 import logging, requests
 from html.parser import HTMLParser
 from urllib.parse import urljoin
+import helper.constants as const
 
 class LinkParser(HTMLParser):
     def __init__(self, base_url, prefix):
@@ -30,7 +31,7 @@ def get_extension_link(url: str, prefix: str) -> str | None:
     :param prefix: prefix to match links against
     :return: download link or None
     """
-    logging.info("============================ get_extension_link:")
+    logging.info(const.SHORT_LINE + " get_extension_link:")
     try:
         resp = requests.get(url)
         resp.raise_for_status()
@@ -45,9 +46,9 @@ def get_extension_link(url: str, prefix: str) -> str | None:
         logging.warning(f"Multiple links found for prefix {prefix}")
     if parser.links:
         logging.info(f"Link: {parser.links[0]}")
-        logging.info(85 *"=")
+        logging.info(const.LONG_LINE)
         return parser.links[0]
 
     logging.info("No archive link found:")
-    logging.info(85 *"=")
+    logging.info(const.LONG_LINE)
     return None

@@ -1,6 +1,7 @@
 import logging, os, re
 from pathlib import Path
 from helper.dataclasses import Release
+import helper.constants as const
 
 def detect_mediawiki_version(folder: Path) -> Release:
     """
@@ -9,7 +10,7 @@ def detect_mediawiki_version(folder: Path) -> Release:
         define( 'MW_VERSION', 'VERSION' );
     und return VERSION zurück (e.g. '1.43.6').
     """
-    logging.info("============================ detect_mediawiki_version:")
+    logging.info(const.SHORT_LINE + " detect_mediawiki_version:")
     defines_path: Path = folder / "includes" / "Defines.php"
     
     if not defines_path.is_file():
@@ -26,7 +27,7 @@ def detect_mediawiki_version(folder: Path) -> Release:
                 release = match.group(1)
                 logging.info(f"In MW folder: {folder}")
                 logging.info(f"Found Mediawiki release: {release}")
-                logging.info(85 *"=")
+                logging.info(const.LONG_LINE)
                 return Release(release)
 
     raise ValueError("Constant MW_VERSION not found in Defines.php")

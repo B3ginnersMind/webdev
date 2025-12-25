@@ -1,14 +1,13 @@
 """
 Download and extract a MediaWiki release archive.
 """
-import argparse, logging, os, shutil, tarfile
+import logging, os, tarfile
 import urllib.request
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from typing import Tuple
-from helper.dataclasses import Release, UpdateData
-
-MEDIAWIKI_RELEASE_BASE_URL = "https://releases.wikimedia.org/mediawiki/"
+import helper.utils as utils
+from helper.dataclasses import UpdateData
+import helper.constants as const
 
 def download_mediawiki_archive(url: str, target_path: Path) -> None:
     req = urllib.request.Request(
@@ -45,13 +44,13 @@ def download_mediawiki_archive(url: str, target_path: Path) -> None:
 def get_mediawiki_release(d: UpdateData) -> None:
     """
     Download MediaWiki release archive in a robust way.
-    Extract archive and stores everything into target_folder. 
-    Example:
-        UpdateData.version_new = Release("1.44.3")
+    Extract archive and stores everything into UpdateData.mw_basefolder_new. 
+    Input example:
+        UpdateData.release_new = Release("1.44.3")
         UpdateData.mw_basefolder_new = Path("/home/user")
-        -> /home/user/mediawiki-1.44.3.tar.gz
-        -> /home/user/mediawiki-1.44.3/
-    Returns archive name and the path to the extracted files.
+    Downloads archive /home/user/mediawiki-1.44.3.tar.gz
+    Extracts archive into:
+        UpdateData.mw_folder_new <- /home/user/mediawiki-1.44.3/
 
     Features:
     -  Sets *valid user agent* (prevents 403)
@@ -60,11 +59,11 @@ def get_mediawiki_release(d: UpdateData) -> None:
     -  Clear error messages
     -  No external libraries
     """
-    logging.info(f"============================ get_mediawiki_release: {d.version_new}")
-    filename = f"mediawiki-{d.version_new}.tar.gz"
+    logging.info(const.SHORT_LINE + f" get_mediawiki_release: {d.release_new}")
+    filename = f"mediawiki-{d.release_new}.tar.gz"
     logging.info(f"Requested Mediawiki archive: {filename}")
     url = (
-        f"{MEDIAWIKI_RELEASE_BASE_URL}1.{d.version_new.major}/{filename}"
+        f"{const.MEDIAWIKI_RELEASE_BASE_URL}1.{d.release_new.major}/{filename}"
     )
 
     target_folder = d.mw_basefolder_new
@@ -75,10 +74,8 @@ def get_mediawiki_release(d: UpdateData) -> None:
     else:
         download_mediawiki_archive(url, archive_path)
     
-    d.mw_folder_new = target_folder / f"mediawiki-{d.version_new}"
-    if d.mw_folder_new.is_dir():
-        logging.warning(f"Target folder already exists, removing: {d.mw_folder_new}")
-        shutil.rmtree(str(d.mw_folder_new))
+    d.mw_folder_new = target_folder / f"mediawiki-{d.release_new}"
+    utils.remtree(d.mw_folder_new)
 
     logging.info(f"Extract archive: {filename}") 
     logging.info(f"Into folder: {target_folder}")
@@ -91,4 +88,4 @@ def get_mediawiki_release(d: UpdateData) -> None:
     else:
         logging.info(f"Extracted Mediawiki folder exists: {d.mw_folder_new}")
 
-    logging.info(85 *"=")
+    logging.info(const.LONG_LINE)

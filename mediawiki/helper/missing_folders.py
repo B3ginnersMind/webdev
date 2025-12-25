@@ -1,18 +1,17 @@
 import logging
 from pathlib import Path
 from helper.dataclasses import UpdateData
+import helper.constants as const
 
-#def get_missing_folders(folder_live: Path, folder_new: Path, subfolder: str) -> list[str]:
 def get_missing_folders(d: UpdateData, subfolder: str) -> list[str]:
     """
-    Iterates through all subfolders of folder_live/subfolder
-    and checks if they exist in folder_new/subfolder.
+    Iterates through all subfolders of UpdateData.mw_folder_live/subfolder
+    and checks if they exist in UpdateData.mw_basefolder_new/subfolder.
     Returns a list of missing folder names.
     """
-    logging.info(f"============================ get_missing_folders: {subfolder}")
+    logging.info(const.SHORT_LINE + f" get_missing_folders: {subfolder}")
     base_live: Path =  d.mw_folder_live / subfolder
     base_new: Path = d.mw_folder_new / subfolder
-    logging.info(85 *"-")
     logging.info(f"Live release    : {d.mw_folder_live}")
     logging.info(f"New release     : {d.mw_folder_new}" )
     logging.info(f"Tested subfolder: {subfolder}")
@@ -40,5 +39,5 @@ def get_missing_folders(d: UpdateData, subfolder: str) -> list[str]:
     else:
         logging.info(f"=> Missing: {missing}")
   
-    logging.info(85 *"=")
+    logging.info(const.LONG_LINE)
     return missing
