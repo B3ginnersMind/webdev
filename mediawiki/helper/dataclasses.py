@@ -33,6 +33,11 @@ class UpdateData:
    mw_basefolder_new: Path = None
    release_new: Release = None
    mw_folder_new: Path = None
+   php_command: str = "php"
+   user_owner: str = "www-data"
+   group_owner: str = "www-data"
+   dir_mode: int = int(0o750)
+   file_mode: int = int(0o640)
 
    def release_basefolder(self) -> Path:
       if self.mw_basefolder_new is None or self.release_new is None:
@@ -50,4 +55,29 @@ class UpdateData:
       logging.info(f"Live Mediawiki version: {self.release_live}")
       logging.info(f"Base folder of new release: {self.mw_basefolder_new}")
       logging.info(f"Requested release: {self.release_new}")
-      logging.info(f"New folder after download: {self.mw_folder_new}")
+      if self.mw_folder_new:
+         logging.info(f"New folder after download: {self.mw_folder_new}")
+      logging.info(f"PHP command: {self.php_command}")
+      logging.info(f"Owner: {self.user_owner}")
+      logging.info(f"Group: {self.group_owner}")
+      logging.info(f"Directory permissions: {self.dir_mode}")
+      logging.info(f"File permissions: {self.file_mode}")
+   
+   def test_input(self):
+      if not self.mw_folder_live.is_dir():
+         raise ValueError(f"Invalid live release: {self.mw_folder_live}")
+      if (self.release_new.main == 0 
+         or self.release_new.major == 0
+         or self.release_new.minor == 0
+         ):
+         raise ValueError(f"Invalid required release: {self.release_new}")
+
+   def test_before_update(self):
+      self.test_input()
+      if (self.release_live.main == 0 
+         or self.release_live.major == 0
+         or self.release_live.minor == 0
+         ):
+         raise ValueError(f"Invalid live release: {self.release_live}")
+      if self.release_new <= self.release_live:
+         raise ValueError(f"Required release not newer than live release")

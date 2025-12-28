@@ -1,8 +1,14 @@
 
-import configparser, logging, shutil, zipfile
+import configparser, grp, logging, os, pwd, shutil, zipfile
 import helper.constants as const
+from subprocess import run
 from pathlib import PurePosixPath, Path
 from helper.dataclasses import Release, UpdateData
+
+def query_continue():
+    ch = input('Enter q to abort or other key to continue: ')
+    if ch == 'q':
+        quit()
 
 def read_config(config_path: Path, section: str = "settings") -> UpdateData:
     """
@@ -21,9 +27,15 @@ def read_config(config_path: Path, section: str = "settings") -> UpdateData:
     config = configparser.ConfigParser()
     config.read(config_path)
     data: UpdateData = UpdateData()
-    data.mw_folder_live = Path(config.get("settings", "mw_folder_live", fallback=""))
-    data.mw_basefolder_new = Path(config.get("settings", "mw_basefolder_new", fallback=""))
-    data.release_new = Release(config.get("settings", "release_new", fallback=""))
+    data.mw_folder_live = Path(config.get(section, "mw_folder_live"))
+    data.mw_basefolder_new = Path(config.get(section, "mw_basefolder_new"))
+    data.release_new = Release(config.get(section, "release_new"))
+    data.php_command = config.get(section, "php_command")
+    data.group_owner = config.get(section, "group_owner")
+    # int(value, 0):
+    # Base 0 means "auto-detect the base from the prefix"
+    data.dir_mode = int(config.get(section, "dir_mode"), 0)
+    data.file_mode = int(config.get(section, "dir_mode"), 0)
     return data
 
 def remtree(path: Path) -> None:
@@ -95,3 +107,69 @@ def copy_live_site_data(src_dir: Path, dst_dir: Path) -> None:
     shutil.copytree(src_images_dir, dst_images_dir)
     logging.info(const.LONG_LINE)
 
+def fix_permissions_mw_folder_new(d: UpdateData):
+    """
+    Adjust the permissions for the webfile tree (owner and mode).
+    Take the values frim the ini file.
+    """
+    folder: Path = d.mw_folder_new
+    logging.info(f"Fix permissions of folder tree: {folder}")
+    if not folder.is_dir():
+        raise ValueError(f"{folder} is not a directory")
+    # Resolve uid and gid
+    uid = pwd.getpwnam(d.user_owner).pw_uid
+    gid = grp.getgrnam(d.group_owner).gr_gid
+    # change root folder
+    os.chmod(folder, d.dir_mode)
+    os.chown(folder, uid, gid)
+    # Walk directory tree
+    for p in folder.rglob("*"):
+        os.chown(p, uid, gid)
+        if p.is_dir():
+            os.chmod(p, d.dir_mode)
+        else:
+            os.chmod(p, d.file_mode)
+
+def exchange_live_new_mw_folder(d: UpdateData):
+    """
+    Move the live folder to a backup folder.
+    Move the new folder to the live folder path.
+    """
+    logging.info(const.SHORT_LINE + " exchange_live_new_mw_folder:")
+    save_base_dir = d.mw_basefolder_new / "backup"
+    os.makedirs(save_base_dir, exist_ok=True)
+    save_dir = save_base_dir / d.mw_folder_live.name
+    remtree(save_dir)
+    logging.info(f"Move: {d.mw_folder_live}")
+    logging.info(f"To: {save_dir}")
+    shutil.move(str(d.mw_folder_live), str(save_dir))
+    logging.info(f"Move: {d.mw_folder_new}")
+    logging.info(f"To: {d.mw_folder_live}")
+    shutil.move(str(d.mw_folder_new), str(d.mw_folder_live))
+    logging.info(const.LONG_LINE)
+
+def run_php(d: UpdateData, php_script_call: str):
+    """
+    Run a PHP skript.
+    The interpreter command is taken from the ini file.
+    'php_script_call' contains the actual PHP commands.
+    """
+    logging.info(const.SHORT_LINE + " run_php:")
+    command = list()
+    command.append(d.php_command)
+    command.extend(php_script_call.split(" "))
+
+    plain_command = ""
+    for token in command:
+        plain_command += token + " "
+    logging.info(f"Running command: {plain_command}")
+
+    result = run(command, capture_output=True, text=True, check=True)
+    str_len = len(result.stdout)
+    post_fix = ""
+    if str_len > 0:
+        c = result.stdout[str_len-1]
+        if c != "\n":
+            post_fix = "\n"
+    logging.info("Result:\n\n" + result.stdout + post_fix)
+    logging.info(const.LONG_LINE)

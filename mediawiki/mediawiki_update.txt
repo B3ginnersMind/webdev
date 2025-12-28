@@ -1,0 +1,34 @@
+#-------------------------------------------------------------------------------
+# If you copy this file to 'mediawiki_update.ini' you get the default ini file.
+# Then uncomment and edit the section [mywebsite] below:
+# - mw_folder_live: the root webfolder of your Mediawiki
+# - mw_basefolder_new: where to save the new Mediawiki release
+# - release_new: the required new Mediawiki release
+# - php_command: php interpreter command compatible to new Mediawiki
+# Permissions:
+# - user_owner: required owner of the webfiles tree
+# - group_owner: required group owner of the webfiles tree
+# - dir_mode: required mode for directories
+# - file_mode: required mode for files
+# No quotes around the strings!
+#
+# Check your Python version with 'python --version'
+# It should at least be Python 3.10.
+# Get help with:
+# 'python mediawiki_update.py -h'
+# Start update with:
+# 'python mediawiki_update.py mywebsite'
+# The argument is the name of the section to be read.
+# Other sections will be ignored.
+# 'php --version' will show you the default PHP version.
+# 'php8.2' e.g. calls the specific version 8.2 of PHP.
+#-------------------------------------------------------------------------------
+#[mywebsite]
+#mw_folder_live = /var/www/mywebsite
+#mw_basefolder_new = /home/user/mediawiki
+#release_new = 1.45.1
+#php_command = php8.2
+#user_owner = www-data
+#group_owner = www-data
+#dir_mode = 0o750
+#file_mode = 0o640

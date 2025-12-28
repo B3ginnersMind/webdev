@@ -128,3 +128,21 @@ Possible commands resulting in file show_dns_exampleDomains.txt:
 
     show_dns.py exampleDomains.txt
     show_dns.py exampleDomains.txt -k exampleHosts.txt -ns 8.8.8.8
+
+### mediawiki_update.py in folder mediawiki
+
+Skript which updates a Mediawiki installation:
+It updates the web files and also calls the database update script. The data
+is read from an INI file. If no path to this config file is entered, the file
+'mediawiki_update.ini' in the folder containing 'mediawiki_update.py' is 
+assumed as the default. See also 'mediawiki_update.txt' for a description of
+the INI file. 'mediawiki_update.py' requires a section name for the INI file.
+Only the data within this section is read.
+
+Examples for possible arguments:
+
+ -v                                    : get version
+ --help                                : get help
+ -h                                    : get help
+ mysite                      : read section 'mysite' from default INI file
+ mysite -c /path/to/conf.ini : read from INI file /path/to/conf.ini instead
