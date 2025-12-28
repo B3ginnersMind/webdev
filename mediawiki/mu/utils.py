@@ -35,7 +35,7 @@ def read_config(config_path: Path, section: str = "settings") -> UpdateData:
     # int(value, 0):
     # Base 0 means "auto-detect the base from the prefix"
     data.dir_mode = int(config.get(section, "dir_mode"), 0)
-    data.file_mode = int(config.get(section, "dir_mode"), 0)
+    data.file_mode = int(config.get(section, "file_mode"), 0)
     return data
 
 def remtree(path: Path) -> None:
