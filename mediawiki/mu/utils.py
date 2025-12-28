@@ -75,21 +75,21 @@ def copy_live_site_data(src_dir: Path, dst_dir: Path) -> None:
     Copies .htaccess from src_dir to dst_dir.
     Colpied LocalSettings.php from src_dir to dst_dir.
     Copies all picture files from src_dir to dst_dir (no subfolders).
+    Copies all txt files from src_dir to dst_dir (no subfolders).
     Copies src_dir/images to dst_dir/images.
     """
     logging.info(const.SHORT_LINE + f" copy_live_site_data:")
     logging.info(f"Source directory: {src_dir}")
     logging.info(f"Destination directory: {dst_dir}")
 
-    IMAGE_EXTENSIONS = {
-        ".jpg", ".jpeg", ".png", ".gif",
-        ".bmp", ".tiff", ".tif", ".webp"
+    COPIED_EXTENSIONS = {
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".txt"
     }
     dst_dir.mkdir(parents=True, exist_ok=True)
     for src_path in src_dir.iterdir():
         if not src_path.is_file():
             continue
-        if src_path.suffix.lower() not in IMAGE_EXTENSIONS:
+        if src_path.suffix.lower() not in COPIED_EXTENSIONS:
             continue
         logging.info(f"Copying image file: {src_path.name}")
         dst_path = dst_dir / src_path.name

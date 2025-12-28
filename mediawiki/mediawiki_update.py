@@ -14,7 +14,7 @@ group_owner = www-data
 dir_mode = 0o750
 file_mode = 0o640
 """
-__version__ = "1.02"
+__version__ = "1.03"
 import argparse, logging, os, platform, shutil
 from pathlib import Path
 import mu.utils as utils
