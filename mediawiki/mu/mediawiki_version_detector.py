@@ -1,7 +1,7 @@
 import logging, os, re
 from pathlib import Path
-from helper.dataclasses import Release
-import helper.constants as const
+from mu.dataclasses import Release
+import mu.constants as const
 
 def detect_mediawiki_version(folder: Path) -> Release:
     """

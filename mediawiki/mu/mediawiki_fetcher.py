@@ -5,9 +5,9 @@ import logging, os, tarfile
 import urllib.request
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-import helper.utils as utils
-from helper.dataclasses import UpdateData
-import helper.constants as const
+import mu.utils as utils
+from mu.dataclasses import UpdateData
+import mu.constants as const
 
 def download_mediawiki_archive(url: str, target_path: Path) -> None:
     req = urllib.request.Request(

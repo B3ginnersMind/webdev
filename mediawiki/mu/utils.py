@@ -1,9 +1,9 @@
 
 import configparser, grp, logging, os, pwd, shutil, zipfile
-import helper.constants as const
+import mu.constants as const
 from subprocess import run
 from pathlib import PurePosixPath, Path
-from helper.dataclasses import Release, UpdateData
+from mu.dataclasses import Release, UpdateData
 
 def query_continue():
     ch = input('Enter q to abort or other key to continue: ')

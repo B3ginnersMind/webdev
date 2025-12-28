@@ -17,13 +17,13 @@
 # Get help with:
 # 'python mediawiki_update.py -h'
 # Start update with:
-# 'python mediawiki_update.py mywebsite'
+# 'python mediawiki_update.py mysite'
 # The argument is the name of the section to be read.
 # Other sections will be ignored.
 # 'php --version' will show you the default PHP version.
 # 'php8.2' e.g. calls the specific version 8.2 of PHP.
 #-------------------------------------------------------------------------------
-#[mywebsite]
+#[mysite]
 #mw_folder_live = /var/www/mywebsite
 #mw_basefolder_new = /home/user/mediawiki
 #release_new = 1.45.1

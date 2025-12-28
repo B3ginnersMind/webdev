@@ -1,20 +1,29 @@
 #!/usr/bin/env python
 """
-Update a Mediawiki installation.
+Update a Mediawiki installation. Also perform the database update.
 Input data is taken from a section of a config file.
-See file 'mediawiki_update.txt'.
-Also perform the database update.
+See file 'mediawiki_update.txt'. Example for 'mediawiki_update.ini':
+
+[mysite]
+mw_folder_live = /var/www/mywebsite
+mw_basefolder_new = /home/user/mediawiki
+release_new = 1.45.1
+php_command = php8.2
+user_owner = www-data
+group_owner = www-data
+dir_mode = 0o750
+file_mode = 0o640
 """
-__version__ = "1.0"
+__version__ = "1.01"
 import argparse, logging, os, platform, shutil
 from pathlib import Path
-import helper.utils as utils
-from helper.dataclasses import Release, UpdateData
-from helper.mediawiki_fetcher import get_mediawiki_release
-from helper.mediawiki_version_detector import detect_mediawiki_version
-from helper.missing_folders import get_missing_folders
-from helper.extension_fetcher import fetch_missing_extensions
-from helper.skin_fetcher import fetch_missing_skins
+import mu.utils as utils
+from mu.dataclasses import Release, UpdateData
+from mu.mediawiki_fetcher import get_mediawiki_release
+from mu.mediawiki_version_detector import detect_mediawiki_version
+from mu.missing_folders import get_missing_folders
+from mu.extension_fetcher import fetch_missing_extensions
+from mu.skin_fetcher import fetch_missing_skins
 
 logging.basicConfig(
     level=logging.INFO,

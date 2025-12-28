@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
-from helper.dataclasses import UpdateData
-import helper.constants as const
+from mu.dataclasses import UpdateData
+import mu.constants as const
 
 def get_missing_folders(d: UpdateData, subfolder: str) -> list[str]:
     """

@@ -66,20 +66,20 @@ def replace_tree(src, dest):
 def main():
 
     # select target folder
-    home = str(pathlib.Path.home())
-    backup = '/Backup/script'
+    HOME = str(pathlib.Path.home())
+    BACKUP = '/Backup/script'
 
     print('Where to copy the scripts?')
-    print('1    : ', home)
-    print('2    : ', backup)
+    print('1    : ', HOME)
+    print('2    : ', BACKUP)
     print('3    : ', 'other folder')
     print('other: ', 'quit script')
     option = query_int('Enter int: ', 1, 3)
 
     if option == 1:
-        target_folder = home
+        target_folder = HOME
     elif option == 2:
-        target_folder = backup
+        target_folder = BACKUP
     elif option == 3:
         target_folder = input('Enter full installation path: ')
 
@@ -99,10 +99,16 @@ def main():
     install_pyscript(webdev_path, 'showvhosts', 'show_vhosts.py', target_folder)
     install_pyscript(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
     install_pyscript(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
+    install_pyscript(webdev_path, 'mediawiki', 'mediawiki_update.py', target_folder)
 
     websitemanager_module = os.path.join(webdev_path, 'websitemanager', 'wm')
     websitemanager_module_dest = os.path.join(target_folder, 'wm')
     replace_tree(websitemanager_module, websitemanager_module_dest)
+
+    mw_updateer_module = os.path.join(webdev_path, 'mediawiki', 'mu')
+    mw_updateer_module_dest = os.path.join(target_folder, 'mu')
+    replace_tree(mw_updateer_module, mw_updateer_module_dest)
+
     print('...installation finished')
 
 if __name__ == "__main__":

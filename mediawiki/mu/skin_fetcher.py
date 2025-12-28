@@ -2,9 +2,9 @@ import logging, shutil
 import urllib.request
 from pathlib import Path
 import zipfile
-import helper.constants as const
-import helper.utils as utils
-from helper.dataclasses import UpdateData
+import mu.constants as const
+import mu.utils as utils
+from mu.dataclasses import UpdateData
 
 def fetch_missing_skins(d: UpdateData, missing_skins: list) -> None:
     """

@@ -1,7 +1,7 @@
 import logging, requests
 from html.parser import HTMLParser
 from urllib.parse import urljoin
-import helper.constants as const
+import mu.constants as const
 
 class LinkParser(HTMLParser):
     def __init__(self, base_url, prefix):

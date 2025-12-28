@@ -1,9 +1,9 @@
 import logging, shutil, tarfile
 import urllib.request
-import helper.constants as const
-import helper.utils as utils
-from helper.extension_link_finder import get_extension_link
-from helper.dataclasses import UpdateData
+import mu.constants as const
+import mu.utils as utils
+from mu.extension_link_finder import get_extension_link
+from mu.dataclasses import UpdateData
 
 def fetch_missing_extensions(d: UpdateData, missing_extensions: list) -> None:
     """
