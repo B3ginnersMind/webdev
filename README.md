@@ -141,8 +141,9 @@ Only the data within this section is read.
 
 Examples for possible arguments:
 
- -v                                    : get version
- --help                                : get help
- -h                                    : get help
- mysite                      : read section 'mysite' from default INI file
- mysite -c /path/to/conf.ini : read from INI file /path/to/conf.ini instead
+    -v                          : get version
+    --help                      : get help
+    -h                           : get help
+    mysite                      : read section 'mysite' from default INI file
+    mysite -c /path/to/conf.ini : read from INI file /path/to/conf.ini instead
+

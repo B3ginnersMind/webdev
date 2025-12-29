@@ -81,20 +81,20 @@ def copy_live_site_data(src_dir: Path, dst_dir: Path) -> None:
     logging.info(f"Source directory: {src_dir}")
     logging.info(f"Destination directory: {dst_dir}")
 
-    COPIED_EXTENSIONS = {
-        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".txt"
+    COPY_MASK = {
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp",
+         ".txt", ".htaccess", ".htpasswd", "LocalSettings.php"
     }
-    FURTHER_FILES = [".htaccess", "LocalSettings.php"]
     dst_dir.mkdir(parents=True, exist_ok=True)
     for src_path in src_dir.iterdir():
         if not src_path.is_file():
             continue
         if (
-            src_path.suffix.lower() in COPIED_EXTENSIONS or
-            src_path.name in FURTHER_FILES
+            src_path.suffix.lower() in COPY_MASK or
+            src_path.name in COPY_MASK
            ):
-            logging.info(f"Copying file: {src_path.name}")
             dst_path = dst_dir / src_path.name
+            logging.info(f"Copying file: {src_path.name}")
             shutil.copy2(src_path, dst_path)
 
     src_images_dir = src_dir / "images"
