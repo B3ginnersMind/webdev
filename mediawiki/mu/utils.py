@@ -72,11 +72,10 @@ def get_zip_root_folder(zip_path: str) -> str:
 
 def copy_live_site_data(src_dir: Path, dst_dir: Path) -> None:
     """
-    Copies .htaccess from src_dir to dst_dir.
-    Colpied LocalSettings.php from src_dir to dst_dir.
-    Copies all picture files from src_dir to dst_dir (no subfolders).
-    Copies all txt files from src_dir to dst_dir (no subfolders).
-    Copies src_dir/images to dst_dir/images.
+    src_dir is the root folder of the live Mediawiki.
+    .htaccess, LocalSettings.php, images and txt files 
+    are copied from src_dir to dst_dir if they exist in src_dir.
+    Foldere tree src_dir/images is copied to dst_dir/images.
     """
     logging.info(const.SHORT_LINE + f" copy_live_site_data:")
     logging.info(f"Source directory: {src_dir}")
@@ -85,19 +84,18 @@ def copy_live_site_data(src_dir: Path, dst_dir: Path) -> None:
     COPIED_EXTENSIONS = {
         ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".txt"
     }
+    FURTHER_FILES = [".htaccess", "LocalSettings.php"]
     dst_dir.mkdir(parents=True, exist_ok=True)
     for src_path in src_dir.iterdir():
         if not src_path.is_file():
             continue
-        if src_path.suffix.lower() not in COPIED_EXTENSIONS:
-            continue
-        logging.info(f"Copying image file: {src_path.name}")
-        dst_path = dst_dir / src_path.name
-        shutil.copy2(src_path, dst_path)
-    
-    logging.info("Copying .htaccess and LocalSettings.php")
-    shutil.copy2(src_dir / ".htaccess", dst_dir / ".htaccess")
-    shutil.copy2(src_dir / "LocalSettings.php", dst_dir / "LocalSettings.php")
+        if (
+            src_path.suffix.lower() in COPIED_EXTENSIONS or
+            src_path.name in FURTHER_FILES
+           ):
+            logging.info(f"Copying file: {src_path.name}")
+            dst_path = dst_dir / src_path.name
+            shutil.copy2(src_path, dst_path)
 
     src_images_dir = src_dir / "images"
     dst_images_dir = dst_dir / "images"
