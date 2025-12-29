@@ -114,7 +114,7 @@ def fix_permissions_mw_folder_new(d: UpdateData):
     folder: Path = d.mw_folder_new
     logging.info(f"Fix permissions of folder tree: {folder}")
     if not do_chown:
-        logging.warning(f"Skipping ôwner fix since skript not run as root.")
+        logging.warning(f"Skipping owner fix since skript not run as root.")
     if not folder.is_dir():
         raise ValueError(f"{folder} is not a directory")
     if do_chown: # Resolve uid and gid
