@@ -108,21 +108,24 @@ def copy_live_site_data(src_dir: Path, dst_dir: Path) -> None:
 def fix_permissions_mw_folder_new(d: UpdateData):
     """
     Adjust the permissions for the webfile tree (owner and mode).
-    Take the values frim the ini file.
+    Take the values frim the ini file. Owner change skipped without sudo!
     """
+    do_chown = os.getuid() == 0
     folder: Path = d.mw_folder_new
     logging.info(f"Fix permissions of folder tree: {folder}")
+    if not do_chown:
+        logging.warning(f"Skipping ôwner fix since skript not run as root.")
     if not folder.is_dir():
         raise ValueError(f"{folder} is not a directory")
-    # Resolve uid and gid
-    uid = pwd.getpwnam(d.user_owner).pw_uid
-    gid = grp.getgrnam(d.group_owner).gr_gid
-    # change root folder
+    if do_chown: # Resolve uid and gid
+        uid = pwd.getpwnam(d.user_owner).pw_uid
+        gid = grp.getgrnam(d.group_owner).gr_gid
+    # Change root folder
     os.chmod(folder, d.dir_mode)
-    os.chown(folder, uid, gid)
+    if do_chown: os.chown(folder, uid, gid)
     # Walk directory tree
     for p in folder.rglob("*"):
-        os.chown(p, uid, gid)
+        if do_chown: os.chown(p, uid, gid)
         if p.is_dir():
             os.chmod(p, d.dir_mode)
         else:
