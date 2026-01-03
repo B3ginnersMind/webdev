@@ -1,5 +1,5 @@
 
-import datetime, os, pandas, platform, shutil, stat, sys, textwrap
+import configparser, datetime, os, pandas, platform, shutil, stat, sys, textwrap
 from enum import Enum
 from dataclasses import dataclass
 from pathlib import Path, WindowsPath
@@ -194,54 +194,46 @@ def checkTableColumns(table : pandas.DataFrame, tableName, configColumns : list)
             abort(str(missingElements), 
                       'missing element(s) in "' + tableName + '" at row: ' + str(r))
 
-# https://www.activestate.com/resources/quick-reads/how-to-access-an-element-in-pandas/
-# '\s+'  one or more whitespace chars
-# '\t'   tab 
-# '#'    character to comment out a data line
-# Header is at the top line (0).
 class Parameters:
-    def __init__(self, paramTable):
-        print('Reading:', paramTable)
-        self.paramTable = paramTable
-        # test file existence within the same directory
-        if not os.path.exists(paramTable):
-            abort('parameter table file "' + paramTable + '"is missing')  
-        self.data = pandas.read_csv(paramTable, comment='#', sep=r'\s+', header=0)
-        checkTableColumns(self.data, paramTable, ['param', 'value'])
-        self.data.set_index("param", inplace = True)
-        params = ['runasroot', 'scp', 'sql', 'sqldump', 'sqldumpoptions',
-                  'sqlmainpw', 'sitedumpdir', 'snapshotdir', 'logdir', 'wwwroot', 
-                  'wwwusergroup', 'wwwbanothers', 'remotelocation']
-        self.checkParams(params)
-    def checkParams(self, params : list):
-        missingParams = ''
-        for p in params:
-            if p not in self.data.index:
-                missingParams += ' ' + p
-        if missingParams != '':
-           abort('missing parameters in "' + self.paramTable 
-                 + '": ' + missingParams)
-    def get(self, param):
-        # does param exist?
-        if param not in self.data.index:
-            print('===> param', param, 'missing in index')
-            quit()
-            #return 'null'
-        value = self.data.at[param, "value"]
-        return value
+    def __init__(self, config_file: str):
+        self.section = "wm_config"
+        print('Reading:', config_file)
+        print('Section:', self.section)
+        self.config_file = config_file
+        if not os.path.exists(config_file):
+            abort('parameter table file "' + config_file + '"is missing')  
+        self.config = configparser.ConfigParser()
+        self.config.read(config_file)
+        self.params = ['runasroot', 'scp', 'sql', 'sqldump', 'sqldumpoptions', 
+                       'sqlmainuser', 'sqlmainpw', 'sitedumpdir', 'snapshotdir', 
+                       'logdir', 'wwwroot', 'wwwusergroup', 'wwwbanothers', 
+                       'remotelocation']
+        self.checkParams()
     def show(self):
         print_line()
-        print('content of parameter table "' + self.paramTable + '":')
+        print('content of parameter table "' + self.config_file + '":')
         maxParamLength = 0
-        for p in self.data.index:
+        for p in self.params:
             maxParamLength = max(maxParamLength, len(p))
         indent = (maxParamLength + 3) * ' '
-        for p in self.data.index:
-            v = self.data.at[p, "value"]
-            line = p.ljust(maxParamLength) + ' = ' + '"' + v + '"'
+        for p in self.params:
+            v = self.config.get(self.section, p)
+            line = p.ljust(maxParamLength) + ' = ' + "'" + v + "'"
             wrappedLine = textwrap.fill(line, WRAP_LENGTH, subsequent_indent=indent)
             print(wrappedLine)
         print_line()
+    def checkParams(self):
+        missingParams = ''
+        for p in self.params:
+            if not self.config.has_option(self.section, p):
+                missingParams += ' ' + p
+        if missingParams != '':
+           abort('missing parameters in "' + self.config_file 
+                 + '": ' + missingParams)
+    def get(self, param):
+        if not self.config.has_option(self.section, param):
+            abort('===> param', param, 'missing in index')
+        return self.config.get(self.section, param)
 
 @dataclass
 class WebSiteData:
@@ -253,6 +245,11 @@ class WebSiteData:
     dbPassWord : str
     comment : str
 
+# https://www.activestate.com/resources/quick-reads/how-to-access-an-element-in-pandas/
+# '\s+'  one or more whitespace chars
+# '\t'   tab 
+# '#'    character to comment out a data line
+# Header is at the top line (0).
 class WebSiteTable:
     def __init__(self, tableName):
         print('Reading:', tableName)

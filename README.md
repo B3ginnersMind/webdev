@@ -43,9 +43,9 @@ This script requires the Python "requests" package to perform the download.
 - Both automatic and interactive modes are supported.
 - Two configuration files must be present in the same directory
   as website_manager.py:
-  + *website_manager_params.txt* with the script configurations.
+  + *website_manager_config.ini* with the script configurations.
   + *website_table.txt* with the data of the managed websites.
-- Copy and rename *demo_website_manager_params.txt* and 
+- Copy and rename *demo_website_manager_config.ini* and 
   *demo_website_table.txt* to create your own configuration.
   These demo files contain further documentation.
 - Website manager has been successfully applied with 
@@ -85,6 +85,10 @@ Initial version
 
 - Added -t option to specify a snapshot timestamp to be used to locate
   the backup archive from which a site is being restored.
+
+### Version 1.3.1
+
+- website_manager_config.ini file instead of website_manager_params.txt
 
 ## Further tiny tools
 

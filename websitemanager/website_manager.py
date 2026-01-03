@@ -16,7 +16,7 @@ The following features are supported:
 
 In the same directory as this script, there must be two files 
 containing tables with columns separated by spaces:
-website_manager_params.txt - contains configuration parameters
+website_manager_config.ini - contains configuration parameters
 website_table.txt          - contains the data for each website
 
 - Without argument the interactive mode is entered.
@@ -40,7 +40,7 @@ from wm.website_manager_worker import get_archive_timestamp, get_archive_dir
 # Table processing in website_manager_utils by module pandas.
 import wm.website_manager_utils as u
 from wm.website_manager_utils import Operation, Parameters, WebSiteTable
-__version__ = "1.3"
+__version__ = "1.3.1"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
@@ -72,7 +72,7 @@ p.add_argument("-v", "--version", action='version',
 args = p.parse_args()
 
 script_folder = os.path.dirname(os.path.realpath(__file__))
-paramsfile = script_folder + '/website_manager_params.txt'
+paramsfile = script_folder + '/website_manager_config.ini'
 if (args.config):
     paramsfile = script_folder + '/' + args.config
 u.is_file_or_abort(paramsfile)
