@@ -252,7 +252,6 @@ class WebSiteTable:
         try:
             # module csv handles newline itself!
             with open(tablePath, 'r', encoding='utf-8', newline='') as csv_datei:
-                print(f"Datei '{tablePath}' erfolgreich geöffnet.")
                 reader = csv.reader(csv_datei, delimiter=' ')
                 for line in reader:
                     # remove empty columns due to muliple blanks
@@ -265,11 +264,9 @@ class WebSiteTable:
                                 abort("too few columns in line:", str(line))
                             self.table.append(line)
                             self.site2index[line[0]] = self.numWebsites - 1
-                            print("line", line)
                         else:
                             self.header = line
                             self.checkheader()
-                            print("\nheader", self.header, "\n")
         except FileNotFoundError:
             abort(f"FEHLER: Die Datei '{tablePath}' wurde nicht gefunden.")
         if self.numWebsites < 1:
@@ -277,9 +274,6 @@ class WebSiteTable:
         for j in range(len(self.columns)):
             for i in range(self.numWebsites):
                 self.widths[j] = max(self.widths[j], len(self.table[i][j]))
-        print("site2index", self.site2index, "\n")
-        print("table", self.table, "\n")
-        print("param2index", self.col2index, "\n")
         self.test()
     def checkheader(self):
         if self.header != self.columns:

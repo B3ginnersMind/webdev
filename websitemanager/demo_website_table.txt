@@ -1,8 +1,7 @@
 siteName    save wwwSubdir    dbName       dbUser    dbPassWord   comment
 # ----------------------------------------------------------------------------
 # Copy this file to website_table.txt and edit it.
-# Do not enter a comment line above the header line!
-# Here, 3 websites are indicated:
+# Here, 3 websites to be managed are indicated:
 # ----------------------------------------------------------------------------
 mydomain.org  0  mydrupal     drupaldb     cmsuser1  "password1"  "My Drupal" 
 example.org   1  myjoomla     joomladb     cmsuser2  "password2"  "My Joomla" 

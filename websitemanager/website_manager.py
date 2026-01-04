@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# Note:  "!/usr/bin/env python3" does not work on Windows!
 """
 -----------------------------------------------------------------
 Manage backup and recovery of websites which use a database.
@@ -14,10 +13,12 @@ The following features are supported:
 - replace after snapshot: take a snapshot first, then recover
 - prepare database: add missing database and DB user of a website
 
-In the same directory as this script, there must be two files 
-containing tables with columns separated by spaces:
-website_manager_config.ini - contains configuration parameters
-website_table.txt          - contains the data for each website
+On default, the control input data is taken from two files:
+website_manager_config.ini - ini file with configuration parameters
+website_table.txt          - data of each managed website
+
+See demo_website_manager_config.ini and demo_website_table.txt
+for further information.
 
 - Without argument the interactive mode is entered.
 - Use the saveall option to run an autosave batch over all sites.
@@ -125,7 +126,6 @@ if mode == Operation.UNKNOWN:
     m = u.query_int('Enter digit', mode.min(), mode.max())
     mode = Operation(m)
     if mode == Operation.SAVEALL:
-        u.print_line()
         websites.show()
         print('=> Entering saveall mode...')
         print('Note: Older archives from this day will be overwritten.')
@@ -144,7 +144,6 @@ if siteName != 'none' and not websites.hasSite(siteName):
     u.abort("Retry with existing siteName or use interactive mode.")
 
 if siteName == 'none':
-    u.print_line()
     websites.show()
     row = u.query_int('Enter row number of treated website', 0, numSites-1)
     s = websites.getData(row)
