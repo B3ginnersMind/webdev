@@ -1,7 +1,7 @@
 
-import configparser, datetime, os, pandas, platform, shutil, stat, sys, textwrap
+import csv, configparser, datetime, os, platform, shutil, stat, sys, textwrap
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from pathlib import Path, WindowsPath
 
 LINE_LENGTH = 70
@@ -173,27 +173,6 @@ def append_logfile(logFile, tag):
         f.write(tag + comment + '\n')
     print('Comment added in:     ', logFile)
 
-def checkTableColumns(table : pandas.DataFrame, tableName, configColumns : list):
-    nrows = len(table)
-    if nrows == 0:
-        abort('missing data in table "' + tableName + '"')
-    missingCols = ''
-    for col in configColumns:
-        if col not in table.columns:
-            missingCols += ' ' + col
-    if missingCols != '':
-        abort('missing columns in "' + tableName + '": ' + missingCols)
-    ncols = len(configColumns)
-    for r in range(nrows):
-        missingElements = 0
-        for c in range(ncols):
-            if pandas.isna(table.at[r,configColumns[c]]) == True:
-              missingElements += 1
-        if missingElements != 0:
-            print(table)
-            abort(str(missingElements), 
-                      'missing element(s) in "' + tableName + '" at row: ' + str(r))
-
 class Parameters:
     def __init__(self, config_file: str):
         self.section = "wm_config"
@@ -237,52 +216,112 @@ class Parameters:
 
 @dataclass
 class WebSiteData:
-    siteName : str
-    save : int
-    wwwSubdir : str
-    dbName : str
-    dbUser : str
-    dbPassWord : str
-    comment : str
+    siteName : str = "none"
+    save : int = 0
+    wwwSubdir : str = "none"
+    dbName : str = "none"
+    dbUser : str = "none"
+    dbPassWord : str = "none"
+    comment : str = "none"
 
-# https://www.activestate.com/resources/quick-reads/how-to-access-an-element-in-pandas/
-# '\s+'  one or more whitespace chars
-# '\t'   tab 
-# '#'    character to comment out a data line
-# Header is at the top line (0).
-class WebSiteTable:
-    def __init__(self, tableName):
-        print('Reading:', tableName)
-        columns = ['siteName', 'save', 'wwwSubdir', 'dbName', 'dbUser', 'dbPassWord', 'comment']
-        self.websites = pandas.read_csv(tableName, comment='#', sep=r'\s+', header=0)
-        checkTableColumns(self.websites, tableName, columns)
-        self.numWebsites = len(self.websites)
-        self.rowDict = {}
-        for r in range(self.numWebsites):
-            self.rowDict[self.websites.at[r,"siteName"]] = r 
-        if len(self.rowDict) != self.numWebsites:
-            abort('siteName values in "' + tableName + '" are ambiguous')
-        viewColumns = ['siteName', 'save', 'wwwSubdir', 'dbName', 'comment']
-        self.viewedTable = pandas.read_csv(tableName, comment='#', sep=r'\s+', 
-                                           header=0, usecols=viewColumns)
+    @classmethod
+    def field_names(cls) -> list[str]:
+        """Returns all attribute names as a string list."""
+        return [f.name for f in fields(cls)]
+    @classmethod
+    def field_widths(cls) -> list[int]:
+        """Returns length of all attribute names as an  list of ints."""
+        return [len(f.name) for f in fields(cls)]
     def show(self):
-        # print(self.websites)
-        print(self.viewedTable)
+        print("------- WebSiteData contents ---------")
+        for name, value in self.__dict__.items():
+            print(f"{name}: {value}")
+        print("--------------------------------------")
+
+class WebSiteTable:
+    def __init__(self, tablePath):
+        print('Reading:', tablePath)
+        self.columns = WebSiteData.field_names()
+        self.col2index = {c: i for i, c in enumerate(self.columns)}
+        self.widths = WebSiteData.field_widths()
+        # header line does not count as website
+        self.numWebsites = -1
+        self.header: list[str] = []
+        self.site2index = {}
+        self.table: list[list[str]] = []
+        try:
+            # module csv handles newline itself!
+            with open(tablePath, 'r', encoding='utf-8', newline='') as csv_datei:
+                print(f"Datei '{tablePath}' erfolgreich geöffnet.")
+                reader = csv.reader(csv_datei, delimiter=' ')
+                for line in reader:
+                    # remove empty columns due to muliple blanks
+                    line = list(filter(('').__ne__, line))
+                    # skip empty and comment lines
+                    if len(line) > 0 and line[0][0] != "#":
+                        self.numWebsites += 1
+                        if self.numWebsites >= 1:
+                            if len(line) < len(self.columns):
+                                abort("too few columns in line:", str(line))
+                            self.table.append(line)
+                            self.site2index[line[0]] = self.numWebsites - 1
+                            print("line", line)
+                        else:
+                            self.header = line
+                            self.checkheader()
+                            print("\nheader", self.header, "\n")
+        except FileNotFoundError:
+            abort(f"FEHLER: Die Datei '{tablePath}' wurde nicht gefunden.")
+        if self.numWebsites < 1:
+            abort("no website data in table:", tablePath)
+        for j in range(len(self.columns)):
+            for i in range(self.numWebsites):
+                self.widths[j] = max(self.widths[j], len(self.table[i][j]))
+        print("site2index", self.site2index, "\n")
+        print("table", self.table, "\n")
+        print("param2index", self.col2index, "\n")
+        self.test()
+    def checkheader(self):
+        if self.header != self.columns:
+            abort("header columns do not match expected columns.")
+    def test(self):
+        sites = []
+        for i in range(self.numWebsites):
+            site = self.table[i][self.col2index['siteName']]
+            if site in sites:
+                abort("duplicate siteName in table:", site)
+            sites.append(site)
+    def showall(self):
+        skipped = []
+        self.show(skipped)
+    def show(self, skippedCols = ['dbUser', 'dbPassWord']):
+        print_line()
+        headline = "    "
+        skippedColIndices = [self.col2index[c] for c in skippedCols]
+        for j in range(len(self.columns)):
+            if j not in skippedColIndices:
+                headline += self.columns[j].ljust(self.widths[j]) + "  "
+        print(headline)
+        for i in range(self.numWebsites):
+            line = f"{i:2d}  "
+            for j in range(len(self.columns)):
+                if j not in skippedColIndices:
+                    value = self.table[i][j]
+                    line += value.ljust(self.widths[j]) + "  "
+            print(line)
+        print_line()
+
     def getNumWebsites(self):
         return self.numWebsites
     def hasSite(self, siteName):
-        return siteName in self.rowDict
+        return siteName in self.site2index
     def getSite(self, siteName):
-        return self.getData(self.rowDict[siteName])
+        return self.getData(self.site2index[siteName])
     def getData(self, row):
-        return WebSiteData(
-            self.websites.at[row,"siteName"],
-            self.websites.at[row,"save"],
-            self.websites.at[row,'wwwSubdir'],
-            self.websites.at[row,"dbName"],
-            self.websites.at[row,"dbUser"],
-            self.websites.at[row,"dbPassWord"],
-            self.websites.at[row,"comment"])
+        data = {col: self.table[row][self.col2index[col]] for col in self.columns}
+        # ** means: take each key-value pair as a named parameter.
+        return WebSiteData(**data)
+
 
 class TimerElapsed:
   def __init__(self):

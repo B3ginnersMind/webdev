@@ -32,7 +32,6 @@ This script requires the Python "requests" package to perform the download.
 
 ## website_manager.py in folder websitemanager
 
-- Requires the pandas package to read ASCII tables.
 - Manage backup and recovery of websites which use a database
   such as Wordpress, Joomla, Mediawiki, Drupal etc.
 - Add a missing database and a missing database user to install 
@@ -86,9 +85,11 @@ Initial version
 - Added -t option to specify a snapshot timestamp to be used to locate
   the backup archive from which a site is being restored.
 
-### Version 1.3.1
+### Version 1.4
 
-- website_manager_config.ini file instead of website_manager_params.txt
+- website_manager_config.ini file instead of website_manager_params.txt.
+  See demo_website_manager_config.ini.
+- Module pandas no longer necessary to read ini and website table input.
 
 ## Further tiny tools
 
