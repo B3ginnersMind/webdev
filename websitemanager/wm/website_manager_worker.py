@@ -8,7 +8,7 @@ BAN_OTHERS_RECURSIVE = "chmod -R o-rwx "
 BAN_OTHERS_SINGLE = "chmod o-rwx "
 
 def dumpwebsite(p : Parameters, d : WebSiteData):
-    if d.save != 1:
+    if d.save != "1":
         u.print_line()
         print(d.siteName, 'skipped due to column "save"')
         return

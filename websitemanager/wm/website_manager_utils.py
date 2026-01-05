@@ -217,7 +217,7 @@ class Parameters:
 @dataclass
 class WebSiteData:
     siteName : str = "none"
-    save : int = 0
+    save : str = "0"
     wwwSubdir : str = "none"
     dbName : str = "none"
     dbUser : str = "none"
