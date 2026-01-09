@@ -36,10 +36,10 @@ for further information.
 """
 
 import argparse, os
-from wm.website_manager_worker import backup, dumpwebsite, restore, prepare_database
-from wm.website_manager_worker import get_archive_timestamp, get_archive_dir
-import wm.website_manager_utils as u
-from wm.website_manager_utils import Operation, Parameters, WebSiteTable
+from wm.worker import backup, dumpwebsite, restore, prepare_database
+from wm.worker import get_archive_timestamp, get_archive_dir
+import wm.utils as u
+from wm.utils import Operation, Parameters, WebSiteTable
 __version__ = "1.4"
 
 p = argparse.ArgumentParser(description=__doc__,

@@ -1,7 +1,7 @@
 
 import subprocess
-from wm.website_manager_utils import check_root_user, abort
-from wm.website_manager_utils import RUNNER, Parameters, WebSiteData
+from wm.utils import check_root_user, abort
+from wm.utils import RUNNER, Parameters, WebSiteData
 
 # get the database user password
 def get_database_pw(site : WebSiteData):

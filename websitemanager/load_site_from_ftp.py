@@ -13,7 +13,7 @@ Depends on website_manager.py to restore the website from the downloaded archive
 # sudo apt install python3-paramiko
 # =====================================================================
 import argparse, paramiko, getpass, os, tempfile, shutil
-import wm.website_manager_utils as u
+import wm.utils as u
 import subprocess
 
 def get_names(siteName : str):

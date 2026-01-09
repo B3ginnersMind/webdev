@@ -1,8 +1,8 @@
 
 import glob, os, datetime, platform, shutil, tarfile
-import wm.website_manager_utils as u
-import wm.website_manager_dbutils as db
-from wm.website_manager_utils import  Parameters, TimerElapsed, WebSiteData
+import wm.utils as u
+import wm.dbutils as db
+from wm.utils import  Parameters, TimerElapsed, WebSiteData
 
 BAN_OTHERS_RECURSIVE = "chmod -R o-rwx "
 BAN_OTHERS_SINGLE = "chmod o-rwx "
