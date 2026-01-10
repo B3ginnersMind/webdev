@@ -5,8 +5,8 @@ from pathlib import Path, WindowsPath
 
 LINE_LENGTH = 70
 WRAP_LENGTH = LINE_LENGTH - 2
-#RUNNER_OPTIONS = []                        # for production
-RUNNER_OPTIONS = ['verbose']              # only verbose
+RUNNER_OPTIONS = []                        # for production
+#RUNNER_OPTIONS = ['verbose']              # only verbose
 #RUNNER_OPTIONS = ['verbose', 'simulate']  # only print commands for debugging
 
 class OsCommandRunner:
