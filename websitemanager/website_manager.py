@@ -43,7 +43,7 @@ import wm.utils as u
 from wm.utils import Operation
 from wm.websites import WebSiteTable
 from wm.config import Parameters
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
@@ -115,7 +115,7 @@ websites = WebSiteTable(websitesfile)
 numSites = websites.getNumWebsites()
 
 params = Parameters(paramsfile)
-if params.get('runasroot') != 'false':
+if params.get('runasroot') == 'true':
     u.check_root_user()
 
 if mode == Operation.UNKNOWN:

@@ -97,6 +97,10 @@ Initial version
 - order of columns in website_table.txt may vary.
 - Database host column is included in website_table.txt.
 
+### Version 1.5.2
+
+- if runasroot is 'false', restore does not try to create DB or dBuser.
+
 ## Further tiny tools
 
 ### load_site_from_ftp.py

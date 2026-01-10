@@ -290,9 +290,8 @@ def restore(params : Parameters, site : WebSiteData, timestamp, backupDir):
     print('Restoring database from:', dbFile)
     u.is_file_or_abort(dbFile)
     
-    print('Check whether database already exists...')
-    db.ensure_database_exists(params, site)
-    
+    if params.get('runasroot') == 'true':
+        db.ensure_database_exists(params, site)
     sql1 = sql + ' -h ' + site.host + ' -u ' + site.dbUser
     sql2 = site.dbName + ' < ' + dbFile
 
