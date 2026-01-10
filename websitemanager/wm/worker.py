@@ -2,7 +2,9 @@
 import glob, os, datetime, platform, shutil, tarfile
 import wm.utils as u
 import wm.dbutils as db
-from wm.utils import  Parameters, TimerElapsed, WebSiteData
+from wm.utils import  TimerElapsed
+from wm.websites import WebSiteData
+from wm.config import Parameters
 
 BAN_OTHERS_RECURSIVE = "chmod -R o-rwx "
 BAN_OTHERS_SINGLE = "chmod o-rwx "
@@ -88,7 +90,7 @@ def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir = "n
     tempDir = backupDir + '/' + temp
     u.make_empty_dir(tempDir)
     sqlFilePath = tempDir + '/' + sqlFile
-    sqlDumpCommand = (mySqldump + dbPass + ' -u' + site.dbUser + ' '
+    sqlDumpCommand = (mySqldump + ' -h ' + site.host + dbPass + ' -u' + site.dbUser + ' '
                       + mySqldumpOptions + ' ' + site.dbName + ' > ' + sqlFilePath)
     # Note: On Linux start a new shell to be able to redirect as root user!
     # sh -c "command > file"
@@ -291,7 +293,7 @@ def restore(params : Parameters, site : WebSiteData, timestamp, backupDir):
     print('Check whether database already exists...')
     db.ensure_database_exists(params, site)
     
-    sql1 = sql + ' -u ' + site.dbUser
+    sql1 = sql + ' -h ' + site.host + ' -u ' + site.dbUser
     sql2 = site.dbName + ' < ' + dbFile
 
     # should database be restored

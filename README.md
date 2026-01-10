@@ -57,6 +57,7 @@ The following features are supported:
 - replace: recover one website from a backup archive
 - replace after snapshot: take a snapshot first, then recover
 - prepare database: only prepare the database for a website
+  (This is only possible for localhost and with sudo rights.)
 
 Snapshots are time stamped. Bulk backups are kept daily for a week,
 weekly for a month, and monthly for a year. They are labeled with
@@ -90,6 +91,11 @@ Initial version
 - website_manager_config.ini file instead of website_manager_params.txt.
   See demo_website_manager_config.ini.
 - Module pandas no longer necessary to read ini and website table input.
+
+### Version 1.5
+
+- order of columns in website_table.txt may vary.
+- Database host column is included in website_table.txt.
 
 ## Further tiny tools
 

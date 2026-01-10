@@ -12,6 +12,7 @@ The following features are supported:
 - replace: recover one website from a backup archive
 - replace after snapshot: take a snapshot first, then recover
 - prepare database: add missing database and DB user of a website
+  (This is only possible for localhost and with sudo rights.)
 
 On default, the control input data is taken from two files:
 website_manager_config.ini - ini file with configuration parameters
@@ -39,8 +40,10 @@ import argparse, os
 from wm.worker import backup, dumpwebsite, restore, prepare_database
 from wm.worker import get_archive_timestamp, get_archive_dir
 import wm.utils as u
-from wm.utils import Operation, Parameters, WebSiteTable
-__version__ = "1.4"
+from wm.utils import Operation
+from wm.websites import WebSiteTable
+from wm.config import Parameters
+__version__ = "1.5"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
@@ -166,6 +169,7 @@ if mode.isReplace():
         timestamp = get_archive_timestamp(params, site, altDir)
     backupDir = get_archive_dir(params, timestamp, altDir)
     restore(params, site, timestamp, backupDir)
-    
+
 if mode == Operation.DBEXIST:
+    u.check_root_user()
     prepare_database(params, site)
