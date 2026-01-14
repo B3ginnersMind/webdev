@@ -41,7 +41,7 @@ class Parameters:
            abort('missing parameters in "' + self.config_file 
                  + '": ' + missingParams)
            
-    def get(self, param):
+    def get(self, param: str) -> str:
         if not self.config.has_option(self.section, param):
             abort('===> param', param, 'missing in index')
         return self.config.get(self.section, param)

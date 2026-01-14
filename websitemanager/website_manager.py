@@ -37,13 +37,14 @@ for further information.
 """
 
 import argparse, os
-from wm.worker import backup, dumpwebsite, restore, prepare_database
-from wm.worker import get_archive_timestamp, get_archive_dir
+from wm.backup import get_archive_dir, backup, dumpwebsite
+from wm.restore import prepare_database, get_archive_timestamp, restore
+
 import wm.utils as u
 from wm.utils import Operation
 from wm.websites import WebSiteTable
 from wm.config import Parameters
-__version__ = "1.5.2"
+__version__ = "1.6"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format

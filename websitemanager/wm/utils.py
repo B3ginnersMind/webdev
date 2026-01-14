@@ -1,18 +1,21 @@
 
-import datetime, os, platform, shutil, stat, sys, textwrap
+import os, platform, shutil, stat, sys, textwrap
 from enum import Enum
 from pathlib import Path, WindowsPath
+from collections.abc import Callable
+from typing import Any
+from types import TracebackType
 
 LINE_LENGTH = 70
 WRAP_LENGTH = LINE_LENGTH - 2
-RUNNER_OPTIONS = []                        # for production
-#RUNNER_OPTIONS = ['verbose']              # only verbose
-#RUNNER_OPTIONS = ['verbose', 'simulate']  # only print commands for debugging
+RUNNER_OPTIONS: list[str] = []                        # for production
+#RUNNER_OPTIONS: list[str]= ['verbose']              # only verbose
+#RUNNER_OPTIONS: list[str] = ['verbose', 'simulate']  # only print commands for debugging
 
 class OsCommandRunner:
-    def __init__(self, options = []):
+    def __init__(self, options: list[str] = []):
       self.options = options
-    def do(self, cmd):
+    def do(self, cmd: str):
         if 'verbose' in self.options:
             print_line('-')
             print(textwrap.fill(cmd, WRAP_LENGTH))
@@ -46,7 +49,7 @@ class Operation(Enum):
     def isReplace(self):
         return (self == Operation.REPLACE or self == Operation.REPLACE_AFTER_SNAPSHOT)
 
-def abort(*msg):
+def abort(*msg: str) -> None:
     messageLine = '...'
     for m in msg: 
         messageLine += ' ' + m
@@ -56,7 +59,7 @@ def abort(*msg):
         sys.exit(1)
 
 def check_root_user():
-    if platform.system() != 'Windows' and os.getuid() != 0:
+    if platform.system() != 'Windows' and os.getuid() != 0: # type: ignore
         abort('Please run as root.')
 
 def query_continue():
@@ -64,7 +67,8 @@ def query_continue():
     if ch == 'q':
         quit()
 
-def query_int(msg, min, max):
+def query_int(msg: str, min: int, max: int) -> int:
+    num = -1
     try:
         num = int(input(msg + ': '))
         if num < min or num > max:
@@ -73,21 +77,24 @@ def query_int(msg, min, max):
         abort('not a number')
     return num
 
-def print_line(char = '='):
+def print_line(char: str = '='):
     print(LINE_LENGTH * char)
 
-def ensure_dir(dir):
+def ensure_dir(dir: str) -> None:
     if os.path.isdir(dir):
         return
     if 'simulate' not in RUNNER_OPTIONS:
         os.makedirs(dir, 0o700)
 
-def remove_readonly(func, path, _):
+def remove_readonly(
+        func: Callable[[str], Any], 
+        path: str, 
+        exc_info: tuple[type[BaseException], BaseException, TracebackType]):
     """Remove write protection and continue delete process."""
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
-def delete_dir(dir, usePython=True):
+def delete_dir(dir: str, usePython: bool=True):
     p = Path(dir)
     if p.is_file():
         abort('delete_dir:', dir, 'is a file instead of a directory')
@@ -102,90 +109,26 @@ def delete_dir(dir, usePython=True):
     else:
         RUNNER.do('rm -R ' + dir)
 
-def make_empty_dir(dir):
+def make_empty_dir(dir: str):
     delete_dir(dir)
     if 'simulate' not in RUNNER_OPTIONS:
         os.makedirs(dir, 0o755)
 
-def is_dir_or_abort(dir):
+def is_dir_or_abort(dir: str):
     if not os.path.isdir(dir):
         abort('Directory missing  ' + dir)
 
-def is_file_or_abort(path):
+def is_file_or_abort(path: str):
     if not os.path.isfile(path):
         abort('File missing  ' + path)
 
-def delete_file(file):
+def delete_file(file: str):
     if os.path.isfile(file):
         os.remove(file)
 
-def get_weekday() -> str:
-    d = datetime.datetime.now()
-    return 'wd' + d.strftime("%w")
-
-def get_time_tag() -> str:
-    currently = datetime.datetime.now()
-    return currently.strftime('%Y-%m-%d_%H-%M')
-
-def get_date_tag() -> str:
-    currently = datetime.datetime.now()
-    return currently.strftime('%Y-%m-%d')
-
-def get_current_time() -> str:
-    currently = datetime.datetime.now()
-    return currently.strftime('%d.%m.%Y %H:%M')
-
-def get_date_of_file(file : str) -> str:
-    ts = os.path.getmtime(file)
-    t = datetime.datetime.fromtimestamp(ts)
-    return t.strftime('%Y.%m.%d')
-
-def get_dated_files(files : list) -> list:
-    datedFiles = []
-    for f in files:
-        ts = os.path.getmtime(f)
-        t = datetime.datetime.fromtimestamp(ts)
-        date = t.strftime('%Y.%m.%d')
-        datedFiles.append(date +'(' + f + ')')
-    return datedFiles
-
-def isSnapshot(timestamp) -> bool:
-    """"
-    Test whether timestamp is from snapshot or cron (saveAll) backup.
-    "Cron" daily, weekly, monthly staggered backups won't contain '_' or '-'.
-    """
-    return ('_' in timestamp or '-' in timestamp)
-
-def print_timestamps(archives : list, sitename : str, msg : str):
-    line = []
-    for a in archives:
-        a = a.replace(sitename +'.', '')
-        a = a.replace('.tar.gz', '')
-        line.append(a)
-    line.sort()
-    print(msg + '\n', textwrap.fill('   '.join(line), WRAP_LENGTH), '\n')
-
-def append_logfile(logFile, tag):
+def append_logfile(logFile: str, tag: str):
     print('action:', tag)
     comment = input('Add comment to action for logfile:  ')
     with open(logFile, 'a') as f:
         f.write(tag + comment + '\n')
     print('Comment added in:     ', logFile)
-
-class TimerElapsed:
-  def __init__(self):
-    self.starttime = datetime.datetime.now()
-    self.interimtime = self.starttime
-  def show_elapsed(self, comment):
-    now = datetime.datetime.now()
-    # diff: timedelta Object
-    diff = now - self.interimtime
-    self.interimtime = now
-    print('=> ' + comment + ' = ' + str(diff.total_seconds()) + ' sec')
-  def show_total_elapsed(self, comment):
-    #self.newtime = datetime.datetime.now()
-    now = datetime.datetime.now()
-    # diff: timedelta Object
-    diff = now - self.starttime
-    self.starttime = now
-    print('=> ' + comment + ' = ' + str(diff.total_seconds()) + ' sec')

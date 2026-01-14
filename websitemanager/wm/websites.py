@@ -19,25 +19,28 @@ class WebSiteData:
     def field_names(cls) -> list[str]:
         """Returns all attribute names as a string list."""
         return [f.name for f in fields(cls)]
+    
     @classmethod
     def field_widths(cls) -> list[int]:
         """Returns length of all attribute names as an  list of ints."""
         return [len(f.name) for f in fields(cls)]
+    
     def show(self, info: str="") -> None:
         print("------- WebSiteData contents ---------", info)
         for name, value in self.__dict__.items():
             print(f"{name}: {value}")
         print("--------------------------------------")
 
+
 class WebSiteTable:
-    def __init__(self, tablePath):
+    def __init__(self, tablePath: str):
         print('Reading:', tablePath)
         self.columns = WebSiteData.field_names()
         self.widths = WebSiteData.field_widths()
         # header line does not count as website
         self.numWebsites = -1
         self.header: list[str] = []
-        self.site2index = {}
+        self.site2index: dict[str,int] = {}
         self.table: list[list[str]] = []
         try:
             # module csv handles newline itself!
@@ -66,6 +69,7 @@ class WebSiteTable:
             for i in range(self.numWebsites):
                 self.widths[j] = max(self.widths[j], len(self.table[i][j]))
         self.checkSites()
+
     def checkheader(self):
         duplicateCols = {v for v, count in Counter(self.header).items() if count > 1}
         if duplicateCols:
@@ -79,15 +83,18 @@ class WebSiteTable:
                 abort("missing headers in table:", str(missing))
             if extra:
                 abort("extra headers in table:", str(extra))    
+
     def checkSites(self):
         siteCol = self.col2index['siteName']
         sitesList = [self.table[i][siteCol] for i in range(self.numWebsites)]
         duplicateSites = {v for v, count in Counter(sitesList).items() if count > 1}
         if duplicateSites:
             abort("duplicate siteName in table:", str(duplicateSites))
+
     def showall(self, title: str="")  -> None:
         self.show(skippedCols=[], title=title)
-    def show(self, skippedCols = ['dbUser', 'dbPassWord'], title: str=""):
+
+    def show(self, skippedCols: list[str] = ['dbUser', 'dbPassWord'], title: str=""):
         print_line()
         headline = "    "
         if title:
