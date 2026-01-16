@@ -20,11 +20,17 @@ script_file = "install_webdev.py"
 modul_name = "install_webdev"
 script_path = os.path.join(latest_webdev_dir, script_file)
 print('webdev can be installed with:', script_path)
+# Return a module spec based on a file location.
 spec = importlib.util.spec_from_file_location(modul_name, script_path)
+assert spec is not None
+# Create a new module based on the spec.
 module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+# Execute the module in its own namespace.
 spec.loader.exec_module(module)
 
 print('Should the installation script be executed now?')
 module.query_continue()
 print('Calling installation script...')
+# Call the main function of the imported module
 module.main()

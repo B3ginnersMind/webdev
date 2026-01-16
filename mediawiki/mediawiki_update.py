@@ -15,7 +15,7 @@ dir_mode = 0o750
 file_mode = 0o640
 """
 __version__ = "1.07"
-import argparse, logging, os, platform, shutil
+import argparse, logging, os, platform
 from pathlib import Path
 import mu.utils as utils
 from mu.dataclasses import Release, UpdateData
@@ -45,7 +45,7 @@ def update(config_path: Path, config_section: str):
             logging.error(f"Unsupported system: {current_sysem}")
             quit()
 
-    if os.getuid() != 0:
+    if platform.system() != 'Windows' and os.getuid() != 0: # type: ignore
         logging.warning(f"Skript not run as root. Proceed anyway?")
         utils.query_continue()
 

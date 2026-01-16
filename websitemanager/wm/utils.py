@@ -9,7 +9,7 @@ from types import TracebackType
 LINE_LENGTH = 70
 WRAP_LENGTH = LINE_LENGTH - 2
 RUNNER_OPTIONS: list[str] = []                        # for production
-#RUNNER_OPTIONS: list[str]= ['verbose']              # only verbose
+#RUNNER_OPTIONS: list[str]= ['verbose']               # only verbose
 #RUNNER_OPTIONS: list[str] = ['verbose', 'simulate']  # only print commands for debugging
 
 class OsCommandRunner:
@@ -70,11 +70,16 @@ def query_continue():
 def query_int(msg: str, min: int, max: int) -> int:
     num = -1
     try:
-        num = int(input(msg + ': '))
+        val = input(msg + ' or q to abort: ')
+        if val == 'q':
+            quit()
+        num = int(val)
         if num < min or num > max:
             abort('number out of range [' + str(min) + ',' + str(max) + ']')
     except ValueError:
         abort('not a number')
+    except KeyboardInterrupt:    
+        abort('interrupted by user')
     return num
 
 def print_line(char: str = '='):
@@ -95,6 +100,8 @@ def remove_readonly(
     func(path)
 
 def delete_dir(dir: str, usePython: bool=True):
+    if dir == 'none':
+        return
     p = Path(dir)
     if p.is_file():
         abort('delete_dir:', dir, 'is a file instead of a directory')

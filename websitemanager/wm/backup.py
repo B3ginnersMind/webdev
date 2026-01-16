@@ -41,10 +41,6 @@ def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir: str
       altdir:     If entered, alternative target directory
     """
     timer = t.TimerElapsed()
-    # Used Linux shell commands. Full path due to cron usage.
-    scp = params.get('scp')
-    mySqldump = params.get('sqldump')
-    mySqldumpOptions = params.get('sqldumpoptions')
     
     # Current weekday time stamp wd0 ... wd6
     weekday = t.get_weekday()
@@ -61,8 +57,6 @@ def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir: str
     backupDir = get_archive_dir(params, tag, altdir) # backup archive target dir
 
     # Database and archive files
-    sqlFile = site.siteName  + '.sql'
-    dbPass = db.get_database_pw(site)
     zipArchive = site.siteName + '.' + tag + '.tar.gz'
     zipPath = backupDir + '/' + zipArchive
 
@@ -83,23 +77,10 @@ def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir: str
     print('Remote backup path:   ', useRemoteLocation)
     print('Longterm archive:     ', longtermZipArchive)
 
-    # Create the MySQL dump.
-    # A global transaction identifier (GTID) is not necessary.
-    temp = 'temp932524687'
-    tempDir = backupDir + '/' + temp
-    u.make_empty_dir(tempDir)
-    sqlFilePath = tempDir + '/' + sqlFile
-    sqlDumpCommand = (mySqldump + ' -h ' + site.host + dbPass + ' -u' + site.dbUser + ' '
-                      + mySqldumpOptions + ' ' + site.dbName + ' > ' + sqlFilePath)
-    # Note: On Linux start a new shell to be able to redirect as root user!
-    # sh -c "command > file"
-    if platform.system() != 'Windows':
-        sqlDumpCommand = ('sh -c "' + sqlDumpCommand + '"')
-    u.RUNNER.do(sqlDumpCommand)
-    if not os.path.exists(sqlFilePath):
-        u.abort(sqlFilePath + ' does not exist')
-    timer.show_elapsed('SQL dump time elapsed')
+    # ========== If there is a database, create SQL dump ===================
+    tempDir = dump_database(params, site, backupDir)
 
+    # ========== Create tar.gz archive ===================
     # rename archive as longterm archive if applicable
     if longtermZipArchive != 'none':
         longtermArchivePath = backupDir + '/' + longtermZipArchive
@@ -109,9 +90,10 @@ def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir: str
     # Open gz archive to be written, add webfiles and add SQL dump.
     with tarfile.open(zipPath, "w:gz", compresslevel=5) as tar:
         tar.add(wwwDir, arcname="www")
-        tar.add(tempDir, arcname="database")
+        if site.dbName != 'none':
+            tar.add(tempDir, arcname="database")
+            u.delete_dir(tempDir)
     timer.show_elapsed('Tarfile time elapsed')
-    u.delete_dir(tempDir)
 
     if os.path.exists(zipPath):
         if params.get('wwwbanothers') == 'true':
@@ -124,23 +106,58 @@ def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir: str
     else:
         u.abort('Gzip archive missing: ', zipPath)
 
+    scp = params.get('scp')
     if useRemoteLocation != 'none':
         remote_upload(zipArchive, longtermZipArchive, backupDir, scp, useRemoteLocation)
 
     timer.show_total_elapsed('Backup time elapsed')
     print('Finished:             ', t.get_current_time())
 
-# Will a long-term backup archive be saved? If yes, the oldest
-# daily archive will be renamed instead of overwritten. Each month
-# the following will be saved: At the 8th, the archive of the 1st
-# is renamed as monthly backup. At the 15th and the 23rd, the archives
-# of the 8th and the 16th are saved as (roughly) weekly backups.
-# At the 1st, the archive between the 22th and the 25th of the previous
-# month is saved as a further (roughly) weekly backup. The exact date 
-# depends on the number of days of the previous month.
-# There will be at most 12 monthly backups and 3 'weekly' backups.
-# The oldest of these archives will be cyclically overwritten.
+
+def dump_database(params : Parameters, site : WebSiteData, backupDir : str) -> str:
+    """
+    Dump the database (if there is one) to a temp directory inside the backup directory.
+    Returns the path to the temp directory with the SQL file or 'none'. 
+    """
+    tempDir = 'none'
+    if site.dbName != 'none':
+        # ========== Create SQL dump ===================
+        # Create a temporary folder in the backup directory
+        temp = 'temp932524687'
+        tempDir = backupDir + '/' + temp
+        u.make_empty_dir(tempDir)
+        # Used Linux shell commands. Full path due to cron usage.
+        mySqldump = params.get('sqldump')
+        mySqldumpOptions = params.get('sqldumpoptions')
+        # A global transaction identifier (GTID) for the SQL dump is not necessary.
+        sqlFile = site.siteName  + '.sql'
+        defaults_file, db_credential = db.get_db_defaults_file(params, site)
+        sqlFilePath = tempDir + '/' + sqlFile
+        sqlDumpCommand = (mySqldump + db_credential + ' -h ' + site.host + ' '
+                        + mySqldumpOptions + ' ' + site.dbName + ' > ' + sqlFilePath)
+        # Note: On Linux start a new shell to be able to redirect as root user!
+        # sh -c "command > file"
+        if platform.system() != 'Windows':
+            sqlDumpCommand = ('sh -c "' + sqlDumpCommand + '"')
+        u.RUNNER.do(sqlDumpCommand)
+        os.remove(defaults_file)
+        if not os.path.exists(sqlFilePath):
+            u.abort(sqlFilePath + ' does not exist')
+    return tempDir
+
 def get_longterm_archive(zipPath: str, siteName: str) -> str:
+    """
+    Will a long-term backup archive be saved? If yes, the oldest
+    daily archive will be renamed instead of overwritten. Each month
+    the following will be saved: At the 8th, the archive of the 1st
+    is renamed as monthly backup. At the 15th and the 23rd, the archives
+    of the 8th and the 16th are saved as (roughly) weekly backups.
+    At the 1st, the archive between the 22th and the 25th of the previous
+    month is saved as a further (roughly) weekly backup. The exact date 
+    depends on the number of days of the previous month.
+    There will be at most 12 monthly backups and 3 'weekly' backups.
+    The oldest of these archives will be cyclically overwritten.
+    """
     # Is there already an 8 days old archive?
     if not os.path.exists(zipPath):
         return 'none'
@@ -158,14 +175,17 @@ def get_longterm_archive(zipPath: str, siteName: str) -> str:
         return siteName + '.' + newTag + '.tar.gz'
     return 'none'
 
-# Save to remote host if configured.
-# SSL key must be present. For Hetzner see
-# https://docs.hetzner.com/de/robot/storage-box/backup-space-ssh-keys/
 def remote_upload(zipArchive: str, 
                   longtermZipArchive: str, 
                   backupDir: str, 
                   scp: str, 
                   remoteLocation: str):
+    """
+    Save to remote host if configured.
+    SSL key must be present. For Hetzner's storagebox see
+    https://docs.hetzner.com/de/robot/storage-box/backup-space-ssh-keys/
+    It is also ossible to save to a mounted storage device.
+    """
     print('Upload:               ', zipArchive)
     print('Upload started:       ', t.get_current_time())
     zipPath = backupDir + '/' + zipArchive

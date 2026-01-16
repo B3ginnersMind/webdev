@@ -1,15 +1,31 @@
 
-import subprocess
+import os, random, string, stat, subprocess
 from wm.utils import abort, check_root_user, RUNNER
 from wm.websites import WebSiteData
 from wm.config import Parameters
 
-# get the database user password
-def get_database_pw(site : WebSiteData):
-    dbPass = ''
-    if site.dbPassWord != 'none':
-        dbPass = ' -p' + site.dbPassWord
-    return dbPass
+def get_db_defaults_file(params : Parameters, site : WebSiteData) -> tuple[str, str]:
+    """
+    Create a temporary defaults file for mysql client with user and password.
+    Returns the path to the defaults file and the database credential string
+    to be used in mysql commands.
+    """
+    snapshotdir = params.get('snapshotdir')
+    char_pool: str = string.ascii_letters + string.digits
+    defaults_file = "/."
+    for _ in range(15):
+        defaults_file += random.choice(char_pool)
+    defaults_file = snapshotdir + defaults_file
+    lines: list[str] = []
+    lines.append('[client]\n')
+    lines.append('user=' + site.dbUser + '\n')
+    lines.append('password=' + site.dbPassWord + '\n')
+    with open(defaults_file, 'w') as df:
+        df.writelines(lines)
+    # Set file permission to read and write for user only
+    os.chmod(defaults_file, stat.S_IRUSR | stat.S_IWUSR)
+    db_credential: str = " --defaults-file=" + defaults_file
+    return defaults_file, db_credential
 
 # get the mysql main user password
 def get_mysql_pw(params : Parameters):
@@ -29,14 +45,16 @@ def get_mysql_open_string(params : Parameters):
 # Does the database exist and is accessible by the database user?
 def database_exists(params : Parameters, site : WebSiteData):
     # Test the return code of the following command:
-    # mysql -u USER -pPASSWD --silent -e "quit" DATABASENAME
-    testcommand = (params.get('sql') + ' -u ' + site.dbUser
-                  + get_database_pw(site)
-                  + ' --silent -e "quit" ' + site.dbName)
+    # mysql --defaults-file=FILE --silent -e "quit" DATABASENAME
+    defaults_file, db_cred  = get_db_defaults_file(params, site)
+    testcommand = (params.get('sql') 
+                   + db_cred
+                   + ' --silent -e "quit" ' + site.dbName)
     print('Check whether database already exists and is accessible...')
     # To silence output add: stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     result = subprocess.run(testcommand, shell=True, stderr=subprocess.DEVNULL)
     exitcode = result.returncode
+    os.remove(defaults_file)    
     if exitcode != 0:
         return False
     return True

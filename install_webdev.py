@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This little helper script copies the webdev files into a folder of your choice.
-import os, glob, pathlib, shutil, stat
+import os, pathlib, shutil, stat
 
 def abort(msg=''):
     if msg != '':

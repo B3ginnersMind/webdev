@@ -1,5 +1,5 @@
 
-import glob, os, shutil, tarfile
+import glob, os, shutil, tarfile, textwrap
 import wm.utils as u
 import wm.dbutils as db
 from wm.websites import WebSiteData
@@ -22,6 +22,9 @@ def prepare_database(params : Parameters, site : WebSiteData):
     print('Checked database:', site.dbName)
     print('Database user:', site.dbUser)
     u.print_line()
+    if site.dbName == 'none' or site.dbUser == 'none':
+        print('No database or database user to be prepared.')
+        return
     print('Check whether database already exists...')
     db.ensure_database_exists(params, site)
 
@@ -68,8 +71,6 @@ def restore(params : Parameters, site : WebSiteData, timestamp: str, backupDir: 
       timestamp:  timestamp of the archive to be restored
       backupDir:  backup archive directory
     """
-    # Used Linux shell commands.
-    sql = params.get('sql')
     wwwUserGroup  = params.get('wwwusergroup') # 'none': do nothing
     # otherwise: change owner and expect user and group e.g. www-data:www-data"
     wwwbanothers = params.get('wwwbanothers') == 'true'
@@ -106,44 +107,11 @@ def restore(params : Parameters, site : WebSiteData, timestamp: str, backupDir: 
     print('Webfiles location:      ', tempWwwPath)
     u.is_dir_or_abort(tempWwwPath)
 
-    # Search DbFile, the SQL dump file within the extracted files.
-    tempDatabasePath = tempDir + '/database'
-    print('Database dump location: ', tempDatabasePath)
-    u.is_dir_or_abort(tempDatabasePath)
-    workingDir = os.getcwd()
-    os.chdir(tempDatabasePath)
-    # SQL file has to begin with siteName and end with ".sql".
-    sqlfiles = glob.glob('*.sql')
-    numSqls = len(sqlfiles)
-    if numSqls != 1:
-        u.abort('Error abort due to unexpected (numSqls != 1) number of SQL files...')
-    dbFile = tempDatabasePath + '/' + sqlfiles[0]
-    print('Restoring database from:', dbFile)
-    u.is_file_or_abort(dbFile)
-    
-    if params.get('runasroot') == 'true':
-        db.ensure_database_exists(params, site)
-    sql1 = sql + ' -h ' + site.host + ' -u ' + site.dbUser
-    sql2 = site.dbName + ' < ' + dbFile
-
-    # should database be restored
-    print('Execute:')
-    print(sql1 + ' -pXXXXX ' + sql2)
-    restorecommand = (sql1 + db.get_database_pw(site) + ' ' + sql2)
-    print('Overwriting database', site.dbName)
-    u.query_continue()
-    
-    # now restore database
-    exitcode = u.RUNNER.do(restorecommand)
-    if exitcode == 0:
-        print('...database', site.dbName, 'restored')
-    else:
-        u.abort('...database', site.dbName, 'restoration failed')
-    # leave SQL directory to be able to clean up the temp directory
-    os.chdir(workingDir)
+    # If database is not 'none', restore it
+    restore_database(params, site, tempDir)
     
     # should all webfiles be restored?
-    print('Finally webdir', wwwPath, 'has to be restored!')
+    print('Webdir', wwwPath, 'has to be restored!')
     print('The following is carried out:')
     print('Webdir replaced:', wwwPath)
     print('By this:', tempWwwPath)
@@ -173,3 +141,50 @@ def restore(params : Parameters, site : WebSiteData, timestamp: str, backupDir: 
     u.append_logfile(logFile, msg)        
 
     print('...', site.siteName, 'restore', timestamp, 'complete.')
+
+
+def restore_database(params : Parameters, site : WebSiteData, tempDir: str):
+    if site.dbName == 'none':
+        print('.... no database to be restored.')
+        return
+    # Used SQL command.
+    sql = params.get('sql')
+    # Search DbFile, the SQL dump file within the extracted files.
+    tempDatabasePath = tempDir + '/database'
+    print('Database dump location: ', tempDatabasePath)
+    u.is_dir_or_abort(tempDatabasePath)
+    workingDir = os.getcwd()
+    os.chdir(tempDatabasePath)
+    # SQL file has to begin with siteName and end with ".sql".
+    sqlfiles = glob.glob('*.sql')
+    numSqls = len(sqlfiles)
+    if numSqls != 1:
+        u.abort('Error abort due to unexpected (numSqls != 1) number of SQL files...')
+    dbFile = tempDatabasePath + '/' + sqlfiles[0]
+    print('Restoring database from:', dbFile)
+    u.is_file_or_abort(dbFile)
+    
+    if params.get('runasroot') == 'true':
+        db.ensure_database_exists(params, site)
+
+    # should database be restored?
+    defaults_file, db_credential = db.get_db_defaults_file(params, site)
+    print('Execute:')
+    restorecommand = (sql + db_credential + ' -h ' + site.host 
+                      + ' ' + site.dbName + ' < ' + dbFile)
+    wrappedCmd = textwrap.fill(restorecommand, u.WRAP_LENGTH)
+    u.print_line('-')
+    print(wrappedCmd)
+    u.print_line('-')
+    print('Overwriting database', site.dbName)
+    u.query_continue()
+
+    # now restore database
+    exitcode = u.RUNNER.do(restorecommand)
+    os.remove(defaults_file)
+    if exitcode == 0:
+        print('...database', site.dbName, 'restored')
+    else:
+        u.abort('...database', site.dbName, 'restoration failed')
+    # leave SQL directory to be able to clean up the temp directory
+    os.chdir(workingDir)

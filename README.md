@@ -101,6 +101,11 @@ Initial version
 
 - if runasroot is 'false', restore does not try to create DB or dBuser.
 
+### Version 1.6
+
+- Websites without databases may also be saved and recovered.
+- No more warnings about passing DB passwords in command line.
+
 ## Further tiny tools
 
 ### load_site_from_ftp.py
