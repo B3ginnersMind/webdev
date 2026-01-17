@@ -76,6 +76,9 @@ def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir: str
     print('Gzip archive written: ', zipArchive)
     print('Remote backup path:   ', useRemoteLocation)
     print('Longterm archive:     ', longtermZipArchive)
+    
+    # ========== Check that www directory exists ===================
+    u.is_dir_or_abort(wwwDir)
 
     # ========== If there is a database, create SQL dump ===================
     tempDir = dump_database(params, site, backupDir)
@@ -88,7 +91,7 @@ def backup(params : Parameters, site : WebSiteData, sitedump : bool, altdir: str
         os.replace(zipPath, longtermArchivePath)
 
     # Open gz archive to be written, add webfiles and add SQL dump.
-    with tarfile.open(zipPath, "w:gz", compresslevel=5) as tar:
+    with tarfile.open(zipPath, "w:gz", compresslevel=5, dereference=True) as tar:
         tar.add(wwwDir, arcname="www")
         if site.dbName != 'none':
             tar.add(tempDir, arcname="database")

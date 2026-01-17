@@ -44,7 +44,7 @@ import wm.utils as u
 from wm.utils import Operation
 from wm.websites import WebSiteTable
 from wm.config import Parameters
-__version__ = "1.6"
+__version__ = "1.6.1"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format

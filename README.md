@@ -106,6 +106,10 @@ Initial version
 - Websites without databases may also be saved and recovered.
 - No more warnings about passing DB passwords in command line.
 
+### Version 1.6.1
+
+- fix for webfolder with symbolic links
+
 ## Further tiny tools
 
 ### load_site_from_ftp.py
