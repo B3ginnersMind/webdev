@@ -110,6 +110,10 @@ Initial version
 
 - fix for webfolder with symbolic links
 
+### Version 1.6.2
+
+- Bugfix for database passwords with special characters.
+
 ## Further tiny tools
 
 ### load_site_from_ftp.py

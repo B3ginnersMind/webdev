@@ -17,10 +17,10 @@ def get_db_defaults_file(params : Parameters, site : WebSiteData) -> tuple[str, 
         defaults_file += random.choice(char_pool)
     defaults_file = snapshotdir + defaults_file
     lines: list[str] = []
-    lines.append('[client]\n')
-    lines.append('user=' + site.dbUser + '\n')
-    lines.append('password=' + site.dbPassWord + '\n')
-    with open(defaults_file, 'w') as df:
+    lines.append("[client]\n")
+    lines.append("user=" + site.dbUser + "\n")
+    lines.append("password='" + site.dbPassWord + "'\n")
+    with open(defaults_file, "w") as df:
         df.writelines(lines)
     # Set file permission to read and write for user only
     os.chmod(defaults_file, stat.S_IRUSR | stat.S_IWUSR)

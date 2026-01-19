@@ -22,7 +22,7 @@ mysite.net    1  myfiles      none        none          none      none       "St
 # dbName      name of the CMS database
 # host        name of the database server (localhost on a single server)
 # dbUser      database user which has access to the CMS database
-# dbPassWord  password of this database user (careful with special chars e.g. "}"!)
+# dbPassWord  password of this database user
 #
 # Backup archives are saved as siteName.timeStamp.tar.gz where
 # siteName is the site identifier and timeStamp is the backup time.
