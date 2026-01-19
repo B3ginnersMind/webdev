@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # This little helper script copies the webdev files into a folder of your choice.
+import readline # type: ignore for input() history support on Unix
 import os, pathlib, shutil, stat
 
 def abort(msg=''):

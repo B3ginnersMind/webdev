@@ -1,4 +1,5 @@
 
+import readline # type: ignore for input() history support on Unix
 import os, platform, shutil, stat, sys, textwrap
 from enum import Enum
 from pathlib import Path, WindowsPath

@@ -1,4 +1,5 @@
 
+import readline # type: ignore for input() history support on Unix
 import glob, os, shutil, tarfile, textwrap
 import wm.utils as u
 import wm.dbutils as db
