@@ -13,8 +13,12 @@ Depends on website_manager.py to restore the website from the downloaded archive
 # sudo apt install python3-paramiko
 # =====================================================================
 import argparse, paramiko, getpass, os, tempfile, shutil
+from wm.websites import WebSiteTable
+from wm.config import Parameters
+from wm.timeutils import get_date_tag
 import wm.utils as u
 import subprocess
+__version__ = "1.0.1"
 
 def get_names(siteName : str):
     """
@@ -27,21 +31,22 @@ def get_names(siteName : str):
     """
     script_folder = os.path.dirname(os.path.realpath(__file__))
     os.chdir(script_folder)
-    paramsfile = script_folder + '/website_manager_params.txt'
+    paramsfile = script_folder + '/website_manager_config.ini'
     u.is_file_or_abort(paramsfile)
-    params = u.Parameters(paramsfile)
+    params = Parameters(paramsfile)
     wwwroot = params.get('wwwroot')
     local_snapshot_dir = params.get('snapshotdir')
-    # 'none': do nothing    
+    # www_user_group == 'none': do nothing    
     www_user_group  = params.get('wwwusergroup') 
 
     websitesfile = script_folder + '/website_table.txt'
     u.is_file_or_abort(websitesfile)
-    websites = u.WebSiteTable(websitesfile)
+    websites = WebSiteTable(websitesfile)
     site = websites.getSite(siteName)
     return wwwroot, site.wwwSubdir, local_snapshot_dir, www_user_group
 
-def download(hostname, port, username, remote_archive_path, local_archive_path):
+def download(hostname: str, port: int, username: str, 
+             remote_archive_path: str, local_archive_path: str):
     # Passwort sicher abfragen
     password = getpass.getpass("Passwort eingeben: ")
     try:
@@ -94,7 +99,9 @@ p.add_argument("localSiteName",
 p.add_argument('-c', '--config', type=str,
                help='relative path of local website config file to be preserved')
 p.add_argument('-t', '--timestamp', type=str,
-               help='timestamp of archive to be downloaded')
+               help='timestamp (date) of archive to be downloaded')
+p.add_argument("-v", "--version", action='version', 
+               version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
 
 u.print_line()
@@ -107,7 +114,7 @@ remote_site_name = args.remoteSiteName
 tag = args.timestamp
 # if no tag given, use current date tag
 if not tag:
-    tag = u.get_date_tag()
+    tag = get_date_tag()
 remote_archive_filename = remote_site_name + '.' + tag + '.tar.gz'
 remote_archive_path = f"{remote_dir}/{remote_archive_filename}"
 
@@ -118,6 +125,7 @@ local_archive_path = os.path.join(local_snapshot_dir, local_archive_site_name)
 
 config_path = 'none'
 tempdir = 'none'
+config_temp_path = 'none'
 if args.config:
     config_path = os.path.join(wwwroot, wwwsubdir, args.config)
     tempdir = tempfile.mkdtemp()
@@ -138,7 +146,7 @@ print('local snapshot directory:', local_snapshot_dir)
 print('local website name:', local_site_name)
 print('local archive path ', local_archive_path)
 print('temporary directory:', tempdir)
-print('local config path:', config_path)
+print('local website config path:', config_path)
 print('cached config file:', config_temp_path)
 print('user:group for webfiles:', www_user_group)
 u.print_line()

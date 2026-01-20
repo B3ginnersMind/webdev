@@ -1,5 +1,8 @@
 
-import readline # type: ignore for input() history support on Unix
+try:                 # for line editing on input for Linux
+    import readline  # type: ignore
+except ImportError:
+    readline = None
 import os, platform, shutil, stat, sys, textwrap
 from enum import Enum
 from pathlib import Path, WindowsPath
