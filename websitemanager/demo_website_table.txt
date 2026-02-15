@@ -4,7 +4,7 @@ siteName    save wwwSubdir    dbName      host          dbUser   dbPassWord  com
 # -------------------------------------------------------------------------------------------
 mydomain.org  0  mydrupal     drupaldb    localhost     cmsuser1  password1  "My Drupal" 
 example.org   1  myjoomla     joomladb    dbserver.com  cmsuser2  password2  "My Joomla" 
-demo.org      1  mywordpress  wordpressdb localhost     cmsuser3  password3  "My Wordpress"
+demo.org      1  wpsites/my   wordpressdb localhost     cmsuser3  password3  "My Wordpress"
 mysite.net    1  myfiles      none        none          none      none       "Static website"
 # -------------------------------------------------------------------------------------------
 # The table must consist of 8 columns, separated by spaces.
@@ -12,15 +12,16 @@ mysite.net    1  myfiles      none        none          none      none       "St
 # The columns may appear in any order.
 # Strings that include blanks must be enclosed in quotation marks.
 # Comment lines are indicated by a hash mark at the beginning.
+# Each line refers to a single wesite.
 #
 # siteName    an identifier of the website
 # save        0: omit website from bulk backup, 1: include it
-# wwwSubdir   subdirectory (under webroot) containing the web files
+# wwwSubdir   subdirectory (path) under webroot folder containing all web files
 # comment     a short comment concerning about website
 #
 # The columns below refer to a database. Without a database, the entries must be "none".
 # dbName      name of the CMS database
-# host        name of the database server (localhost on a single server)
+# host        name of the database server (localhost in most cases)
 # dbUser      database user which has access to the CMS database
 # dbPassWord  password of this database user
 #
