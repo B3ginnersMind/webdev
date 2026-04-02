@@ -114,6 +114,12 @@ Initial version
 
 - Bugfix for database passwords with special characters.
 
+### Version 1.6.3
+
+- Fixed lineedit on comment input.
+- "load_site_from_ftp.py" made compatible to website_manager.
+- Comment added that web subdirectory paths are possible.
+
 ## Further tiny tools
 
 ### load_site_from_ftp.py
