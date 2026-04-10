@@ -33,7 +33,22 @@ DOMAIN="$4"
 echo "1: CONFIG     : $1"
 echo "2: CERTNAME   : $2"
 echo "3: FOLDERNAME : $3"
-echo "4: DOMAIN     : $3"
+echo "4: DOMAIN     : $4"
+
+function query_continue()
+{
+  local MESSAGE=$1
+  echo
+  echo $MESSAGE
+  read -p "Möchten Sie fortfahren? (y/n) " -n 1 -r
+  echo    # Neue Zeile nach der Eingabe
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Skript abgebrochen."
+    exit 1
+  fi
+  echo "Weiter geht's..."
+  echo
+}
 
 APACHE_CONF="/etc/apache2/sites-available/${CONFIG}.conf"
 CERT_CONF="/etc/letsencrypt/renewal/${CERTNAME}.conf"
@@ -108,6 +123,7 @@ echo "Starte Apache neu..."
 apache2ctl restart
 
 # Teste per curl, ob die Challenge erreichbar ist
+query_continue "Apache läuft. Jetzt testen wir die Erreichbarkeit der Challenge-URL."
 mkdir -p /var/www/$FOLDERNAME/.well-known/acme-challenge
 echo OK > /var/www/$FOLDERNAME/.well-known/acme-challenge/token1
 curl -fsS http://$DOMAIN/.well-known/acme-challenge/token1\ 
@@ -116,6 +132,7 @@ curl -fsS http://$DOMAIN/.well-known/acme-challenge/token1\
 rm -rf /var/www/$FOLDERNAME/.well-known
 
 # Certbot Dry-Run
+query_continue "Jetzt simulieren wir die Zertifikatserneuerung mit Certbot (Dry-Run)."
 echo "Teste Zertifikatserneuerung..."
 certbot renew --cert-name "$CERTNAME" --dry-run
 
