@@ -6,7 +6,7 @@ try:                # for line editing on input for Linux
 except ImportError:
     readline = None
 
-def abort(msg=''):
+def abort(msg: str=''):
     if msg != '':
         print('...' + msg)
     print('...aborting')
@@ -17,16 +17,18 @@ def query_continue():
     if ch == 'q':
         quit()
 
-def query_int(msg, min, max):
+def query_int(msg: str, min_value: int, max_value: int) -> int:
     try:
-        num = int(input(msg + ': '))
-        if num < min or num > max:
-            abort('number out of range [' + str(min) + ',' + str(max) + ']')
+        num = int(input(f"{msg} [{min_value}-{max_value}]: "))
+        if num < min_value or num > max_value:
+            abort(f'number out of range [{min_value}-{max_value}]')
+            quit()
     except ValueError:
         abort('not a number')
+        quit()
     return num
 
-def copy_file(src, dest):
+def copy_file(src: str, dest: str):
     if not os.path.isfile(src):
         abort('file ' + src + ' is missing')
     if os.path.isfile(dest):
@@ -35,25 +37,25 @@ def copy_file(src, dest):
     shutil.copy2(src, dest)
     print('copied', src, 'to', dest)
 
-def contains_subdir(dir):
+def contains_subdir(dir: str) -> bool:
     for item in os.listdir(dir):
         item_path = os.path.join(dir, item)
         if os.path.isdir(item_path):
             return True
     return False
 
-def make_executable(file):
+def make_executable(file: str):
     st = os.stat(file)
     os.chmod(file, st.st_mode | stat.S_IEXEC)
     print(file, 'made executable')
 
-def install_pyscript(webdev_path, subdir, pyscript, target_folder):
+def install_script(webdev_path: str, subdir: str, pyscript: str, target_folder: str):
     source_file = os.path.join(webdev_path, subdir, pyscript)
     target_script = os.path.join(target_folder, pyscript)
     copy_file(source_file, target_script)
     make_executable(target_script)
 
-def replace_tree(src, dest):
+def replace_tree(src: str, dest: str):
     if not os.path.isdir(src):
         abort(' ' + src + ' is missing')
     if os.path.isfile(dest):
@@ -84,7 +86,7 @@ def main():
         target_folder = HOME
     elif option == 2:
         target_folder = BACKUP
-    elif option == 3:
+    else:
         target_folder = input('Enter full installation path: ')
 
     # target folder must already exist
@@ -98,12 +100,12 @@ def main():
     webdev_path = os.path.dirname(os.path.realpath(__file__))
     print('Install webdev from folder:', webdev_path)
 
-    install_pyscript(webdev_path, 'showdns', 'show_dns.py', target_folder)
-    install_pyscript(webdev_path, 'parsecerts', 'parse_certificates.py', target_folder)
-    install_pyscript(webdev_path, 'showvhosts', 'show_vhosts.py', target_folder)
-    install_pyscript(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
-    install_pyscript(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
-    install_pyscript(webdev_path, 'mediawiki', 'mediawiki_update.py', target_folder)
+    install_script(webdev_path, 'showdns', 'show_dns.py', target_folder)
+    install_script(webdev_path, 'parsecerts', 'parse_certificates.py', target_folder)
+    install_script(webdev_path, 'showvhosts', 'show_vhosts.py', target_folder)
+    install_script(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
+    install_script(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
+    install_script(webdev_path, 'mediawiki', 'mediawiki_update.py', target_folder)
 
     websitemanager_module = os.path.join(webdev_path, 'websitemanager', 'wm')
     websitemanager_module_dest = os.path.join(target_folder, 'wm')

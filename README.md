@@ -129,6 +129,16 @@ Initial version
 - The timestamp tag of the archive has to contain yyyy-mm-dd.
 - This little helper utility is intended to refresh a local dev installation.
 
+### test_cert_renewal.sh in folder certs
+
+Test the renewal of a certificate using Certbot.
+Designed for Ubuntu file paths.
+
+- Create a backup of the Apache2 configuration for a virtual host.
+- Edit the virtual host configuration.
+- Check the configuration syntax and load the configuration into Apache2.
+- Run a Certbot dry run to simulate the certificate renewal.
+
 ### parse_certificates.py in folder parsecerts
 
 Display the Letsencrypt certificates in a clear format so that those that need to be renewed soon are at the top.
