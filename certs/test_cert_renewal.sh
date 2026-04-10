@@ -126,7 +126,7 @@ apache2ctl restart
 query_continue "Apache läuft. Jetzt testen wir die Erreichbarkeit der Challenge-URL."
 mkdir -p /var/www/$FOLDERNAME/.well-known/acme-challenge
 echo OK > /var/www/$FOLDERNAME/.well-known/acme-challenge/token1
-curl -fsS http://$DOMAIN/.well-known/acme-challenge/token1\ 
+curl -fsS http://$DOMAIN/.well-known/acme-challenge/token1 \
   && echo "Challenge erreichbar" \
   || echo "Challenge NICHT erreichbar"
 rm -rf /var/www/$FOLDERNAME/.well-known
