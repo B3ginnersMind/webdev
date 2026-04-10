@@ -106,7 +106,7 @@ def main():
     install_script(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
     install_script(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
     install_script(webdev_path, 'mediawiki', 'mediawiki_update.py', target_folder)
-    install_script(webdev_path, 'certs', 'mediawiki_test_cert_renewal.sh', target_folder)
+    install_script(webdev_path, 'certs', 'test_cert_renewal.sh', target_folder)
 
     websitemanager_module = os.path.join(webdev_path, 'websitemanager', 'wm')
     websitemanager_module_dest = os.path.join(target_folder, 'wm')
