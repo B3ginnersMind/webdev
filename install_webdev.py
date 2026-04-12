@@ -102,7 +102,8 @@ def main():
 
     install_script(webdev_path, 'showdns', 'show_dns.py', target_folder)
     install_script(webdev_path, 'parsecerts', 'parse_certificates.py', target_folder)
-    install_script(webdev_path, 'showvhosts', 'show_vhosts.py', target_folder)
+    install_script(webdev_path, 'vhosts', 'show_vhosts.py', target_folder)
+    install_script(webdev_path, 'vhosts', 'backup_vhost_confs.sh', target_folder)
     install_script(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
     install_script(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
     install_script(webdev_path, 'mediawiki', 'mediawiki_update.py', target_folder)

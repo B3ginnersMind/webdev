@@ -148,11 +148,10 @@ Display the Letsencrypt certificates in a clear format so that those that need t
 - Sort the lines such that the oldest certificates are on top.
 - Print this result to stdout.
 
-### show_vhosts.py in folder showvhosts
+### folder vhosts
 
-Utility for an Ubuntu server with Apache2 that prints out the running virtual 
-hosts and the PHP FPM versions used. The output is truncated and formatted for
-clarity.
+- *show_vhosts.py:* Utility for an Ubuntu server with Apache2 that prints out the running virtual hosts and the PHP FPM versions used. The output is truncated and formatted for clarity.
+- *backup_vhost_confs.sh:* Backup all files in /etc/apache2/sites-available
 
 ### show_dns.py in folder showdns
 

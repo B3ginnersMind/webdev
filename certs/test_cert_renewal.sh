@@ -133,6 +133,7 @@ rm -rf /var/www/$FOLDERNAME/.well-known
 
 # Certbot Dry-Run
 query_continue "Jetzt simulieren wir die Zertifikatserneuerung mit Certbot (Dry-Run)."
+echo "certbot renew --cert-name $CERTNAME --dry-run"
 echo "Teste Zertifikatserneuerung..."
 certbot renew --cert-name "$CERTNAME" --dry-run
 

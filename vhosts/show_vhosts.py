@@ -11,7 +11,7 @@ from datetime import datetime
 import re
 __version__ = "1.01"
 
-def get_output(command):
+def get_output(command: str) -> list[str]:
     """runs shell command and returns output as list of strings"""
     print("-----------------------------------------------------------------")
     print('Processing', '"'+command+'"')
@@ -44,13 +44,13 @@ search_used_php_versions = (
 
 usedphp_raw = get_output(search_used_php_versions)
 # shortend output
-usedphp_shortened = []
+usedphp_shortened: list[str] = []
 for l in usedphp_raw:
     l = re.sub('/etc/apache2/sites-enabled/', '', l)
 #   l = re.sub('/etc/apache2/sites-available/', '', l)
     l = re.sub('proxy:unix:/var/run/php/', '', l)
     l = re.sub('SetHandler ', '', l)
-    l = re.sub('.sock\|fcgi://localhost/', '', l)
+    l = re.sub(r'\.sock\|fcgi://localhost/', '', l)
     usedphp_shortened.append(l)
 # get max length of config name
 max_len_conf = max(len(l.split()[0]) for l in usedphp_shortened)
