@@ -131,11 +131,11 @@ Initial version
 
 ### test_cert_renewal.sh in folder certs
 
-Test the renewal of a certificate using Certbot.
-Designed for Ubuntu file paths.
+Test the renewal of a certificate for a vhost using Certbot.
+Streamlines bugfixing. Designed for Ubuntu file paths.
 
 - Create a backup of the Apache2 configuration for a virtual host.
-- Edit the virtual host configuration.
+- Allows Editing the virtual host configuration (bug fixing step).
 - Check the configuration syntax and load the configuration into Apache2.
 - Run a Certbot dry run to simulate the certificate renewal.
 

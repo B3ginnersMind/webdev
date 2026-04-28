@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 #----------------------------------------------------------------------------
 # Testet die Erneuerung eines Zertifikats mit Certbot.
+#
 # conf-Dateien der vhosts        : /etc/apache2/sites-available
 # conf-Dateien aktivierter vhosts: /etc/apache2/sites-enabled
 # Zertifikat-Renewal-configs     : /etc/letsencrypt/renewal
-# Webordner                      : /var/www# Das Skript prüft die notwendigen Dateien und Verzeichnisse, 
+# Webordner                      : /var/www# 
+#
+# Das Skript prüft die notwendigen Dateien und Verzeichnisse, 
 # erstellt ein Backup der Apache-Konfiguration,
-# bearbeitet die Konfiguration, testet sie und 
+# gestattet Bearbeitung die Konfiguration mit Editor nano, testet sie und 
 # führt einen Certbot Dry-Run durch, um die Erneuerung zu simulieren.
 #----------------------------------------------------------------------------
 # Strenge Fehlerbehandlung aktivieren
@@ -61,7 +64,8 @@ BACKUP_FILE="${BACKUP_DIR}/${TIMESTAMP}-${CONFIG}.conf"
 
 # Parameter prüfen
 if [[ -z "$CONFIG" || -z "$CERTNAME" ]]; then
-    echo "Usage: $0 CONFIG CERTNAME"
+    echo "Fehler: <Config-Name> oder <Renewal-Config-Name> fehlt."
+    echo "Usage: $0 <Config-Name> <Renewal-Config-Name> <Webordner> <Domain>"
     exit 1
 fi
 
