@@ -100,7 +100,12 @@ def remove_readonly(
         path: str, 
         exc_info: tuple[type[BaseException], BaseException, TracebackType]):
     """Remove write protection and continue delete process."""
-    os.chmod(path, stat.S_IWRITE)
+    mode = os.stat(path).st_mode
+    os.chmod(path, mode | stat.S_IWUSR)
+    # The following line removed all read/execution permissions for all users,
+    # which is not intended. Instead, only the write permission for the user 
+    # should be added.
+    # os.chmod(path, stat.S_IWRITE)
     func(path)
 
 def delete_dir(dir: str, usePython: bool=True):
