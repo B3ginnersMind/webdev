@@ -9,7 +9,7 @@ Manfred Koerkel, 22.04.2025
 from subprocess import PIPE, run
 from datetime import datetime
 import re
-__version__ = "1.01"
+__version__ = "1.02"
 
 def get_output(command: str) -> list[str]:
     """runs shell command and returns output as list of strings"""
@@ -34,12 +34,12 @@ for l in phpversions:
 # search only over enabled configs
 search_used_php_versions = (
     "find -L /etc/apache2/sites-enabled -name '*.conf'"
-    " -exec grep 'fpm.sock' {} +"
+    " -exec grep '/run/php/php' {} +"
 )
 # search over all configs
 # search_used_php_versions = (
 #    "find /etc/apache2/sites-available -type f -name '*.conf'"
-#    " -exec grep 'fpm.sock' {} +"
+#    " -exec grep '/run/php/php' {} +"
 #)
 
 usedphp_raw = get_output(search_used_php_versions)
