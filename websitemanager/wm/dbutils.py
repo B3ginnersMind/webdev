@@ -54,7 +54,7 @@ def database_exists(params : Parameters, site : WebSiteData):
     # To silence output add: stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     result = subprocess.run(testcommand, shell=True, stderr=subprocess.DEVNULL)
     exitcode = result.returncode
-    os.remove(defaults_file)    
+    os.remove(defaults_file)
     if exitcode != 0:
         return False
     return True
@@ -84,8 +84,8 @@ def add_dbuser(params : Parameters, site : WebSiteData):
     # create user testuser@localhost identified by 'TESTPASSWD';
     # alter user testuser@localhost identified with mysql_native_password;
     # alter user testuser@localhost identified by 'TESTPASSWD';
-    # After setting mysql_native_password reset password since it may habe been deleted.
-    # Note: A CMS might not be compatibel with caching_sha2_password.
+    # After setting mysql_native_password reset password since it may have been deleted.
+    # Note: A CMS might not be compatible with caching_sha2_password.
     command = (get_mysql_open_string(params)
               + '-e "' 
               + 'create user ' + site.dbUser + '@localhost '
@@ -97,6 +97,18 @@ def add_dbuser(params : Parameters, site : WebSiteData):
               + '"'
               )
     print('Add user', site.dbUser)
+    RUNNER.do(command)
+
+def change_dbuser_pw(params : Parameters, site : WebSiteData):
+    # Change the password of a database user
+    # + "flush privileges;"
+    command = (get_mysql_open_string(params)
+              + '-e "' 
+              + 'alter user ' + site.dbUser + '@localhost '
+              + "identified by '" + site.dbPassWord + "';"
+              + '"'
+              )
+    print('New DB Password', site.dbPassWord, "for user", site.dbUser)
     RUNNER.do(command)
 
 # Create database if it does not yet exist. Abort if no success.
