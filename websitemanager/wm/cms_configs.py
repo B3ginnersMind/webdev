@@ -1,6 +1,5 @@
 import os, re
 from pathlib import Path
-from wm import websites
 import wm.dbutils as db
 from wm.websites import WebSiteTable, WebSiteData
 from wm.config import Parameters
