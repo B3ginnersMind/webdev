@@ -9,7 +9,7 @@ from wm.config import Parameters
 # Mediawiki LocalSettings.php : $wgDBpassword = "XXX";
 
 # CMS_LIST = ['joomla', 'wordpress', 'mediawiki', 'drupal']
-CMS_LIST = ['joomla', 'wordpress', 'mediawiki']
+CMS_LIST = ['joomla', 'wordpress', 'mediawiki', 'static']
 CMS_CONFIG_FILE = {"joomla"   : "configuration.php", 
                    "wordpress": "wp-config.php",
                    "mediawiki": "LocalSettings.php"}
@@ -44,6 +44,9 @@ def process_dbpassword(params : Parameters, site : WebSiteData, change: bool = F
     conf = ""
     if cms == "none":
         print(site.siteName, "==> missing known CMS indicator")
+        return
+    elif cms == "static":
+        print(site.siteName, "==> static website")
         return
     elif cms == "multiple":
         print(site.siteName, "==> multiple CMS indicators")
