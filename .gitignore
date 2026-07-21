@@ -3,6 +3,8 @@
 # Ignore test inputs and outputs
 website_manager_config.ini
 website_table.txt
+website_table_new.txt
+website_table_old.txt
 show_ips_exampleDomains.txt
 show_dns_exampleDomains.txt
 *.log

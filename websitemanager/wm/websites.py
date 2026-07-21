@@ -9,6 +9,7 @@ class WebSiteData:
     siteName : str = "none"
     save : str = "0"
     wwwSubdir : str = "none"
+    owner : str = "default"
     host : str = "none"
     dbName : str = "none"
     dbUser : str = "none"
@@ -22,7 +23,7 @@ class WebSiteData:
     
     @classmethod
     def field_widths(cls) -> list[int]:
-        """Returns length of all attribute names as an  list of ints."""
+        """Returns length of all attribute names as a list of ints."""
         return [len(f.name) for f in fields(cls)]
     
     def show(self, info: str="") -> None:
@@ -53,11 +54,13 @@ class WebSiteTable:
                     if len(line) > 0 and line[0][0] != "#":
                         self.numWebsites += 1
                         if self.numWebsites >= 1:
+                            # set new website data
                             if len(line) < len(self.columns):
                                 abort("too few columns in line:", str(line))
                             self.table.append(line)
                             self.site2index[line[0]] = self.numWebsites - 1
                         else:
+                            # set header line
                             self.header = line
                             self.checkheader()
                             self.col2index = {c: i for i, c in enumerate(self.header)}

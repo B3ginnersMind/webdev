@@ -120,6 +120,10 @@ Initial version
 - "load_site_from_ftp.py" made compatible to website_manager.
 - Comment added that web subdirectory paths are possible.
 
+### Version 1.7.0
+
+- Introduced column owner of webfile for PHP pool isolation.
+
 ## Further tiny tools
 
 ### load_site_from_ftp.py

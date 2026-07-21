@@ -75,7 +75,10 @@ def restore(params : Parameters, site : WebSiteData, timestamp: str, backupDir: 
       timestamp:  timestamp of the archive to be restored
       backupDir:  backup archive directory
     """
-    wwwUserGroup  = params.get('wwwusergroup') # 'none': do nothing
+    if site.owner == "default":
+        wwwUserGroup  = params.get('wwwusergroup') # 'none': do nothing
+    else:
+        wwwUserGroup = site.owner + ":" + site.owner
     # otherwise: change owner and expect user and group e.g. www-data:www-data"
     wwwbanothers = params.get('wwwbanothers') == 'true'
     

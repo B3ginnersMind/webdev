@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Any
 from types import TracebackType
 
-LINE_LENGTH = 70
+LINE_LENGTH = 80
 WRAP_LENGTH = LINE_LENGTH - 2
 RUNNER_OPTIONS: list[str] = []                        # for production
 #RUNNER_OPTIONS: list[str]= ['verbose']               # only verbose

@@ -1,12 +1,12 @@
 # Copy this file to website_table.txt and edit it. Below are 4 examples of website entries.
-# -------------------------------------------------------------------------------------------
-siteName    save wwwSubdir    dbName      host          dbUser   dbPassWord  comment
-# -------------------------------------------------------------------------------------------
-mydomain.org  0  mydrupal     drupaldb    localhost     cmsuser1  password1  "My Drupal" 
-example.org   1  myjoomla     joomladb    dbserver.com  cmsuser2  password2  "My Joomla" 
-demo.org      1  wpsites/my   wordpressdb localhost     cmsuser3  password3  "My Wordpress"
-mysite.net    1  myfiles      none        none          none      none       "Static website"
-# -------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
+siteName    save wwwSubdir   dbName      host         owner   dbUser   dbPassWord  comment
+# -------------------------------------------------------------------------------------------------
+mydomain.org  0  mydrupal    drupaldb    localhost    web1    cmsuser1  password1  "My Drupal" 
+example.org   1  myjoomla    joomladb    dbserver.com web2    cmsuser2  password2  "My Joomla" 
+demo.org      1  wpsites/my  wordpressdb localhost    web3    cmsuser3  password3  "My Wordpress"
+mysite.net    1  myfiles     none        none        defauilt none      none       "Static website"
+# -------------------------------------------------------------------------------------------------
 # The table must consist of 8 columns, separated by spaces.
 # The first non-comment line must be the header with the column names. 
 # The columns may appear in any order.
@@ -22,6 +22,8 @@ mysite.net    1  myfiles      none        none          none      none       "St
 # The columns below refer to a database. Without a database, the entries must be "none".
 # dbName      name of the CMS database
 # host        name of the database server (localhost in most cases)
+# owner       owner:owner will be set as owner:group of webfiles on restore
+#             ("default" means that value from ini file is used instead)
 # dbUser      database user which has access to the CMS database
 # dbPassWord  password of this database user
 #

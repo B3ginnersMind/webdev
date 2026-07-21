@@ -43,6 +43,8 @@ def get_names(siteName : str):
     u.is_file_or_abort(websitesfile)
     websites = WebSiteTable(websitesfile)
     site = websites.getSite(siteName)
+    if site.owner != "default":
+        www_user_group = site.owner + ":" + site.owner
     return wwwroot, site.wwwSubdir, local_snapshot_dir, www_user_group
 
 def download(hostname: str, port: int, username: str, 
