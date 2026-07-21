@@ -75,9 +75,9 @@ def dbuser_exists(params : Parameters, site : WebSiteData):
         abort('command', command, 'failed')
     result = output.stdout.decode("utf-8")
     if result[0] == '1':
-        print('User', site.dbUser, 'exists')
+        print('User', site.dbUser, 'exists in MYSQL user table')
         return True
-    print('User', site.dbUser, 'missing')
+    print('User', site.dbUser, 'missing from MYSQL user table')
     return False
 
 def add_dbuser(params : Parameters, site : WebSiteData):
