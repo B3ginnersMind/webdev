@@ -18,6 +18,10 @@ CMS_PW_VARIABLE = {"joomla"   : "$password",
                    "mediawiki": "$wgDBpassword"}
 
 def get_cms(site : WebSiteData) -> str:
+    """
+    Ermittelt das CMS anhand des Kommentarfeldes der Website.
+    Gibt den CMS-Namen zurück, wenn eindeutig, sonst "none" oder "multiple".
+    """
     siteComment = site.comment.lower()
     found = [cms for cms in CMS_LIST if cms in siteComment]
     
@@ -28,7 +32,12 @@ def get_cms(site : WebSiteData) -> str:
     else:
         return "multiple"
 
-def process_dbpassword(params : Parameters, site : WebSiteData, checkOnly: bool = True):
+def process_dbpassword(params : Parameters, site : WebSiteData, change: bool = False):
+    """
+    Prüft, ob das Passwort in der CMS-Konfigurationsdatei mit dem in der Website-Table übereinstimmt.
+    Wenn change=True, wird das Passwort in der CMS-Konfigurationsdatei und das in der Datenbank 
+    auf das Passwort in der Website-Table geändert.
+    """
     wwwRoot = params.get('wwwroot')
     wwwDir = wwwRoot + '/' + site.wwwSubdir
     cms = get_cms(site)
@@ -53,15 +62,16 @@ def process_dbpassword(params : Parameters, site : WebSiteData, checkOnly: bool 
         else:
             msg = "==> password changed!"
         print(site.siteName, cms, conf, msg)
-        if checkOnly:
-            return
-        if not found:
+        if change and not found:
             print("=> Setting new password in configuration file...")
             set_dbpassword(conf, cms, site.dbPassWord)
             db.change_dbuser_pw(params, site)
         return  
 
 def search_dbpassword(conf: Path, cms: str, password: str) -> bool:
+    """
+    Prüft, ob das Passwort in der CMS-Konfigurationsdatei mit dem in der Website-Table übereinstimmt.
+    """
     # CMS im Dict vorhanden?
     if cms not in CMS_PW_VARIABLE:
         return False
@@ -136,6 +146,13 @@ def set_dbpassword(conf: str, cms: str, password: str) -> bool:
     return True
 
 def check_user_password_consistency(websites : WebSiteTable, singleSite : str) -> bool:
+    """
+    Prüft DB-User/Passwort-Kombinationen in der Website-Table.
+    - Warnung, wenn der selbe DB-User verschiedene Passwörter hat. Das ist inkonsistent!
+    - Warnung, wenn der selbe DB-User für mehr als eine Website genutzt.
+      Wenn nur bei einer Website das Passwort geändert wird, funktionieren die anderen nicht mehr!
+      Die Passwörter müssen daher für alle Websites angepasst werden, die diesen DB-User haben!
+    """
     numSites = websites.getNumWebsites()
     ok = True
     password_dict = {}
@@ -147,6 +164,8 @@ def check_user_password_consistency(websites : WebSiteTable, singleSite : str) -
 
     for row in range(numSites):
         site = websites.getData(row)
+        if site.dbUser == 'none':
+            continue
         if site.dbUser in password_dict:
             if site.dbPassWord != password_dict[site.dbUser]:
                 ok = False
@@ -157,7 +176,3 @@ def check_user_password_consistency(websites : WebSiteTable, singleSite : str) -
         else:
             password_dict[site.dbUser] = site.dbPassWord
     return ok
-    
-
-
-

@@ -4,6 +4,9 @@
 Read and adjust database passwords of websites which use a database.
 New passwords (if any) are taken from the file website_table.txt.
 Possible for CMS Joomla, Mediawiki and WordPress.
+Without options nothing is changed, only checked. 
+If the option --change is set, the passwords are adjusted in the 
+configuration files and in the database.
 --------------------------------------------------------------------
 """
 
@@ -12,7 +15,7 @@ import wm.utils as u
 import wm.cms_configs as cfg
 from wm.websites import WebSiteTable
 from wm.config import Parameters
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
@@ -20,13 +23,13 @@ p = argparse.ArgumentParser(description=__doc__,
 
 p.add_argument("-v", "--version", action='version', 
                version='%(prog)s version {version}'.format(version=__version__))
-p.add_argument('-c', '--check', action="store_true", 
-               help='only check if database passwords are correct in CMS config files')
+p.add_argument('-c', '--change', action="store_true", 
+               help='not only check but also adjust non-matching database passwords')
 p.add_argument("siteName", nargs='?', type=str, default='none',
                help="site name which is treated exclusively, otherwise all are treated.")
 args = p.parse_args()
 
-if not args.check:
+if args.change:
     u.check_root_user()
 
 script_folder = os.path.dirname(os.path.realpath(__file__))
@@ -61,9 +64,9 @@ if siteName == 'none':
     websites.show()
     for row in range(numSites):
         site = websites.getData(row)
-        cfg.process_dbpassword(params, site, checkOnly=args.check)
+        cfg.process_dbpassword(params, site, change=args.change)
         print()
 else:
     site = websites.getSite(siteName)
-    cfg.process_dbpassword(params, site, checkOnly=args.check)
+    cfg.process_dbpassword(params, site, change=args.change)
     print()
