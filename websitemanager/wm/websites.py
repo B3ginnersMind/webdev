@@ -1,7 +1,7 @@
 
 import csv
-from dataclasses import dataclass, fields
 from collections import Counter
+from dataclasses import dataclass, fields
 from wm.utils import abort, print_line
 
 @dataclass
@@ -72,6 +72,7 @@ class WebSiteTable:
             for i in range(self.numWebsites):
                 self.widths[j] = max(self.widths[j], len(self.table[i][j]))
         self.checkSites()
+        self.checkDatabaseCredentials()
 
     def checkheader(self):
         duplicateCols = {v for v, count in Counter(self.header).items() if count > 1}
@@ -93,6 +94,54 @@ class WebSiteTable:
         duplicateSites = {v for v, count in Counter(sitesList).items() if count > 1}
         if duplicateSites:
             abort("duplicate siteName in table:", str(duplicateSites))
+
+    def checkDatabaseCredentials(self):
+        dir_count:     Counter[str]   = Counter()
+        db_count:      Counter[str]   = Counter()
+        user_count:    Counter[str]   = Counter()
+        password_dict: dict[str, str] = {}
+        ok = True
+
+        for i in range(self.numWebsites):
+            col = self.col2index
+            row = self.table[i]
+
+            wwwSubdir = row[col['wwwSubdir']]
+            dir_count[wwwSubdir] += 1
+
+            dbName    = row[col['dbName']]
+            if dbName == 'none':
+                continue
+
+            dbUser     = row[col['dbUser']]
+            dbPassWord = row[col['dbPassWord']]
+
+            db_count[dbName]   += 1
+            user_count[dbUser] += 1
+
+            if dbUser in password_dict:
+                if dbPassWord != password_dict[dbUser]:
+                    ok = False
+                    print(f"Error: Different passwords for database user: {dbUser}")
+            else:
+                password_dict[dbUser] = dbPassWord
+
+        for f, n in dir_count.items():
+            if n > 1:
+                ok = False
+                print(f"Error: Web folder '{f}' occurs in {n} website entries")
+
+        for u, n in user_count.items():
+            if n > 1:
+                print(f"Warning: DB user '{u}' occurs in {n} website entries")
+
+        for d, n in db_count.items():
+            if n > 1:
+                ok = False
+                print(f"Error: Database '{d}' occurs in {n} website entries")
+
+        if not ok:
+            abort("Errors were detected in website table")
 
     def showall(self, title: str="")  -> None:
         self.show(skippedCols=[], title=title)

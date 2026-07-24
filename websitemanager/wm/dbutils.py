@@ -43,14 +43,15 @@ def get_mysql_open_string(params : Parameters):
             + ' -u' + params.get('sqlmainuser') + ' -s -N ')
 
 # Does the database exist and is accessible by the database user?
-def database_exists(params : Parameters, site : WebSiteData):
+def database_exists(params : Parameters, site : WebSiteData, show : str = 'verbose'):
     # Test the return code of the following command:
     # mysql --defaults-file=FILE --silent -e "quit" DATABASENAME
     defaults_file, db_cred  = get_db_defaults_file(params, site)
     testcommand = (params.get('sql') 
                    + db_cred
                    + ' --silent -e "quit" ' + site.dbName)
-    print('Check whether database already exists and is accessible...')
+    if show == 'verbose':
+        print('Check whether database already exists and is accessible...')
     # To silence output add: stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     result = subprocess.run(testcommand, shell=True, stderr=subprocess.DEVNULL)
     exitcode = result.returncode
@@ -59,9 +60,8 @@ def database_exists(params : Parameters, site : WebSiteData):
         return False
     return True
 
-
 # Does the database user exist?
-def dbuser_exists(params : Parameters, site : WebSiteData):
+def dbuser_exists(params : Parameters, site : WebSiteData, show : str = 'verbose'):
     # mysql --defaults-file=/Backup/script/.mysqlpw -uroot
     #       -s -N -e "SELECT COUNT(*) FROM mysql.user WHERE user='testuser';"
     command = (get_mysql_open_string(params)
@@ -75,9 +75,11 @@ def dbuser_exists(params : Parameters, site : WebSiteData):
         abort('command', command, 'failed')
     result = output.stdout.decode("utf-8")
     if result[0] == '1':
-        print('User', site.dbUser, 'exists in MYSQL user table')
+        if show == 'verbose':
+            print('User', site.dbUser, 'exists in MYSQL user table')
         return True
-    print('User', site.dbUser, 'missing from MYSQL user table')
+    if show == 'verbose':
+        print('User', site.dbUser, 'missing from MYSQL user table')
     return False
 
 def add_dbuser(params : Parameters, site : WebSiteData):
