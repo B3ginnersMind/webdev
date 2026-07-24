@@ -107,6 +107,7 @@ def main():
     install_script(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
     install_script(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
     install_script(webdev_path, 'websitemanager', 'database_pw_adjustment.py', target_folder)
+    install_script(webdev_path, 'websitemanager', 'dbaccess_adjustment.py', target_folder)
     install_script(webdev_path, 'mediawiki', 'mediawiki_update.py', target_folder)
     install_script(webdev_path, 'certs', 'test_cert_renewal.sh', target_folder)
 
