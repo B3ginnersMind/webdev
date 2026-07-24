@@ -139,6 +139,16 @@ Initial version
 - New passwords (if any) are taken from the file website_table.txt.
 - Possible for CMS Joomla, Mediawiki and WordPress.
 
+### dbaccess_adjustment.py
+
+Read, compare and, optionally, adjust database credentials of CMS websites.
+
+- Compare website table database credentials with the CMS config data.
+- Report differences.
+- Optionally, adjust database credentials in the CMS config files to
+  the corresponding values in the website table.
+- This is supported for Joomla, Mediawiki and WordPress.
+
 ### test_cert_renewal.sh in folder certs
 
 Test the renewal of a certificate for a vhost using Certbot.
