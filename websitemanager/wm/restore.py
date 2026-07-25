@@ -5,6 +5,7 @@ except ImportError:
     readline = None
 import glob, os, shutil, tarfile, textwrap
 import wm.utils as u
+import wm.dbaccess as acc
 import wm.dbutils as db
 from wm.websites import WebSiteData
 from wm.config import Parameters
@@ -139,6 +140,13 @@ def restore(params : Parameters, site : WebSiteData, timestamp: str, backupDir: 
             u.RUNNER.do(banotherscommand)
     # Remove temp directory
     u.delete_dir(tempDir)
+
+    # Adjust the database credentials of the config file to the corresponding
+    # values in the website table for supported CMS. The website table credentials
+    # have already been used successfully up to this point.
+    opt: acc.Options = acc.Options()
+    opt.adjust = True
+    acc.adjust_config_after_restore(params, site, opt)
 
     logFile = params.get('logdir') + '/' + site.siteName + '.txt'
     msg = timestamp + ' restored: '

@@ -124,6 +124,13 @@ Initial version
 
 - Introduced column owner of webfile for PHP pool isolation.
 
+### Version 1.8.0
+
+- After restoration of a CMS (Joomla, Wordpress oder Mediawiki) the database
+  credentials are adjusted to the corresponding values in the website table.
+  This makes it possible to restore backups with outdated database settings 
+  and get them up and running right away.
+
 ## Further tiny tools
 
 ### load_site_from_ftp.py

@@ -34,6 +34,8 @@ for further information.
   as the second positional argument.
 - The timestamp of the website recovery archive is an optional argument.
 - Single website actions are logged in a folder specified in the parameter file.
+- After restoration of a CMS (Joomla, Wordpress oder Mediawiki) the database
+  credentials are adjusted to the corresponding values in the website table.
 """
 
 import argparse, os
@@ -44,7 +46,7 @@ import wm.utils as u
 from wm.utils import Operation
 from wm.websites import WebSiteTable
 from wm.config import Parameters
-__version__ = "1.7.0"
+__version__ = "1.8.0"
 
 p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format

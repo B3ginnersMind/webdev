@@ -91,6 +91,7 @@ class DbVar2Data:
             line = "-" * (len(msg) + 27)
             print(line)
 
+VERSION: str = '1.0.0'
 # CMS types. 'static' means there is no CMS.
 CMS_LIST = ['joomla', 'wordpress', 'mediawiki', 'static']
 # Dictionary which contains CMS-specific dataclasses.
@@ -147,6 +148,9 @@ def adjust_config_after_restore(
     it is necessary to adjust the database access data in the CMS configuration file 
     to match the data in the website table. This function does that.
     """
+    print_line()
+    print("adjust_config_after_restore version:", VERSION)
+    # "adjust_config_after_restore"
     found, config_path, cms_name = get_config_cms(params, site, opt)
     # If the CMS config file is not found or if the CMS is unknown, nothing to adjust.
     if not found:
@@ -161,7 +165,7 @@ def adjust_config_after_restore(
     db_table_data.dbPassWord = (cms_data.dbpass, site.dbPassWord)
     db_table_data.host = (cms_data.dbhost, site.host)
     are_equal = compare_and_adjust_table2config(Path(config_path), db_table_data, opt)[0]
-    print(f"Website '{site.siteName}' returned with: {are_equal}")
+    print(f"Website '{site.siteName}' adjustment returned with: {are_equal}")
 
 def compare_and_adjust_table2config(
     config_path: Path, 
