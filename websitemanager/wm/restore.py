@@ -141,12 +141,12 @@ def restore(params : Parameters, site : WebSiteData, timestamp: str, backupDir: 
     # Remove temp directory
     u.delete_dir(tempDir)
 
-    # Adjust the database credentials of the config file to the corresponding
-    # values in the website table for supported CMS. The website table credentials
-    # have already been used successfully up to this point.
+    # If necessary, adjust the database credentials of the config file to match the 
+    # corresponding values in the website table for supported CMS. These credentials
+    # have already been used successfully to access the database up to this point.
     opt: acc.Options = acc.Options()
     opt.adjust = True
-    acc.adjust_config_after_restore(params, site, opt)
+    acc.test_or_adjust_cms_config(params, site, opt)
 
     logFile = params.get('logdir') + '/' + site.siteName + '.txt'
     msg = timestamp + ' restored: '

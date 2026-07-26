@@ -5,7 +5,9 @@ from typing import Union
 from wm.utils import print_line
 from wm.config import Parameters
 import wm.dbutils as db
+import wm.utils as u
 from wm.websites import WebSiteData
+VERSION: str = '1.1.0'
 
 # Supported CMS types and their corresponding database credential definitions.
 #--------------------------------------------------------------------------------------------
@@ -21,6 +23,11 @@ class Options:
     adjust: bool = False
     verbose: int = 1
     dbverbose: str = "quiet"
+
+@dataclass
+class DatabaseAccess:
+    userExists: bool = False
+    dbAccessible: bool = False
 
 @dataclass
 class MyCmsDataBase:
@@ -91,7 +98,6 @@ class DbVar2Data:
             line = "-" * (len(msg) + 27)
             print(line)
 
-VERSION: str = '1.0.0'
 # CMS types. 'static' means there is no CMS.
 CMS_LIST = ['joomla', 'wordpress', 'mediawiki', 'static']
 # Dictionary which contains CMS-specific dataclasses.
@@ -132,25 +138,61 @@ def get_config_cms(
     print(f"Website '{site.siteName}' config file: {config_path}")
     return (True, config_path, cms_name)
 
-def adjust_config_after_restore(
+def test_dbaccess(
+    params: Parameters,
+    site: WebSiteData
+) -> None:
+    _opt = Options(adjust=False)
+    if site.dbUser == 'none':
+        print(f"==> Website '{site.siteName}' without database. Nothing to test.")
+        return
+    has_database_access(params, site, _opt)
+    test_or_adjust_cms_config(params, site, _opt)
+
+def adjust_dbaccess(
+    params: Parameters,
+    site: WebSiteData
+) -> None:
+    _opt = Options(adjust=True)
+    result: DatabaseAccess = has_database_access(params, site, _opt)
+    if result.dbAccessible:
+        test_or_adjust_cms_config(params, site, _opt)
+    else:
+        if result.userExists:
+            print(f"==> Should the database password of '{site.dbUser}'",
+                  "be aligned to the website table password?")
+            u.query_continue()
+            print(f"Changing password of database user '{site.dbUser}' to '{site.dbPassWord}' ...")
+            db.change_dbuser_pw(params, site)
+            result: DatabaseAccess = has_database_access(params, site, _opt)
+            if not result.dbAccessible:
+                print("==> Still not accessible! Check the database!")
+                _opt.adjust = False
+        else:
+            print("==> Check the database users!")
+            _opt.adjust = False
+        test_or_adjust_cms_config(params, site, _opt)
+        if not _opt.adjust:
+            print("==> Adjustment failed! Further action necessary!")
+            quit()
+
+def test_or_adjust_cms_config(
     params: Parameters,
     site: WebSiteData, 
     opt: Options,
 ) -> None:
     """"
-    Adjust the database access data in the CMS configuration file after a 
-    successful website restore.
-    Database restore could have been only successful if the database access data 
-    in the website table is valid. Therefore, it is not necessary to test database 
-    access again. But the database access data in the CMS configuration file 
-    might be different from the data in the website table since the website restore 
-    might have been done from a backup with former database access data. Therefore,
-    it is necessary to adjust the database access data in the CMS configuration file 
-    to match the data in the website table. This function does that.
+    Update the database login details in the CMS configuration file.
+
+    This requires that the database can be accessed using the login details stored 
+    under 'site'. The database access details in the CMS configuration file may differ
+    from those in the website table if the website was restored using a backup 
+    containing out-of-date database access details. In this case, it is therefore 
+    necessary to update the database access details in the CMS configuration file to 
+    match those in the website table. This function takes care of this.
     """
     print_line()
-    print("adjust_config_after_restore version:", VERSION)
-    # "adjust_config_after_restore"
+    print("Running test_or_adjust_cms_config ...")
     found, config_path, cms_name = get_config_cms(params, site, opt)
     # If the CMS config file is not found or if the CMS is unknown, nothing to adjust.
     if not found:
@@ -164,8 +206,7 @@ def adjust_config_after_restore(
     db_table_data.dbUser = (cms_data.dbuser, site.dbUser)
     db_table_data.dbPassWord = (cms_data.dbpass, site.dbPassWord)
     db_table_data.host = (cms_data.dbhost, site.host)
-    are_equal = compare_and_adjust_table2config(Path(config_path), db_table_data, opt)[0]
-    print(f"Website '{site.siteName}' adjustment returned with: {are_equal}")
+    compare_and_adjust_table2config(Path(config_path), db_table_data, opt)[0]
 
 def compare_and_adjust_table2config(
     config_path: Path, 
@@ -228,19 +269,19 @@ def compare_and_adjust_table2config(
         print("".join(new_lines))
         print_line()
     if db_table_data == db_config_data:
-        print("MATCH: Database credentials from website table and config file matched.")
         db_config_data.show("Database credentials in config.")
+        print("MATCH: Database credentials from website table and config file matched.")
         return (True, db_config_data)
     elif not opt.adjust:
-        print("==> CONFLICT: Database credentials from website table and config file conflicting.")
         db_table_data.show("Database credentials in table.")
         db_config_data.show("Database credentials in config.")
+        print("==> CONFLICT: Database credentials from website table and config file conflicting.")
         return (False, db_config_data)
     elif db_table_data == db_config_data_new:
+        # Write the patched CMS config file.
         config_path.write_text("".join(new_lines), encoding="utf-8")
-
-        print("ADJUST: Database credentials from website table inserted in config file.")
         db_config_data_new.show("Adjusted database credentials in config.")
+        print("ADJUST: Database credentials from website table inserted in config file.")
         return (True, db_config_data_new)
     else:
         db_table_data.show("Database credentials in table.")
@@ -270,7 +311,7 @@ def has_database_access(
         params: Parameters, 
         site: WebSiteData, 
         opt: Options
-        ) -> bool:
+        ) -> DatabaseAccess:
     """
     Check whether the database "dbName" of webite "site" is accessible by "dbUser".
     """
@@ -279,10 +320,10 @@ def has_database_access(
     # Check if dbUser exists in the database software?
     if not db.dbuser_exists(params, site, opt.dbverbose):
         print(f"==> User '{site.dbUser}' missing in MYSQL user table")
-        return False
+        return DatabaseAccess(userExists=False)
     # Check whether the database exists and whether dbUser has access to it.
     if not db.database_exists(params, site, opt.dbverbose):
         print(f"==> Database '{site.dbName}' not accessible by user '{site.dbUser}'")
-        return False
+        return DatabaseAccess(userExists=True, dbAccessible=False)
     print(f"Database '{site.dbName}' accessible by user '{site.dbUser}'")
-    return True
+    return DatabaseAccess(userExists=True, dbAccessible=True)
