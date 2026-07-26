@@ -140,16 +140,13 @@ Initial version
 - The timestamp tag of the archive has to contain yyyy-mm-dd.
 - This little helper utility is intended to refresh a local dev installation.
 
-### database_pw_adjustment.py
-
-- Adjust database passwords of websites which use a database.
-- New passwords (if any) are taken from the file website_table.txt.
-- Possible for CMS Joomla, Mediawiki and WordPress.
-
 ### dbaccess_adjustment.py
 
 Read, compare and, optionally, adjust database credentials of CMS websites.
 
+- Version 1.1.0
+- Test whether database credentials in the website table are valid.
+- Optionally, change database passwords if the DB user exists.
 - Compare website table database credentials with the CMS config data.
 - Report differences.
 - Optionally, adjust database credentials in the CMS config files to
