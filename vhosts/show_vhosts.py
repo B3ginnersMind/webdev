@@ -4,12 +4,12 @@
 Output running virtual hosts, and used PHP FPM versions
 on an Ubuntu server with Apache 2.
 The output is shortened for clarity.
-Manfred Koerkel, 22.04.2025
+Manfred Koerkel, 22.04.2025, 27.7.2026
 """
 from subprocess import PIPE, run
 from datetime import datetime
 import re
-__version__ = "1.02"
+__version__ = "1.03"
 
 def get_output(command: str) -> list[str]:
     """runs shell command and returns output as list of strings"""
@@ -31,16 +31,14 @@ phpversions = get_output("systemctl | grep PHP")
 for l in phpversions:
     print(l)
 
-# search only over enabled configs
+# Search only over enabled configs:
+config_dir = "/etc/apache2/sites-enabled"
+# Search over all configs:
+# config_dir = "/etc/apache2/sites-available"
 search_used_php_versions = (
-    "find -L /etc/apache2/sites-enabled -name '*.conf'"
-    " -exec grep '/run/php/php' {} +"
+    "find -L " + config_dir + " -name '*.conf'"
+    " -exec grep -H '/run/php/php' {} + | grep -E -v ':[[:space:]]*#'"
 )
-# search over all configs
-# search_used_php_versions = (
-#    "find /etc/apache2/sites-available -type f -name '*.conf'"
-#    " -exec grep '/run/php/php' {} +"
-#)
 
 usedphp_raw = get_output(search_used_php_versions)
 # shortend output
@@ -49,8 +47,10 @@ for l in usedphp_raw:
     l = re.sub('/etc/apache2/sites-enabled/', '', l)
 #   l = re.sub('/etc/apache2/sites-available/', '', l)
     l = re.sub('proxy:unix:/var/run/php/', '', l)
+    l = re.sub('proxy:unix:/run/php/', '', l)
     l = re.sub('SetHandler ', '', l)
     l = re.sub(r'\.sock\|fcgi://localhost/', '', l)
+    l = re.sub(r'\.sock\|fcgi://localhost', '', l)
     usedphp_shortened.append(l)
 # get max length of config name
 max_len_conf = max(len(l.split()[0]) for l in usedphp_shortened)
