@@ -104,6 +104,7 @@ def main():
     install_script(webdev_path, 'parsecerts', 'parse_certificates.py', target_folder)
     install_script(webdev_path, 'vhosts', 'show_vhosts.py', target_folder)
     install_script(webdev_path, 'vhosts', 'backup_vhost_confs.sh', target_folder)
+    install_script(webdev_path, 'vhosts', 'create_vhost_pool.sh', target_folder)
     install_script(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
     install_script(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
     install_script(webdev_path, 'websitemanager', 'dbaccess_adjustment.py', target_folder)
