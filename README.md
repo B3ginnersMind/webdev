@@ -176,6 +176,7 @@ Display the Letsencrypt certificates in a clear format so that those that need t
 
 - *show_vhosts.py:* Utility for an Ubuntu server with Apache2 that prints out the running virtual hosts and the PHP FPM versions used. The output is truncated and formatted for clarity.
 - *backup_vhost_confs.sh:* Backup all files in /etc/apache2/sites-available
+- *create_vhost_pool.sh:* Create a PHP-FPM pool for an Apache vhost.
 
 ### show_dns.py in folder showdns
 
