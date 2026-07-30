@@ -6,6 +6,20 @@ try:                # for line editing on input for Linux
 except ImportError:
     readline = None
 
+# List of tuples of subdirs and scripts (to be installed from the subdirs):
+SCRIPT_LIST: list[ tuple[str, str] ] = [
+    ('showdns', 'show_dns.py'),
+    ('parsecerts', 'parse_certificates.py'),
+    ('vhosts', 'show_vhosts.py'),
+    ('vhosts', 'backup_vhost_confs.sh'),
+    ('vhosts', 'create_vhost_pool.sh'),
+    ('websitemanager', 'website_manager.py'),
+    ('websitemanager', 'load_site_from_ftp.py'),
+    ('websitemanager', 'dbaccess_adjustment.py'),
+    ('mediawiki', 'mediawiki_update.py'),
+    ('certs', 'test_cert_renewal.sh'),
+]
+
 def abort(msg: str=''):
     if msg != '':
         print('...' + msg)
@@ -29,11 +43,6 @@ def query_int(msg: str, min_value: int, max_value: int) -> int:
     return num
 
 def copy_file(src: str, dest: str):
-    if not os.path.isfile(src):
-        abort('file ' + src + ' is missing')
-    if os.path.isfile(dest):
-        print(dest + ' will be overwritten')
-        query_continue()
     shutil.copy2(src, dest)
     print('copied', src, 'to', dest)
 
@@ -49,11 +58,24 @@ def make_executable(file: str):
     os.chmod(file, st.st_mode | stat.S_IEXEC)
     print(file, 'made executable')
 
-def install_script(webdev_path: str, subdir: str, pyscript: str, target_folder: str):
-    source_file = os.path.join(webdev_path, subdir, pyscript)
-    target_script = os.path.join(target_folder, pyscript)
-    copy_file(source_file, target_script)
-    make_executable(target_script)
+def install_script(webdev_path: str, target_folder: str):
+    for subdir, script in SCRIPT_LIST:
+        source_file = os.path.join(webdev_path, subdir, script)
+        target_script = os.path.join(target_folder, script)
+        if not os.path.isfile(source_file):
+            abort('source file ' + source_file + ' is missing')
+        if os.path.exists(target_script) and not os.path.isfile(target_script):
+            abort(target_script + ' is not a file!')
+        if os.path.isfile(target_script):
+            print(f'==> {target_script} will be overwritten')
+        else:
+            print(f'--> {target_script} is created')
+    query_continue()
+    for subdir, script in SCRIPT_LIST:
+        source_file = os.path.join(webdev_path, subdir, script)
+        target_script = os.path.join(target_folder, script)
+        copy_file(source_file, target_script)
+        make_executable(target_script)
 
 def replace_tree(src: str, dest: str):
     if not os.path.isdir(src):
@@ -100,16 +122,7 @@ def main():
     webdev_path = os.path.dirname(os.path.realpath(__file__))
     print('Install webdev from folder:', webdev_path)
 
-    install_script(webdev_path, 'showdns', 'show_dns.py', target_folder)
-    install_script(webdev_path, 'parsecerts', 'parse_certificates.py', target_folder)
-    install_script(webdev_path, 'vhosts', 'show_vhosts.py', target_folder)
-    install_script(webdev_path, 'vhosts', 'backup_vhost_confs.sh', target_folder)
-    install_script(webdev_path, 'vhosts', 'create_vhost_pool.sh', target_folder)
-    install_script(webdev_path, 'websitemanager', 'website_manager.py', target_folder)
-    install_script(webdev_path, 'websitemanager', 'load_site_from_ftp.py', target_folder)
-    install_script(webdev_path, 'websitemanager', 'dbaccess_adjustment.py', target_folder)
-    install_script(webdev_path, 'mediawiki', 'mediawiki_update.py', target_folder)
-    install_script(webdev_path, 'certs', 'test_cert_renewal.sh', target_folder)
+    install_script(webdev_path, target_folder)
 
     websitemanager_module = os.path.join(webdev_path, 'websitemanager', 'wm')
     websitemanager_module_dest = os.path.join(target_folder, 'wm')
