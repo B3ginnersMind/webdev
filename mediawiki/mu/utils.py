@@ -31,6 +31,7 @@ def read_config(config_path: Path, section: str = "settings") -> UpdateData:
     data.mw_basefolder_new = Path(config.get(section, "mw_basefolder_new"))
     data.release_new = Release(config.get(section, "release_new"))
     data.php_command = config.get(section, "php_command")
+    data.user_owner = config.get(section, "user_owner")
     data.group_owner = config.get(section, "group_owner")
     # int(value, 0):
     # Base 0 means "auto-detect the base from the prefix"

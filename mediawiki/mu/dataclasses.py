@@ -66,9 +66,10 @@ class UpdateData:
    def test_input(self):
       if not self.mw_folder_live.is_dir():
          raise ValueError(f"Invalid live release: {self.mw_folder_live}")
+      if (self.release_new.minor == 0):
+         raise ValueError(f"Prohibited required minor zero release: {self.release_new}")
       if (self.release_new.main == 0 
          or self.release_new.major == 0
-         or self.release_new.minor == 0
          ):
          raise ValueError(f"Invalid required release: {self.release_new}")
 
