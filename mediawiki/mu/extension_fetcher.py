@@ -5,7 +5,7 @@ import mu.utils as utils
 from mu.extension_link_finder import get_extension_link
 from mu.dataclasses import UpdateData
 
-def fetch_missing_extensions(d: UpdateData, missing_extensions: list) -> None:
+def fetch_missing_extensions(d: UpdateData, missing_extensions: list[str]) -> None:
     """
     Fetch and install missing extensions into the new Mediawiki installation.
     Args:

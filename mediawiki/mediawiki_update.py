@@ -14,11 +14,11 @@ group_owner = www-data
 dir_mode = 0o750
 file_mode = 0o640
 """
-__version__ = "1.08"
+__version__ = "1.10"
 import argparse, logging, os, platform
 from pathlib import Path
 import mu.utils as utils
-from mu.dataclasses import Release, UpdateData
+from mu.dataclasses import UpdateData
 from mu.mediawiki_fetcher import get_mediawiki_release
 from mu.mediawiki_version_detector import detect_mediawiki_version
 from mu.missing_folders import get_missing_folders

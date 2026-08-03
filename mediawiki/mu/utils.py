@@ -1,5 +1,5 @@
 
-import configparser, grp, logging, os, pwd, shutil, zipfile
+import configparser, grp, logging, os, platform, pwd, shutil, zipfile
 import mu.constants as const
 from subprocess import run
 from pathlib import PurePosixPath, Path
@@ -53,7 +53,7 @@ def get_zip_root_folder(zip_path: str) -> str:
     exactly one top-level directory tree.
     """
     with zipfile.ZipFile(zip_path, "r") as zf:
-        roots = set()
+        roots: set[str] = set()
 
         for name in zf.namelist():
             # Ignore empty entries
@@ -111,7 +111,9 @@ def fix_permissions_mw_folder_new(d: UpdateData):
     Adjust the permissions for the webfile tree (owner and mode).
     Take the values frim the ini file. Owner change skipped without sudo!
     """
-    do_chown = os.getuid() == 0
+    if platform.system() != 'Linux': # type: ignore
+        return
+    do_chown = os.getuid() == 0      # type: ignore
     folder: Path = d.mw_folder_new
     logging.info(f"Fix permissions of folder tree: {folder}")
     if not do_chown:
@@ -119,14 +121,14 @@ def fix_permissions_mw_folder_new(d: UpdateData):
     if not folder.is_dir():
         raise ValueError(f"{folder} is not a directory")
     if do_chown: # Resolve uid and gid
-        uid = pwd.getpwnam(d.user_owner).pw_uid
-        gid = grp.getgrnam(d.group_owner).gr_gid
+        uid = pwd.getpwnam(d.user_owner).pw_uid  # type: ignore
+        gid = grp.getgrnam(d.group_owner).gr_gid # type: ignore
     # Change root folder
     os.chmod(folder, d.dir_mode)
-    if do_chown: os.chown(folder, uid, gid)
+    if do_chown: os.chown(folder, uid, gid)      # type: ignore
     # Walk directory tree
     for p in folder.rglob("*"):
-        if do_chown: os.chown(p, uid, gid)
+        if do_chown: os.chown(p, uid, gid)      # type: ignore
         if p.is_dir():
             os.chmod(p, d.dir_mode)
         else:
@@ -157,7 +159,7 @@ def run_php(d: UpdateData, php_script_call: str):
     'php_script_call' contains the actual PHP commands.
     """
     logging.info(const.SHORT_LINE + " run_php:")
-    command = list()
+    command: list[str] = []
     command.append(d.php_command)
     command.extend(php_script_call.split(" "))
 

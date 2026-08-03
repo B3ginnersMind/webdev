@@ -1,4 +1,4 @@
-import logging, os, re
+import logging, re
 from pathlib import Path
 from mu.dataclasses import Release
 import mu.constants as const

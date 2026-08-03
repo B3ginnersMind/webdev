@@ -4,13 +4,13 @@ from urllib.parse import urljoin
 import mu.constants as const
 
 class LinkParser(HTMLParser):
-    def __init__(self, base_url, prefix):
+    def __init__(self, base_url: str, prefix: str):
         super().__init__()
         self.base_url = base_url
         self.prefix = prefix
-        self.links = []
+        self.links: list[str] = []
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]):
         """
         Handle start tags <a ..> in HTML and collect links that match the prefix.
         attrs: list of (attribute, value) tuples
@@ -19,7 +19,7 @@ class LinkParser(HTMLParser):
         if tag == "a":
             for k, v in attrs:  # look for href attributes
                 if k == "href":
-                    full_url = urljoin(self.base_url, v)
+                    full_url = str(urljoin(self.base_url, v))
                     if full_url.startswith(self.prefix):
                         self.links.append(full_url)
 

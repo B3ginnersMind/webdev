@@ -60,7 +60,7 @@ def get_mediawiki_release(d: UpdateData) -> None:
     -  No external libraries
     """
     logging.info(const.SHORT_LINE + f" get_mediawiki_release: {d.release_new}")
-    filename = f"mediawiki-{d.release_new}.tar.gz"
+    filename = str(f"mediawiki-{d.release_new}.tar.gz")
     logging.info(f"Requested Mediawiki archive: {filename}")
     url = (
         f"{const.MEDIAWIKI_RELEASE_BASE_URL}1.{d.release_new.major}/{filename}"

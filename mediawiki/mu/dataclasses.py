@@ -1,7 +1,9 @@
 import logging, os
 from pathlib import Path
 from dataclasses import dataclass
+_UNSET_PATH = Path("/unset/path")
 
+# Decorator for dataclass with ordering
 @dataclass(order=True)
 class Release:
    """ Mediawiki release """
@@ -23,16 +25,18 @@ class Release:
    def __str__(self) -> str:
       return f"{self.main}.{self.major}.{self.minor}"
 
+_UNSET_RELEASE = Release()
+
 @dataclass
 class UpdateData:
    """
    Data for live and new Mediawiki files
    """
-   mw_folder_live: Path = None
-   release_live: Release = None
-   mw_basefolder_new: Path = None
-   release_new: Release = None
-   mw_folder_new: Path = None
+   mw_folder_live: Path = _UNSET_PATH
+   release_live: Release = _UNSET_RELEASE
+   mw_basefolder_new: Path = _UNSET_PATH
+   release_new: Release = _UNSET_RELEASE
+   mw_folder_new: Path = _UNSET_PATH
    php_command: str = "php"
    user_owner: str = "www-data"
    group_owner: str = "www-data"
@@ -40,7 +44,7 @@ class UpdateData:
    file_mode: int = int(0o640)
 
    def release_basefolder(self) -> Path:
-      if self.mw_basefolder_new is None or self.release_new is None:
+      if self.mw_basefolder_new is _UNSET_PATH or self.release_new is _UNSET_RELEASE:
          raise ValueError("mw_basefolder_new and release_new must be set")
       rel_folder = self.mw_basefolder_new / \
                    f"{self.release_new.main}.{self.release_new.major}"
@@ -66,8 +70,6 @@ class UpdateData:
    def test_input(self):
       if not self.mw_folder_live.is_dir():
          raise ValueError(f"Invalid live release: {self.mw_folder_live}")
-      if (self.release_new.minor == 0):
-         raise ValueError(f"Prohibited required minor zero release: {self.release_new}")
       if (self.release_new.main == 0 
          or self.release_new.major == 0
          ):
@@ -77,7 +79,6 @@ class UpdateData:
       self.test_input()
       if (self.release_live.main == 0 
          or self.release_live.major == 0
-         or self.release_live.minor == 0
          ):
          raise ValueError(f"Invalid live release: {self.release_live}")
       if self.release_new <= self.release_live:

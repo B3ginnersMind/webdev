@@ -6,14 +6,14 @@ import mu.constants as const
 import mu.utils as utils
 from mu.dataclasses import UpdateData
 
-def fetch_missing_skins(d: UpdateData, missing_skins: list) -> None:
+def fetch_missing_skins(d: UpdateData, missing_skins: list[str]) -> None:
     """
     Docstring for fetch_missing_skins
     
     :param d: read release_basefolder() and mw_folder_new
     :type d: UpdateData
     :param missing_skins: names of missing skins in new Mediawiki release
-    :type missing_skins: list
+    :type missing_skins: list[str]
 
     Only skin Citizen is treated. Its latest zip archive is downloaded and extracted.
     The skin is then moved to the folder of the new Mediawiki release.
@@ -33,7 +33,7 @@ def fetch_missing_skins(d: UpdateData, missing_skins: list) -> None:
                 logging.warning(f"Failed to download Citizen skin archive.")
                 continue
             
-            root: str = utils.get_zip_root_folder(archive_path)
+            root: str = utils.get_zip_root_folder(str(archive_path))
             logging.info(f"Root folder in zip: {root}")
             extraction_folder: Path = d.release_basefolder() / root
             utils.remtree(extraction_folder)

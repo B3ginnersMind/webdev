@@ -4,7 +4,7 @@
 
 `mediawiki_update.py` is an automated tool for updating a live MediaWiki installation to a new version. It handles the entire update workflow including downloading the new release, managing extensions and skins, and executing the database migration scripts.
 
-**Version:** 1.08
+- **Version 1.10:** Mediawiki releases with minor=0  may be installed.
 
 ## Purpose
 
