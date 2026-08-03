@@ -25,16 +25,19 @@ def is_valid_targz(filepath: Path | str) -> bool:
         
     except EOFError:
         # Typischer Fehler, wenn der Download mittendrin abriss
+        logging.error(f"Archive with: {type(EOFError).__name__}")
         return False
     except tarfile.ReadError:
         # Das Archiv ist kein gültiges Tar-Archiv oder stark beschädigt
+        logging.error(f"Archive with: {type(tarfile.ReadError).__name__}")
         return False
     except (gzip.BadGzipFile, zlib.error):
         # Fehler in der Gzip-Kompressionsebene
+        logging.error(f"Archive with: {type(gzip.BadGzipFile).__name__}")
         return False
     except Exception as e:
-        print("Unexpected Exception:", type(e).__name__) 
         # Genereller Fallback für unerwartete I/O-Fehler
+        logging.error(f"Archive with unexpected: {type(e).__name__}")
         return False
 
 def download_mediawiki_archive(url: str, target_path: Path) -> None:
@@ -49,7 +52,7 @@ def download_mediawiki_archive(url: str, target_path: Path) -> None:
     )
     logging.info(f"Downloading from: {url}")
     try:
-        with urllib.request.urlopen(req, timeout=90) as response, \
+        with urllib.request.urlopen(req, timeout=180) as response, \
              open(target_path, "wb") as out:
 
             # Stream download (memory-saving)
