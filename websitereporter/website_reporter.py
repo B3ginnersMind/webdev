@@ -25,7 +25,7 @@ if os.getuid() != 0: # type: ignore
 currenttime = time.strftime('%d.%m.%Y %H:%M')
 script_name = os.path.basename(__file__)
 print('== Generate reports on runnung virtual hosts ==')
-print(' This is Python script', script_name, 'version', __version__)
+print('This is Python script', script_name, 'version', __version__)
 print('Query time:', currenttime)
 
 p = argparse.ArgumentParser(
