@@ -101,10 +101,11 @@ def get_document_roots(apache_config_dir: str) -> list[Path]:
         match = pattern.search(line)
         if match:
             docroot_list.append(Path(match.group(1)))
+    unique_docroots = list(set(docroot_list))
     if _VERBOSE:
-        for path in docroot_list:
+        for path in unique_docroots:
             print(f"Extracted document root: {path}")
-    return docroot_list
+    return unique_docroots
 
 def get_subdirectories(base_path: Path) -> list[Path]:
     print("Find subdirectories in       :", base_path)
