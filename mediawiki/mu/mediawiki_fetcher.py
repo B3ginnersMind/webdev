@@ -1,7 +1,7 @@
 """
 Download and extract a MediaWiki release archive.
 """
-import logging, os, tarfile
+import logging, os, socket, tarfile
 import urllib.request
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -21,7 +21,7 @@ def download_mediawiki_archive(url: str, target_path: Path) -> None:
     )
     logging.info(f"Downloading from: {url}")
     try:
-        with urllib.request.urlopen(req, timeout=30) as response, \
+        with urllib.request.urlopen(req, timeout=90) as response, \
              open(target_path, "wb") as out:
 
             # Stream download (memory-saving)
@@ -36,9 +36,22 @@ def download_mediawiki_archive(url: str, target_path: Path) -> None:
         raise RuntimeError(
             f"HTTP-Fehler {e.code} beim Download von {url}"
         ) from e
+        
     except URLError as e:
+        # Prüfung: War die Ursache für den URLError ein Timeout beim Verbindungsaufbau?
+        if isinstance(e.reason, (TimeoutError, socket.timeout)):
+            raise RuntimeError(
+                f"Timeout beim Verbindungsaufbau zu {url}"
+            ) from e
+            
         raise RuntimeError(
             f"Netzwerkfehler beim Download von {url}: {e.reason}"
+        ) from e
+        
+    except (TimeoutError, socket.timeout) as e:
+        # Wird geworfen, wenn der Timeout WÄHREND des Lesens (response.read) auftritt
+        raise RuntimeError(
+            f"Timeout während der Datenübertragung von {url}"
         ) from e
 
 def get_mediawiki_release(d: UpdateData) -> None:
