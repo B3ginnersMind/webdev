@@ -120,10 +120,10 @@ def get_subdirectories(base_path: Path) -> list[Path]:
     return sub_dirs
 
 def show_num_websites(cms: str, path_list: list[Path]):
-    common_root: str = os.path.commonpath(path_list)
-    if common_root[-1] != '/':
-        common_root += '/'
     if (len(path_list) > 0):
+        common_root: str = os.path.commonpath(path_list)
+        if common_root[-1] != '/':
+            common_root += '/'
         path_list.sort()
         # dir_names: list[str] = [p.name for p in path_list]
         dir_names: list[str] = [re.sub(common_root, '', str(p)) for p in path_list]
