@@ -1,7 +1,7 @@
 """
 Download and extract a MediaWiki release archive.
 """
-import datetime, logging, os, socket, tarfile
+import datetime, logging, os, socket, tarfile, time
 import urllib.request, gzip, zlib
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -17,27 +17,22 @@ def is_valid_targz(filepath: Path | str) -> bool:
         # "r:gz" weist tarfile an, das Archiv als gzip-komprimiert zu behandeln
         with tarfile.open(filepath, "r:gz") as tar:
             # getmembers() liest die Metadaten aller Dateien im Archiv.
-            # Fehlt das korrekte Dateiende (EOF) durch einen abgebrochenen Download,
-            # wird hier eine Exception geworfen.
+            # Fehlt das korrekte Dateiende (EOF) durch einen abgebrochenen
+            # Download, wird hier eine Exception geworfen.
             tar.getmembers()
-            
         return True
         
     except EOFError:
-        # Typischer Fehler, wenn der Download mittendrin abriss
-        logging.error(f"Archive with: {type(EOFError).__name__}")
+        logging.error(f"Archive with: EOFError")
         return False
     except tarfile.ReadError:
-        # Das Archiv ist kein gültiges Tar-Archiv oder stark beschädigt
-        logging.error(f"Archive with: {type(tarfile.ReadError).__name__}")
+        logging.error(f"Archive with: tarfile.ReadError")
         return False
     except (gzip.BadGzipFile, zlib.error):
-        # Fehler in der Gzip-Kompressionsebene
-        logging.error(f"Archive with: {type(gzip.BadGzipFile).__name__}")
+        logging.error(f"Archive with: (gzip.BadGzipFile, zlib.error")
         return False
     except Exception as e:
-        # Genereller Fallback für unerwartete I/O-Fehler
-        logging.error(f"Archive with unexpected: {type(e).__name__}")
+        logging.error(f"Archive with unknown Exception: {type(e).__name__}")
         return False
 
 def download_mediawiki_archive(url: str, target_path: Path) -> None:
@@ -53,8 +48,7 @@ def download_mediawiki_archive(url: str, target_path: Path) -> None:
     logging.info(f"Downloading from: {url}")
     try:
         with urllib.request.urlopen(req, timeout=180) as response, \
-             open(target_path, "wb") as out:
-
+                                    open(target_path, "wb") as out:
             # Stream download (memory-saving)
             block_size = 1024 * 64  # 64 KB
             while True:
@@ -64,26 +58,87 @@ def download_mediawiki_archive(url: str, target_path: Path) -> None:
                 out.write(chunk)
 
     except HTTPError as e:
-        raise RuntimeError(
-            f"HTTP-Fehler {e.code} beim Download von {url}"
-        ) from e
-        
+        raise RuntimeError(f"HTTP-Fehler {e.code} beim Download von {url}") from e
     except URLError as e:
         # Prüfung: War die Ursache für den URLError ein Timeout beim Verbindungsaufbau?
         if isinstance(e.reason, (TimeoutError, socket.timeout)):
-            raise RuntimeError(
-                f"Timeout beim Verbindungsaufbau zu {url}"
-            ) from e
-            
-        raise RuntimeError(
-            f"Netzwerkfehler beim Download von {url}: {e.reason}"
-        ) from e
-        
+            raise RuntimeError(f"Timeout beim Verbindungsaufbau zu {url}") from e
+        raise RuntimeError(f"Netzwerkfehler beim Download von {url}: {e.reason}") from e
     except (TimeoutError, socket.timeout) as e:
         # Wird geworfen, wenn der Timeout WÄHREND des Lesens (response.read) auftritt
         raise RuntimeError(
             f"Timeout während der Datenübertragung von {url}"
         ) from e
+
+def download_mediawiki_archive_robust(url: str, target_path: Path, max_retries: int = 5) -> None:
+    logging.info(f"Downloading from: {url}")
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) MediaWiki-updater/1.0",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+    }
+    
+    retries = 0
+    while retries < max_retries:
+        # Prüfen, wie viel bereits heruntergeladen wurde
+        current_size = target_path.stat().st_size if target_path.exists() else 0
+        
+        req = urllib.request.Request(url, headers=headers)
+        
+        # Wenn wir schon Daten haben, fordern wir nur den Rest an (Resume)
+        if current_size > 0:
+            req.add_header("Range", f"bytes={current_size}-")
+            logging.info(f"Setze Download fort ab Byte {current_size}...")
+
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                # Gesamtgröße der Datei bestimmen (nur beim ersten Versuch möglich/nötig)
+                expected_length = response.getheader('Content-Length')
+                
+                # Wenn es ein Resume ist (HTTP 206), müssen wir die Größen addieren
+                if response.status == 206 and expected_length:
+                    total_size = current_size + int(expected_length)
+                elif expected_length:
+                    total_size = int(expected_length)
+                else:
+                    total_size = None # Server sendet keine Länge mit
+
+                # Datei öffnen (anhängen, wenn wir fortsetzen, sonst neu schreiben)
+                mode = "ab" if current_size > 0 else "wb"
+                with open(target_path, mode) as out:
+                    block_size = 1024 * 64
+                    while True:
+                        chunk = response.read(block_size)
+                        if not chunk:
+                            break
+                        out.write(chunk)
+                
+                # Nach der Schleife: Prüfen, ob wir wirklich alles haben
+                final_size = target_path.stat().st_size
+                if total_size and final_size < total_size:
+                    logging.warning(f"Download vorzeitig vom Server beendet ({final_size}/{total_size} Bytes). Starte neuen Versuch...")
+                    retries += 1
+                    time.sleep(2) # Kurze Pause vor dem Reconnect
+                    continue # Nächster Versuch in der while-Schleife
+                    
+                # Wenn wir hier ankommen, ist die Datei komplett
+                logging.info("Download erfolgreich abgeschlossen.")
+                return
+
+        except HTTPError as e:
+            # HTTP 416 bedeutet "Requested Range Not Satisfiable" (Datei ist schon komplett fertig)
+            if e.code == 416:
+                logging.info("Download war bereits vollständig.")
+                return
+            raise RuntimeError(f"HTTP-Fehler {e.code} beim Download") from e
+            
+        except (URLError, TimeoutError, ConnectionResetError) as e:
+            logging.warning(f"Netzwerkfehler: {e}. Versuche es erneut...")
+            retries += 1
+            time.sleep(2)
+
+    raise RuntimeError(f"Download nach {max_retries} Versuchen fehlgeschlagen.")
 
 def get_mediawiki_release(d: UpdateData) -> None:
     """
@@ -124,7 +179,8 @@ def get_mediawiki_release(d: UpdateData) -> None:
             archive_path.unlink()
     if not valid_archive_already_exists:
         start_time = datetime.datetime.now()
-        download_mediawiki_archive(url, archive_path)
+        # download_mediawiki_archive(url, archive_path)
+        download_mediawiki_archive_robust(url, archive_path)
         end_time = datetime.datetime.now()
         elapsed_time = str((end_time - start_time).total_seconds())
         logging.info(f"Time elapsed during the download: {elapsed_time} sec")
