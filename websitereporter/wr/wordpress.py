@@ -17,11 +17,12 @@ def check_wordpress_sites(cms: CmsLists):
     print("==> Wordpress sites:")
     for dir in cms.wordpress_sites:
         print_line()
-        print(dir)
+        print("==> Worpress website at:", dir)
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)
         os.chdir(dir)
         u.run_command(f"{wp_cli(owner)} core version")
+        u.run_command(f"{wp_cli(owner)} core check-update")
         u.run_command(f"{wp_cli(owner)} core verify-checksums")
         u.run_command(f"{wp_cli(owner)} plugin verify-checksums --all")
         u.run_command(f"{wp_cli(owner)} plugin list")
