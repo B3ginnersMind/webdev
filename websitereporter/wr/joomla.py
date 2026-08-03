@@ -1,6 +1,6 @@
 import os, re
 from wr import utils as u
-from wr.utils import CmsLists, Release
+from wr.utils import CmsPaths, Release
 from wr.utils import print_line, print_double_line
 from pathlib import Path
 _UNSET_RELEASE = Release()
@@ -34,7 +34,7 @@ def joomla_cli(owner: str) -> str:
 
 # cli/joomla.php has been available since Joomla 4.0
 # php cli/joomla.php core:version
-def check_joomla_sites(cms: CmsLists):
+def check_joomla_sites(cms: CmsPaths):
     print_double_line()
     if len(cms.joomla_sites) == 0:
         print("==> Joomla sites: none")

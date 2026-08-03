@@ -1,6 +1,6 @@
 import os, re
 from wr import utils as u
-from wr.utils import CmsLists, Release
+from wr.utils import CmsPaths, Release
 from wr.utils import print_line
 from pathlib import Path
 _UNSET_RELEASE = Release()
@@ -31,7 +31,7 @@ def detect_mediawiki_version(folder: Path) -> Release:
                 return Release(release)
     return _UNSET_RELEASE
 
-def check_mediawiki_sites(cms: CmsLists):
+def check_mediawiki_sites(cms: CmsPaths):
     print_line()
     if len(cms.mediawiki_sites) == 0:
         print("==> Mediawiki sites: none")

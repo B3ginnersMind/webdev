@@ -13,7 +13,7 @@ import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -48,7 +48,7 @@ args = p.parse_args()
 u.print_double_line()
 doc_roots: list[Path] = u.get_document_roots("/etc/apache2/sites-enabled")
 # doc_roots: list[Path] = u.get_subdirectories(Path("/var/www"))
-cms: u.CmsLists = u.detect_cms(doc_roots)
+cms: u.CmsPaths = u.detect_cms(doc_roots)
 if args.joomla:
     j.check_joomla_sites(cms)
 if args.mediawiki:

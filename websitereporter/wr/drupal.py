@@ -1,8 +1,8 @@
 import os
-from wr.utils import CmsLists
+from wr.utils import CmsPaths
 import wr.utils as u
 
-def check_drupal_sites(cms: CmsLists):
+def check_drupal_sites(cms: CmsPaths):
     u.print_double_line()
     if len(cms.drupal_sites) == 0:
         print("==> Drupal sites: none")

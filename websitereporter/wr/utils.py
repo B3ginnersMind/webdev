@@ -18,7 +18,7 @@ class CmsTypes:
     static: str = "Static"
 
 @dataclass
-class CmsLists:
+class CmsPaths:
     drupal_sites: list[Path] = field(default_factory=list[Path])
     joomla_sites: list[Path] = field(default_factory=list[Path])
     mediawiki_sites: list[Path] = field(default_factory=list[Path])
@@ -120,25 +120,23 @@ def get_subdirectories(base_path: Path) -> list[Path]:
             print(f"Found subdirectory: {path}")
     return sub_dirs
 
-def show_num_websites(cms: str, path_list: list[Path]):
+def show_num_websites(cms: str, path_list: list[Path], common_root: str):
     if (len(path_list) > 0):
-        common_root: str = os.path.commonpath(path_list)
-        if common_root[-1] != '/':
-            common_root += '/'
         path_list.sort()
-        # dir_names: list[str] = [p.name for p in path_list]
         dir_names: list[str] = [re.sub(common_root, '', str(p)) for p in path_list]
         adjusted_name = cms.ljust(10)
         name_str: str = ", ".join(dir_names)
         print(f"Detected websites {adjusted_name} : {name_str}")
 
-def detect_cms(doc_roots: list[Path]) -> CmsLists:
+def detect_cms(doc_roots: list[Path]) -> CmsPaths:
     print("Number of scanned WebDocRoots:", len(doc_roots))
     types = CmsTypes()
     cms_type = ""
-    cms_lists = CmsLists()
+    cms_paths = CmsPaths()
+    common_root = os.path.commonpath(doc_roots)
+    if common_root[-1] != '/':
+        common_root += '/'
 
-    #doc_roots: list[Path] = []
     num_skipped_symlinks = 0
     # iterdir() yields all files and folders in the directory (no recursion)
     for web_root in doc_roots:
@@ -151,34 +149,34 @@ def detect_cms(doc_roots: list[Path]) -> CmsLists:
             continue
         if (web_root / types.joomla_detect).exists():
             cms_type = types.joomla
-            cms_lists.joomla_sites.append(web_root)
+            cms_paths.joomla_sites.append(web_root)
         elif (web_root / types.mediawiki_detect).exists():
             cms_type = types.mediawiki
-            cms_lists.mediawiki_sites.append(web_root)
+            cms_paths.mediawiki_sites.append(web_root)
         elif (web_root / types.wordpress_detect).exists():
             cms_type = types.wordpress
-            cms_lists.wordpress_sites.append(web_root)
+            cms_paths.wordpress_sites.append(web_root)
         elif (web_root / types.drupal_detect).exists():
             cms_type = types.drupal
-            cms_lists.drupal_sites.append(web_root)
+            cms_paths.drupal_sites.append(web_root)
         elif has_file_extension(str(web_root), types.unknown_php_detect):
             cms_type = types.unknown
-            cms_lists.unknown_php_sites.append(web_root)
+            cms_paths.unknown_php_sites.append(web_root)
         else:
-            cms_lists.static_sites.append(web_root)
+            cms_paths.static_sites.append(web_root)
         if _VERBOSE:
             print(f"Folder {web_root} : {cms_type} detected")
 
-    show_num_websites(CmsTypes.drupal, cms_lists.drupal_sites)
-    show_num_websites(CmsTypes.joomla, cms_lists.joomla_sites)
-    show_num_websites(CmsTypes.mediawiki, cms_lists.mediawiki_sites)
-    show_num_websites(CmsTypes.wordpress, cms_lists.wordpress_sites)
-    show_num_websites(CmsTypes.static, cms_lists.static_sites)
-    show_num_websites(CmsTypes.unknown, cms_lists.unknown_php_sites)
+    show_num_websites(CmsTypes.drupal, cms_paths.drupal_sites, common_root)
+    show_num_websites(CmsTypes.joomla, cms_paths.joomla_sites, common_root)
+    show_num_websites(CmsTypes.mediawiki, cms_paths.mediawiki_sites, common_root)
+    show_num_websites(CmsTypes.wordpress, cms_paths.wordpress_sites, common_root)
+    show_num_websites(CmsTypes.static, cms_paths.static_sites, common_root)
+    show_num_websites(CmsTypes.unknown, cms_paths.unknown_php_sites, common_root)
     print("Skipped symlinked websites   :", num_skipped_symlinks)
-    return cms_lists
+    return cms_paths
 
-def check_static_sites(cms: CmsLists):
+def check_static_sites(cms: CmsPaths):
     print_line()
     if len(cms.static_sites) == 0:
         print("==> Static sites: none")
