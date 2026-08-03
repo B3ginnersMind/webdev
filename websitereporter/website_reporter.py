@@ -6,14 +6,14 @@ The document roots are taken from the Apache vhost config files.
 Without any arguments, the script will only list all detected vhost types.
 Detectable vhost types are Joomla, MediaWiki, WordPress, Drupal and static sites.
 """
-import argparse, os, platform
+import argparse, os, platform, time
 from pathlib import Path
 import wr.utils as u
 import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -21,6 +21,12 @@ if platform.system() != 'Linux':
 if os.getuid() != 0: # type: ignore
     print(f"Skript not run as root. Exiting...")
     quit()
+
+currenttime = time.strftime('%d.%m.%Y %H:%M')
+script_name = os.path.basename(__file__)
+print('== Generate reports on runnung virtual hosts ==')
+print(' This is Python script', script_name, 'version', __version__)
+print('Query time:', currenttime)
 
 p = argparse.ArgumentParser(
     description=__doc__,
