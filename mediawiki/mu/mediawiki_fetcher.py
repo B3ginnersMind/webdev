@@ -2,12 +2,40 @@
 Download and extract a MediaWiki release archive.
 """
 import logging, os, socket, tarfile
-import urllib.request
+import urllib.request, gzip, zlib
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 import mu.utils as utils
 from mu.dataclasses import UpdateData
 import mu.constants as const
+
+def is_valid_targz(filepath: Path | str) -> bool:
+    """
+    Prüft, ob ein .tar.gz Archiv valide und vollständig ist.
+    """
+    try:
+        # "r:gz" weist tarfile an, das Archiv als gzip-komprimiert zu behandeln
+        with tarfile.open(filepath, "r:gz") as tar:
+            # getmembers() liest die Metadaten aller Dateien im Archiv.
+            # Fehlt das korrekte Dateiende (EOF) durch einen abgebrochenen Download,
+            # wird hier eine Exception geworfen.
+            tar.getmembers()
+            
+        return True
+        
+    except EOFError:
+        # Typischer Fehler, wenn der Download mittendrin abriss
+        return False
+    except tarfile.ReadError:
+        # Das Archiv ist kein gültiges Tar-Archiv oder stark beschädigt
+        return False
+    except (gzip.BadGzipFile, zlib.error):
+        # Fehler in der Gzip-Kompressionsebene
+        return False
+    except Exception as e:
+        print("Unexpected Exception:", type(e).__name__) 
+        # Genereller Fallback für unerwartete I/O-Fehler
+        return False
 
 def download_mediawiki_archive(url: str, target_path: Path) -> None:
     req = urllib.request.Request(
@@ -82,11 +110,18 @@ def get_mediawiki_release(d: UpdateData) -> None:
     target_folder = d.mw_basefolder_new
     os.makedirs(target_folder, exist_ok=True)
     archive_path: Path = target_folder / filename
+    valid_archive_already_exists = False
     if archive_path.is_file():
-        logging.warning("Archive file already exists, keep it")
-    else:
+        if is_valid_targz(archive_path):
+            logging.warning("Archive file already exists, keep it")
+            valid_archive_already_exists = True
+        else:
+            logging.warning("Existing archive file corrupted, remove it")
+            valid_archive_already_exists = False
+            archive_path.unlink()
+    if not valid_archive_already_exists:
         download_mediawiki_archive(url, archive_path)
-    
+
     d.mw_folder_new = target_folder / f"mediawiki-{d.release_new}"
     utils.remtree(d.mw_folder_new)
 
