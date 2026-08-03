@@ -1,7 +1,7 @@
 """
 Download and extract a MediaWiki release archive.
 """
-import logging, os, socket, tarfile
+import datetime, logging, os, socket, tarfile
 import urllib.request, gzip, zlib
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -120,7 +120,21 @@ def get_mediawiki_release(d: UpdateData) -> None:
             valid_archive_already_exists = False
             archive_path.unlink()
     if not valid_archive_already_exists:
+        start_time = datetime.datetime.now()
         download_mediawiki_archive(url, archive_path)
+        end_time = datetime.datetime.now()
+        elapsed_time = str((end_time - start_time).total_seconds())
+        logging.info(f"Time elapsed during the download: {elapsed_time} sec")
+    if not archive_path.is_file():
+        logging.error("Downloaded archive file missing. Exit.")
+        raise RuntimeError(
+            f"Error: Missing archive file download: {archive_path}"
+        )
+    if not is_valid_targz(archive_path):
+        logging.error("Downloaded archive corrupted. Exit.")
+        raise RuntimeError(
+            f"Error: Corrupted archive file download: {archive_path}"
+        )
 
     d.mw_folder_new = target_folder / f"mediawiki-{d.release_new}"
     utils.remtree(d.mw_folder_new)
