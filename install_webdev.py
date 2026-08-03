@@ -6,8 +6,8 @@ try:                # for line editing on input for Linux
 except ImportError:
     readline = None
 
-# List of tuples of subdirs and scripts (to be installed from the subdirs):
-SCRIPT_LIST: list[ tuple[str, str] ] = [
+# List of tuples comprising subdirectories and scripts they contain:
+_TOOL_LIST: list[ tuple[str, str] ] = [
     ('showdns', 'show_dns.py'),
     ('parsecerts', 'parse_certificates.py'),
     ('vhosts', 'show_vhosts.py'),
@@ -16,8 +16,16 @@ SCRIPT_LIST: list[ tuple[str, str] ] = [
     ('websitemanager', 'website_manager.py'),
     ('websitemanager', 'load_site_from_ftp.py'),
     ('websitemanager', 'dbaccess_adjustment.py'),
+    ('websitereporter', 'website_reporter.py'),
     ('mediawiki', 'mediawiki_update.py'),
     ('certs', 'test_cert_renewal.sh'),
+]
+
+# List of of tuples of tool dirs and its module subdirectories:
+_MODULE_LIST: list[ tuple[str, str] ] = [
+    ('websitemanager', 'wm'),
+    ('websitereporter', 'wr'),
+    ('mediawiki', 'mu'),
 ]
 
 def abort(msg: str=''):
@@ -58,8 +66,8 @@ def make_executable(file: str):
     os.chmod(file, st.st_mode | stat.S_IEXEC)
     print(file, 'made executable')
 
-def install_script(webdev_path: str, target_folder: str):
-    for subdir, script in SCRIPT_LIST:
+def install_tool_scripts(webdev_path: str, target_folder: str):
+    for subdir, script in _TOOL_LIST:
         source_file = os.path.join(webdev_path, subdir, script)
         target_script = os.path.join(target_folder, script)
         if not os.path.isfile(source_file):
@@ -71,7 +79,7 @@ def install_script(webdev_path: str, target_folder: str):
         else:
             print(f'--> {target_script} is created')
     query_continue()
-    for subdir, script in SCRIPT_LIST:
+    for subdir, script in _TOOL_LIST:
         source_file = os.path.join(webdev_path, subdir, script)
         target_script = os.path.join(target_folder, script)
         copy_file(source_file, target_script)
@@ -89,6 +97,24 @@ def replace_tree(src: str, dest: str):
     else:
         print('copy folder', src, 'to', dest)
     shutil.copytree(src, dest)
+
+def install_modules(source_dir: str, target_dir: str):
+    source_dest_list: list[tuple[str, str]] = []
+    for tool_dir, module_dir in _MODULE_LIST:
+        module_source_path = os.path.join(source_dir, tool_dir, module_dir)
+        module_dest_path = os.path.join(target_dir, module_dir)
+        if not os.path.isdir(module_source_path):
+            abort('source dir ' + module_source_path + ' is missing')
+        if os.path.exists(module_dest_path) and not os.path.isdir(module_dest_path):
+            abort(module_dest_path + ' is not a directory!')
+        if os.path.isdir(module_dest_path):
+            print(f'==> {module_dest_path} will be overwritten')
+        else:
+            print(f'--> {module_dest_path} is created')
+        source_dest_list.append((module_source_path, module_dest_path))
+    query_continue()
+    for src, dest in source_dest_list:
+        replace_tree(src, dest)
 
 # main script -----------------------------------------------...
 def main():
@@ -122,15 +148,8 @@ def main():
     webdev_path = os.path.dirname(os.path.realpath(__file__))
     print('Install webdev from folder:', webdev_path)
 
-    install_script(webdev_path, target_folder)
-
-    websitemanager_module = os.path.join(webdev_path, 'websitemanager', 'wm')
-    websitemanager_module_dest = os.path.join(target_folder, 'wm')
-    replace_tree(websitemanager_module, websitemanager_module_dest)
-
-    mw_updateer_module = os.path.join(webdev_path, 'mediawiki', 'mu')
-    mw_updateer_module_dest = os.path.join(target_folder, 'mu')
-    replace_tree(mw_updateer_module, mw_updateer_module_dest)
+    install_tool_scripts(webdev_path, target_folder)
+    install_modules(webdev_path, target_folder)
 
     print('...installation finished')
 
