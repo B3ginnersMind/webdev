@@ -2,6 +2,7 @@ import os, re, subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 _VERBOSE = False
+_LJ = 25
 
 @dataclass
 class CmsTypes:
@@ -86,11 +87,11 @@ def get_document_roots(apache_config_dir: str) -> list[Path]:
     """
     Returns a list of DocumentRoot directories for all vhosts.
     """
-    print("Find vhost DocumentRoots in  :", apache_config_dir)
+    print("DocumentRoots are from:".ljust(_LJ), apache_config_dir)
     docroot_list: list[Path] = []
-    command = ("find -L " + apache_config_dir + " -name '*.conf'"
-    " -exec grep -h -i 'documentroot' {} + | grep -E -v '^[[:space:]]*#'")
-    lines = get_command_output(command)
+    command = ("find -L " + apache_config_dir + " -name '*.conf' -exec "
+               "grep -h -i 'documentroot' {} + | grep -E -v '^[[:space:]]*#'")
+    lines = get_shell_command_output(command)
     if _VERBOSE:
         for line in lines:
             print("Found DocumentRoot line:", line)
@@ -124,12 +125,12 @@ def show_num_websites(cms: str, path_list: list[Path], common_root: str):
     if (len(path_list) > 0):
         path_list.sort()
         dir_names: list[str] = [re.sub(common_root, '', str(p)) for p in path_list]
-        adjusted_name = cms.ljust(10)
         name_str: str = ", ".join(dir_names)
-        print(f"Detected websites {adjusted_name} : {name_str}")
+        detected_sites = f"Detected {cms}:".ljust(_LJ)
+        print(detected_sites, name_str)
 
 def detect_cms(doc_roots: list[Path]) -> CmsPaths:
-    print("Number of scanned WebDocRoots:", len(doc_roots))
+    print("Scanned WebDocRoots:".ljust(_LJ), len(doc_roots))
     types = CmsTypes()
     cms_type = ""
     cms_paths = CmsPaths()
@@ -173,7 +174,11 @@ def detect_cms(doc_roots: list[Path]) -> CmsPaths:
     show_num_websites(CmsTypes.wordpress, cms_paths.wordpress_sites, common_root)
     show_num_websites(CmsTypes.static, cms_paths.static_sites, common_root)
     show_num_websites(CmsTypes.unknown, cms_paths.unknown_php_sites, common_root)
-    print("Skipped symlinked websites   :", num_skipped_symlinks)
+    print("Skipped Symlinks:".ljust(_LJ), num_skipped_symlinks)
+    print_double_line()
+    print("Owners not root/www-data:".ljust(_LJ), "different isolated PHP pools!")
+    print("Common webroot directory:".ljust(_LJ), common_root)
+    get_shell_command_output(f"sudo ls -l {common_root}", verbose=True)
     return cms_paths
 
 def check_static_sites(cms: CmsPaths):
@@ -209,7 +214,7 @@ def run_command(command_str: str):
     for row in rows:
         print("  ".join(col.ljust(widths[i]) for i, col in enumerate(row)))
 
-def get_command_output(command: str, verbose: bool=False) -> list[str]:
+def get_shell_command_output(command: str, verbose: bool=False) -> list[str]:
     """runs shell command and returns output as list of strings"""
     if _VERBOSE:
         print('Processing', '"'+command+'"')
