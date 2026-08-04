@@ -13,7 +13,7 @@ import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -24,9 +24,6 @@ if os.getuid() != 0: # type: ignore
 
 currenttime = time.strftime('%d.%m.%Y %H:%M')
 script_name = os.path.basename(__file__)
-print('== Generate reports on runnung virtual hosts ==')
-print('This is Python script', script_name, 'version', __version__)
-print('Query time:', currenttime)
 
 p = argparse.ArgumentParser(
     description=__doc__,
@@ -44,6 +41,10 @@ p.add_argument("-d", "--drupal", action="store_true",
 p.add_argument("-v", "--version", action='version', 
                 version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
+
+print('=== Generate reports on active virtual hosts ===')
+print('This is Python script', script_name, 'version', __version__)
+print('Query time:', currenttime)
 
 u.print_double_line()
 doc_roots: list[Path] = u.get_document_roots("/etc/apache2/sites-enabled")
