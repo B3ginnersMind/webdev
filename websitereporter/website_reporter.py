@@ -13,13 +13,10 @@ import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.0.7"
+__version__ = "1.0.8"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
-    quit()
-if os.getuid() != 0: # type: ignore
-    print(f"Skript not run as root. Exiting...")
     quit()
 
 currenttime = time.strftime('%d.%m.%Y %H:%M')
@@ -30,6 +27,8 @@ p = argparse.ArgumentParser(
     # formatter used to preserve the raw doc format
     formatter_class=argparse.RawTextHelpFormatter
     )
+p.add_argument("-n", "--noroot", action="store_true",
+                help="do not check whether run as root")
 p.add_argument("-j", "--joomla", action="store_true",
                 help="check Joomla sites")
 p.add_argument("-m", "--mediawiki", action="store_true",
@@ -41,6 +40,10 @@ p.add_argument("-d", "--drupal", action="store_true",
 p.add_argument("-v", "--version", action='version', 
                 version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
+
+if not args.noroot and os.getuid() != 0: # type: ignore
+    print(f"Skript not run as root. Exiting...")
+    quit()
 
 print('=== Generate reports on active virtual hosts ===')
 print('This is Python script', script_name, 'version', __version__)
