@@ -1,19 +1,24 @@
 #!/usr/bin/env python
 """
 --------------------------------------------------------------------------------
-Generate reports on the virtual hosts installed in the web root directory.
+Generate reports on the virtual hosts installed in the web root directories.
 The document roots are taken from the Apache vhost config files.
 Without any arguments, the script will only list all detected vhost types.
 Detectable vhost types are Joomla, MediaWiki, WordPress, Drupal and static sites.
+
+Setting are read from file "website_reporter_config.ini" which has to be in the 
+same directory as this script. If this file is missing, the default settings are
+used. See "demo_website_reporter_config.ini" for the default settings.
 """
 import argparse, os, platform, time
 from pathlib import Path
+from wr.config import read_config, settings
 import wr.utils as u
 import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.0.8"
+__version__ = "1.1.0"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -27,8 +32,6 @@ p = argparse.ArgumentParser(
     # formatter used to preserve the raw doc format
     formatter_class=argparse.RawTextHelpFormatter
     )
-p.add_argument("-n", "--noroot", action="store_true",
-                help="do not check whether run as root")
 p.add_argument("-j", "--joomla", action="store_true",
                 help="check Joomla sites")
 p.add_argument("-m", "--mediawiki", action="store_true",
@@ -41,7 +44,9 @@ p.add_argument("-v", "--version", action='version',
                 version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
 
-if not args.noroot and os.getuid() != 0: # type: ignore
+read_config(Path(__file__).parent / "website_reporter_config.ini")
+settings.show()
+if settings.run_as_root and os.getuid() != 0: # type: ignore
     print(f"Skript not run as root. Exiting...")
     quit()
 
@@ -50,9 +55,13 @@ print('This is Python script', script_name, 'version', __version__)
 print('Query time:', currenttime)
 
 u.print_double_line()
-doc_roots: list[Path] = u.get_document_roots("/etc/apache2/sites-enabled")
-# doc_roots: list[Path] = u.get_subdirectories(Path("/var/www"))
-cms: u.CmsPaths = u.detect_cms(doc_roots)
+if len(settings.web_roots) > 0:
+    cms: u.CmsPaths = u.detect_cms(settings.web_roots)
+else:
+    # doc_roots: list[Path] = u.get_subdirectories(Path("/var/www"))
+    doc_roots: list[Path] = u.get_document_roots("/etc/apache2/sites-enabled")
+    cms: u.CmsPaths = u.detect_cms(doc_roots)
+
 if args.joomla:
     j.check_joomla_sites(cms)
 if args.mediawiki:

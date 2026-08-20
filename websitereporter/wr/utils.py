@@ -1,8 +1,10 @@
-import os, re, subprocess
+import os, re, stat, subprocess
+from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 _VERBOSE = False
-_LJ = 25
+_INDENT = 25
+_LINE_LEN = 100
 
 @dataclass
 class CmsTypes:
@@ -48,14 +50,18 @@ class Release:
    def __str__(self) -> str:
       return f"{self.main}.{self.major}.{self.minor}"
 
+def get_indent():
+    return _INDENT
+def get_line_len():
+    return _LINE_LEN
 def print_dots():
-    print(80 * ".")
+    print(_LINE_LEN * ".")
 def print_line():
     print()
-    print(80 * "-")
+    print(_LINE_LEN * "-")
 def print_double_line():    
     print()
-    print(80 * "=")
+    print(_LINE_LEN * "=")
 
 def has_file_extension(start_directory: str, file_extension: str) -> bool:
     """
@@ -87,7 +93,7 @@ def get_document_roots(apache_config_dir: str) -> list[Path]:
     """
     Returns a list of DocumentRoot directories for all vhosts.
     """
-    print("DocumentRoots are from:".ljust(_LJ), apache_config_dir)
+    print("DocumentRoots are from:".ljust(_INDENT), apache_config_dir)
     docroot_list: list[Path] = []
     command = ("find -L " + apache_config_dir + " -name '*.conf' -exec "
                "grep -h -i 'documentroot' {} + | grep -E -v '^[[:space:]]*#'")
@@ -126,11 +132,37 @@ def show_num_websites(cms: str, path_list: list[Path], common_root: str):
         path_list.sort()
         dir_names: list[str] = [re.sub(common_root, '', str(p)) for p in path_list]
         name_str: str = ", ".join(dir_names)
-        detected_sites = f"Detected {cms}:".ljust(_LJ)
+        detected_sites = f"Detected {cms}:".ljust(_INDENT)
         print(detected_sites, name_str)
 
+def list_directories(pathlist: list[Path]) -> None:
+    if not pathlist:
+        return
+
+    rows: list[tuple[str, str, str, str, str]] = []
+    for p in pathlist:
+        name = p.name 
+        mode = stat.filemode(p.stat().st_mode)
+        owner = p.owner()  # type: ignore
+        group = p.group()  # type: ignore
+        mtime = p.stat().st_mtime
+        date_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d")
+        target = ""
+        if p.is_symlink():
+            target = "-> " + str(p.readlink())
+        rows.append((mode, f"{owner}:{group}", date_str, name, target))
+
+    widths = [max(len(row[index]) for row in rows) for index in range(4)]
+    for mode, owner_group, date_str, name, target in rows:
+        line = (
+            f"{mode:<{widths[0]}} {owner_group:<{widths[1]}} "
+            f"{date_str:<{widths[2]}} {name:<{widths[3]}}"
+        )
+        print(f"{line} {target}".rstrip())
+    return
+
 def detect_cms(doc_roots: list[Path]) -> CmsPaths:
-    print("Scanned WebDocRoots:".ljust(_LJ), len(doc_roots))
+    print("Scanned WebDocRoots:".ljust(_INDENT), len(doc_roots))
     types = CmsTypes()
     cms_type = ""
     cms_paths = CmsPaths()
@@ -174,11 +206,13 @@ def detect_cms(doc_roots: list[Path]) -> CmsPaths:
     show_num_websites(CmsTypes.wordpress, cms_paths.wordpress_sites, common_root)
     show_num_websites(CmsTypes.static, cms_paths.static_sites, common_root)
     show_num_websites(CmsTypes.unknown, cms_paths.unknown_php_sites, common_root)
-    print("Skipped Symlinks:".ljust(_LJ), num_skipped_symlinks)
+    print("Skipped Symlinks:".ljust(_INDENT), num_skipped_symlinks)
     print_double_line()
-    print("Owners not root/www-data:".ljust(_LJ), "different isolated PHP pools!")
-    print("Common webroot directory:".ljust(_LJ), common_root)
-    get_shell_command_output(f"sudo ls -l {common_root}", verbose=True)
+    print("Owners not root/www-data:".ljust(_INDENT), "different isolated PHP pools!")
+    print("Common webroot directory:".ljust(_INDENT), common_root)
+    # only list the relevant directories
+    list_directories(doc_roots)
+    # get_shell_command_output(f"sudo ls -l {common_root}", verbose=True)
     return cms_paths
 
 def check_static_sites(cms: CmsPaths):
@@ -188,6 +222,11 @@ def check_static_sites(cms: CmsPaths):
     print("==> Static sites:")
     for dir in cms.static_sites:
         print(dir)
+
+def get_nonempty_lines(output: str) -> list[str]:
+    # return [stripped for line in output.splitlines() if (stripped := line.strip())]
+    # return list(filter(None, (line.strip() for line in output.splitlines())))
+    return [line.strip() for line in output.splitlines() if line.strip()]
 
 def run_command(command_str: str):
     """
@@ -205,9 +244,12 @@ def run_command(command_str: str):
 
     result = subprocess.run(command, capture_output=True, text=True, check=True)
     if result.stderr.strip():
-        print(result.stderr)
+        lines = get_nonempty_lines(result.stderr)
+        print(">>> Error occurred .........")
+        print(*lines, sep="\n")
+        print("............................")
 
-    lines = result.stdout.splitlines()
+    lines = get_nonempty_lines(result.stdout)
     rows = [line.split("\t") for line in lines]
     # compute column widths
     widths = [max(len(row[i]) for row in rows) for i in range(len(rows[0]))]

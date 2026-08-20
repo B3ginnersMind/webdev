@@ -1,7 +1,7 @@
 import os, re
-from wr import utils as u
+from wr.config import settings
 from wr.utils import CmsPaths, Release
-from wr.utils import print_line, print_double_line
+from wr.utils import print_line, print_double_line, run_command
 from pathlib import Path
 _UNSET_RELEASE = Release()
 
@@ -30,7 +30,9 @@ def joomla_cli(owner: str) -> str:
     """
     Returns the Joomla CLI command.
     """
-    return f"sudo -u {owner} php8.4 cli/joomla.php"
+    if settings.run_as_root:
+        return f"sudo -u {owner} " + settings.joomla_cli
+    return settings.joomla_cli
 
 # cli/joomla.php has been available since Joomla 4.0
 # php cli/joomla.php core:version
@@ -51,6 +53,6 @@ def check_joomla_sites(cms: CmsPaths):
         elif version <= Release("4.0.0"):
             print("Joomla version < 4.0.0 still without full CLI.")
         else:
-            u.run_command(f"{joomla_cli(owner)} core:update:check")
-            u.run_command(f"{joomla_cli(owner)} update:extensions:check")
-            u.run_command(f"{joomla_cli(owner)} user:list")
+            run_command(f"{joomla_cli(owner)} core:update:check")
+            run_command(f"{joomla_cli(owner)} update:extensions:check")
+            run_command(f"{joomla_cli(owner)} user:list")

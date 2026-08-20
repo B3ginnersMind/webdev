@@ -1,4 +1,5 @@
 import os, re
+from wr.config import settings
 from wr import utils as u
 from wr.utils import CmsPaths, Release
 from wr.utils import print_line
@@ -8,7 +9,9 @@ _UNSET_RELEASE = Release()
 # Important to use the pool owner to prevent damage if the site has been hacked.
 def mediawiki_cli(owner: str, script: str = "run.php") -> str:
     """ Returns the Mediawiki CLI command. """
-    return f"sudo -u {owner} php8.4 maintenance/{script}"
+    if settings.run_as_root:
+        return f"sudo -u {owner} " + settings.mediawiki_cli + script
+    return settings.mediawiki_cli + script
 
 def detect_mediawiki_version(folder: Path) -> Release:
     """

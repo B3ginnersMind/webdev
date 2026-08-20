@@ -1,4 +1,5 @@
 import os
+from wr.config import settings
 from wr import utils as u
 from wr.utils import CmsPaths
 from wr.utils import print_line, print_double_line
@@ -8,7 +9,9 @@ def wp_cli(owner: str) -> str:
     """
     Returns the wp-cli command.
     """
-    return f"sudo -u {owner} wp"
+    if settings.run_as_root:
+        return f"sudo -u {owner} " + settings.wp_cli
+    return settings.wp_cli
 
 def check_wordpress_sites(cms: CmsPaths):
     print_double_line()

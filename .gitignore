@@ -7,6 +7,7 @@ website_table_new.txt
 website_table_old.txt
 show_ips_exampleDomains.txt
 show_dns_exampleDomains.txt
+website_reporter_config.ini
 *.log
 # Byte-compiled / optimized / DLL files
 __pycache__/
