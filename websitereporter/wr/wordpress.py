@@ -20,7 +20,7 @@ def check_wordpress_sites(cms: CmsPaths):
     print("==> Wordpress sites:")
     for dir in cms.wordpress_sites:
         print_line()
-        print("==> Worpress website at:", dir)
+        print("==> Wordpress website at:", dir)
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)
         os.chdir(dir)
