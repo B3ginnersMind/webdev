@@ -242,7 +242,7 @@ def run_command(command_str: str):
     print_dots()        
     print(f"--> Command: {plain_command}")
 
-    result = subprocess.run(command, capture_output=True, text=True, check=True)
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.stderr.strip():
         lines = get_nonempty_lines(result.stderr)
         print(">>> Error occurred .........")
@@ -250,6 +250,8 @@ def run_command(command_str: str):
         print("............................")
 
     lines = get_nonempty_lines(result.stdout)
+    if not lines:
+        return
     rows = [line.split("\t") for line in lines]
     # compute column widths
     widths = [max(len(row[i]) for row in rows) for i in range(len(rows[0]))]
