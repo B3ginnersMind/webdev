@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # This little helper script copies the webdev files into a folder of your choice.
-import os, pathlib, shutil, stat
+import os, shutil, stat
+from pathlib import Path
 try:                # for line editing on input for Linux
     import readline # type: ignore
 except ImportError:
@@ -116,31 +117,86 @@ def install_modules(source_dir: str, target_dir: str):
     for src, dest in source_dest_list:
         replace_tree(src, dest)
 
+def find_writable_backup_script(target_rel_file: str) -> list[str]:
+    # Start at the directory of the current script
+    current_dir = Path(__file__).resolve().parent
+    print("Searching for", target_rel_file)
+    print("Start from", current_dir)
+    print("Search the directory path all the way to the root")
+    # The relative target file path used to search within each folder
+    #target_rel_path = Path("Backup/script/website_manager.py")
+    target_rel_path = Path(target_rel_file)
+    valid_directories: list[str] = []
+
+    while True:
+        # 1. Exit condition: No longer has permission to read the current directory
+        if not os.access(current_dir, os.R_OK | os.X_OK):
+            break
+        target_file = current_dir / target_rel_path
+        # print("===> look for", target_file)
+        if target_file.is_file():
+            # Check whether the file found is writable
+            if os.access(target_file, os.W_OK):
+                valid_directories.append(str(target_file.parent))
+            else:
+                # 2. Exit condition: File found, but no write permissions
+                break
+        # 3. Exit condition: Root directory (e.g. ‘/’) reached
+        parent_dir = current_dir.parent
+        if parent_dir == current_dir:
+            break
+        # Go up one level
+        current_dir = parent_dir
+    return valid_directories
+
+def create_folder(folder_path: str) -> None:
+    # .resolve() converts the path to an absolute one, which prevents
+    # problems when locating the root directory for relative paths.
+    p = Path(folder_path).resolve()
+    # If folder_path already exists, stop
+    if p.exists():
+        return
+    # Find the first existing parent directory
+    closest_existing_parent = p.parent
+    while not closest_existing_parent.exists():
+        closest_existing_parent = closest_existing_parent.parent
+    # If writing to this directory is not permitted, abort
+    if not os.access(closest_existing_parent, os.W_OK):
+        return
+    # Create a new directory, including all missing subfolders
+    try:
+        # parents=True entspricht dem Linux-Befehl `mkdir -p`
+        p.mkdir(parents=True)
+    except OSError as e:
+        print(f"Fehler beim Erstellen von {p}: {e}")
+
 # main script -----------------------------------------------...
 def main():
+    print()
+    # look for an existing installation folde
+    script_file_searched_for = "Backup/script/website_manager.py"
+    folder_list = find_writable_backup_script(script_file_searched_for)
 
     # select target folder
-    HOME = str(pathlib.Path.home())
-    BACKUP_RELATIVE = 'Backup/script'
-    BACKUP = '/' + BACKUP_RELATIVE
-    HOME_BACKUP = os.path.join(HOME, BACKUP_RELATIVE)
-
-    print('Where to copy the scripts?')
-    print('1    : ', HOME)
-    print('2    : ', BACKUP)
-    print('3    : ', HOME_BACKUP)
-    print('4    : ', 'other folder')
-    print('other: ', 'quit script')
-    option = query_int('Enter int: ', 1, 4)
-
-    if option == 1:
-        target_folder = HOME
-    elif option == 2:
-        target_folder = BACKUP
-    elif option == 3:
-        target_folder = HOME_BACKUP
-    else:
+    num_folders = len(folder_list)
+    if num_folders > 1:
+        print(">>> Warning: multiple installation folders found")
+        print(*folder_list, sep="\n")
+        query_continue()
+        print('Where to copy the scripts?')
+        for i in range(0, num_folders):
+            print(i, ":", folder_list[i])
+        option = query_int('Enter int: ', 0, num_folders-1)
+        target_folder = folder_list[option]
+    elif num_folders == 0:
+        print(">>> No installation folder was found")
         target_folder = input('Enter full installation path: ')
+        if not os.path.exists(target_folder):
+            create_folder(target_folder)
+    else:
+        target_folder = folder_list[0]
+        print('Found installation folder:', target_folder)
+        query_continue()
 
     # target folder must already exist
     if not os.path.isdir(target_folder):
