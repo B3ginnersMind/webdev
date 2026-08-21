@@ -122,18 +122,22 @@ def main():
     # select target folder
     HOME = str(pathlib.Path.home())
     BACKUP = '/Backup/script'
+    HOME_BACKUP = HOME + '/' + BACKUP
 
     print('Where to copy the scripts?')
     print('1    : ', HOME)
     print('2    : ', BACKUP)
-    print('3    : ', 'other folder')
+    print('3    : ', HOME_BACKUP)
+    print('4    : ', 'other folder')
     print('other: ', 'quit script')
-    option = query_int('Enter int: ', 1, 3)
+    option = query_int('Enter int: ', 1, 4)
 
     if option == 1:
         target_folder = HOME
     elif option == 2:
         target_folder = BACKUP
+    elif option == 3:
+        target_folder = HOME_BACKUP
     else:
         target_folder = input('Enter full installation path: ')
 
