@@ -121,8 +121,9 @@ def main():
 
     # select target folder
     HOME = str(pathlib.Path.home())
-    BACKUP = '/Backup/script'
-    HOME_BACKUP = os.path.join(HOME, BACKUP)
+    BACKUP_RELATIVE = 'Backup/script'
+    BACKUP = '/' + BACKUP_RELATIVE
+    HOME_BACKUP = os.path.join(HOME, BACKUP_RELATIVE)
 
     print('Where to copy the scripts?')
     print('1    : ', HOME)
