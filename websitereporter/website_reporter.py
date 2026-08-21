@@ -18,7 +18,7 @@ import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -40,11 +40,15 @@ p.add_argument("-w", "--wordpress", action="store_true",
                 help="check WordPress sites")
 p.add_argument("-d", "--drupal", action="store_true",
                 help="check Drupal sites")
+p.add_argument("-u", "--users", action="store_true",
+                help="output CMS user lists")
 p.add_argument("-v", "--version", action='version', 
                 version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
 
 read_config(Path(__file__).parent / "website_reporter_config.ini")
+if args.users:
+    settings.show_cms_users = True
 settings.show()
 if settings.run_as_root and os.getuid() != 0: # type: ignore
     print(f"Skript not run as root. Exiting...")
