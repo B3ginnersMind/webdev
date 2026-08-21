@@ -51,8 +51,10 @@ def check_joomla_sites(cms: CmsPaths):
         if version == _UNSET_RELEASE:
             print("Joomla version could not be detected.")
         elif version <= Release("4.0.0"):
+            print(f"Found Joomla version {version}")
             print("Joomla version < 4.0.0 still without full CLI.")
         else:
             run_command(f"{joomla_cli(owner)} core:update:check")
             run_command(f"{joomla_cli(owner)} update:extensions:check")
-            run_command(f"{joomla_cli(owner)} user:list")
+            if settings.show_cms_users:
+                run_command(f"{joomla_cli(owner)} user:list")

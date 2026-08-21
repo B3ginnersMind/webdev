@@ -30,5 +30,18 @@ def check_wordpress_sites(cms: CmsPaths):
         u.run_command(f"{wp_cli(owner)} plugin verify-checksums --all")
         u.run_command(f"{wp_cli(owner)} plugin list")
         # u.run_command(f"{wpcli(owner)} plugin status")
+        if settings.show_cms_users:
+            u.print_dots()
+            value = u.get_shell_command_output(f"{wp_cli(owner)} user list --format=count")
+            if value and value[0].isdigit():
+                num_users = int(value[0])
+                max_users = 50
+                print("Number of users:", num_users)
+                if num_users > max_users:
+                    print(f"Over {max_users} Wordpress users: Only show administrators")
+                    u.run_command(f"{wp_cli(owner)} user list --role=administrator")
+                else:
+                    u.run_command(f"{wp_cli(owner)} user list")           
+
 
 

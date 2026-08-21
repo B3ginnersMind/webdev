@@ -14,6 +14,7 @@ class Configuration:
     joomla_cli: str = JOOMLA_CLI
     mediawiki_cli: str = MEDIAWIKI_CLI
     wp_cli: str = WP_CLI
+    show_cms_users: bool = False
     apache_vhost_dir: Path = Path(APACHE_VHOST_DIR)
     web_roots: list[Path] = field(default_factory=list[Path])
     def show(self):
@@ -21,7 +22,7 @@ class Configuration:
         print('Configuration')
         num_indent = u.get_indent()
         for field in fields(self):
-            if field.name == "run_as_root":
+            if field.type is bool:
                 line = (field.name + ':').ljust(num_indent) + str(getattr(self, field.name))
                 print(line)
             elif field.name == "web_roots":
@@ -60,6 +61,7 @@ def read_config(config_file: Path) -> None:
             settings.joomla_cli = sec.get("joomla_cli", JOOMLA_CLI)
             settings.mediawiki_cli = sec.get("mediawiki_cli", MEDIAWIKI_CLI)
             settings.wp_cli = sec.get("wp_cli", WP_CLI)
+            settings.show_cms_users = sec.getboolean("show_cms_users", False)
             if "apache_vhost_dir" in sec:
                 settings.apache_vhost_dir = Path(
                     sec.get("apache_vhost_dir", APACHE_VHOST_DIR)
