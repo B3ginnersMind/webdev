@@ -1,9 +1,10 @@
-import os, re, stat, subprocess
+import os, re, stat, subprocess, textwrap
 from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 _VERBOSE = False
 _INDENT = 25
+_INDENT1 = _INDENT + 1
 _LINE_LEN = 100
 
 @dataclass
@@ -132,8 +133,11 @@ def show_num_websites(cms: str, path_list: list[Path], common_root: str):
         path_list.sort()
         dir_names: list[str] = [re.sub(common_root, '', str(p)) for p in path_list]
         name_str: str = ", ".join(dir_names)
-        detected_sites = f"Detected {cms}:".ljust(_INDENT)
-        print(detected_sites, name_str)
+        detected_sites = f"Detected {cms}:".ljust(_INDENT1)
+        line = detected_sites + name_str
+        indent = _INDENT1 * ' '
+        wrappedLine = textwrap.fill(line, get_line_len(), subsequent_indent=indent)
+        print(wrappedLine)
 
 def list_directories(pathlist: list[Path]) -> None:
     if not pathlist:
