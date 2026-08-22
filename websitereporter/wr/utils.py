@@ -257,8 +257,15 @@ def run_command(command_str: str):
     if not lines:
         return
     rows = [line.split("\t") for line in lines]
-    # compute column widths
-    widths = [max(len(row[i]) for row in rows) for i in range(len(rows[0]))]
+
+    # Compute max. number of columns.
+    max_cols = max(len(row) for row in rows)    
+    # Pad any lines that are too short with empty strings (‘’) so that all 
+    # lines have exactly the same number of elements (indices).
+    rows = [row + [""] * (max_cols - len(row)) for row in rows]
+    # Compute the widths of the columns
+    widths = [max(len(row[i]) for row in rows) for i in range(max_cols)]
+    # Formatted output
     for row in rows:
         print("  ".join(col.ljust(widths[i]) for i, col in enumerate(row)))
 
