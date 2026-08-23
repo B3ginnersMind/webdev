@@ -145,6 +145,8 @@ def list_directories(pathlist: list[Path]) -> None:
 
     rows: list[tuple[str, str, str, str, str]] = []
     for p in pathlist:
+        if not p.exists():
+            continue
         name = p.name 
         mode = stat.filemode(p.stat().st_mode)
         owner = p.owner()  # type: ignore
@@ -156,6 +158,9 @@ def list_directories(pathlist: list[Path]) -> None:
             target = "-> " + str(p.readlink())
         rows.append((mode, f"{owner}:{group}", date_str, name, target))
 
+    if not rows:
+        return
+    
     widths = [max(len(row[index]) for row in rows) for index in range(4)]
     for mode, owner_group, date_str, name, target in rows:
         line = (
@@ -175,6 +180,7 @@ def detect_cms(doc_roots: list[Path]) -> CmsPaths:
         common_root += '/'
 
     num_skipped_symlinks = 0
+    num_non_existent_folders = 0
     # iterdir() yields all files and folders in the directory (no recursion)
     for web_root in doc_roots:
         # Filter: Only process the item if it is a directory
@@ -183,6 +189,9 @@ def detect_cms(doc_roots: list[Path]) -> CmsPaths:
             num_skipped_symlinks += 1
             if _VERBOSE:
                 print(f"Folder {web_root} : skipped due to symlink")
+            continue
+        if not web_root.exists() or not web_root.is_dir():
+            num_non_existent_folders += 1
             continue
         if (web_root / types.joomla_detect).exists():
             cms_type = types.joomla
@@ -210,9 +219,12 @@ def detect_cms(doc_roots: list[Path]) -> CmsPaths:
     show_num_websites(CmsTypes.wordpress, cms_paths.wordpress_sites, common_root)
     show_num_websites(CmsTypes.static, cms_paths.static_sites, common_root)
     show_num_websites(CmsTypes.unknown, cms_paths.unknown_php_sites, common_root)
-    print("Skipped Symlinks:".ljust(_INDENT), num_skipped_symlinks)
+    if num_skipped_symlinks > 0:
+        print("Skipped Symlinks:".ljust(_INDENT), num_skipped_symlinks)
+    if num_non_existent_folders > 0:
+        print("Skipped non-existent:".ljust(_INDENT), num_non_existent_folders)
     print_double_line()
-    print("Owners not root/www-data:".ljust(_INDENT), "different isolated PHP pools!")
+    print("Owners not root/www-data:".ljust(_INDENT), "different isolated PHP pools")
     print("Common webroot directory:".ljust(_INDENT), common_root)
     # only list the relevant directories
     list_directories(doc_roots)

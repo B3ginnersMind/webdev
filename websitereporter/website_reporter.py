@@ -18,7 +18,7 @@ import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.1.6"
+__version__ = "1.1.7"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -44,6 +44,8 @@ p.add_argument("-u", "--users", action="store_true",
                 help="output CMS user lists")
 p.add_argument("-v", "--version", action='version', 
                 version='%(prog)s version {version}'.format(version=__version__))
+p.add_argument("website", nargs='?', type=str, default='none',
+               help="the only website document root to be analysed")
 args = p.parse_args()
 
 read_config(Path(__file__).parent / "website_reporter_config.ini")
@@ -59,19 +61,26 @@ print('This is Python script', script_name, 'version', __version__)
 print('Query time:', currenttime)
 
 u.print_double_line()
-if len(settings.web_roots) > 0:
+if args.website != 'none':
+    doc_root: list[Path] = [Path(args.website)]
+    cms: u.CmsPaths = u.detect_cms(doc_root)
+    args.joomla = True
+    args.mediawiki = True
+    args.wordpress = True
+    args.drupal = True
+elif len(settings.web_roots) > 0:
     cms: u.CmsPaths = u.detect_cms(settings.web_roots)
 else:
     # doc_roots: list[Path] = u.get_subdirectories(Path("/var/www"))
     doc_roots: list[Path] = u.get_document_roots("/etc/apache2/sites-enabled")
     cms: u.CmsPaths = u.detect_cms(doc_roots)
 
-if args.joomla:
+if args.joomla and cms.joomla_sites:
     j.check_joomla_sites(cms)
-if args.mediawiki:
+if args.mediawiki and cms.mediawiki_sites:
     m.check_mediawiki_sites(cms)
-if args.wordpress:
+if args.wordpress and cms.wordpress_sites:
     w.check_wordpress_sites(cms)
-if args.drupal:
+if args.drupal and cms.drupal_sites:
     d.check_drupal_sites(cms)
 # u.check_static_sites(cms)
