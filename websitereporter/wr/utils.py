@@ -266,18 +266,17 @@ def run_command(command_str: str, environ_variable: tuple[str, str] = ("", "")):
         plain_command += token + " "
     print_dots()        
     print(f"--> Command: {plain_command}")
-
     result = subprocess.run(command, capture_output=True, text=True, check=False, env=my_env)
-    # if environ_variable == ("", ""):
-    #     result = subprocess.run(command, capture_output=True, text=True, check=False)
-    # else:
-    #     result = subprocess.run(command, capture_output=True, text=True, check=False, env=my_env)
 
     if result.stderr.strip():
         lines = get_nonempty_lines(result.stderr)
-        print(">>> Error occurred .........")
-        print(*lines, sep="\n")
-        print("............................")
+        warning_msg = "human output format requires a terminal with color"
+        # Filters out all lines containing the warning text
+        lines = [line for line in lines if warning_msg not in line]
+        if lines:
+            print(">>> Error occurred .........")
+            print(*lines, sep="\n")
+            print("............................")
 
     lines = get_nonempty_lines(result.stdout)
     if not lines:
