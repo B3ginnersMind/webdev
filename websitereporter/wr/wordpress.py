@@ -42,6 +42,5 @@ def check_wordpress_sites(cms: CmsPaths):
                     u.run_command(f"{wp_cli(owner)} user list --role=administrator")
                 else:
                     u.run_command(f"{wp_cli(owner)} user list")           
-
-
-
+        if settings.wordfence_cli != "none":
+           u.run_command(f"{settings.wordfence_cli} vuln-scan .")

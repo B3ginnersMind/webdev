@@ -7,6 +7,7 @@ APACHE_VHOST_DIR = "/etc/apache2/sites-enabled"
 JOOMLA_CLI: str = "php8.4 cli/joomla.php"
 MEDIAWIKI_CLI: str = "php8.4 maintenance/"
 WP_CLI: str = "wp"
+WORDFENCE_CLI: str = "none" # off by default
 
 @dataclass
 class Configuration:
@@ -14,6 +15,7 @@ class Configuration:
     joomla_cli: str = JOOMLA_CLI
     mediawiki_cli: str = MEDIAWIKI_CLI
     wp_cli: str = WP_CLI
+    wordfence_cli: str = WORDFENCE_CLI
     show_cms_users: bool = False
     apache_vhost_dir: Path = Path(APACHE_VHOST_DIR)
     web_roots: list[Path] = field(default_factory=list[Path])
@@ -61,6 +63,7 @@ def read_config(config_file: Path) -> None:
             settings.joomla_cli = sec.get("joomla_cli", JOOMLA_CLI)
             settings.mediawiki_cli = sec.get("mediawiki_cli", MEDIAWIKI_CLI)
             settings.wp_cli = sec.get("wp_cli", WP_CLI)
+            settings.wordfence_cli = sec.get("wordfence_cli", WORDFENCE_CLI)
             settings.show_cms_users = sec.getboolean("show_cms_users", False)
             if "apache_vhost_dir" in sec:
                 settings.apache_vhost_dir = Path(
