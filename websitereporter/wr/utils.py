@@ -244,7 +244,7 @@ def get_nonempty_lines(output: str) -> list[str]:
     # return list(filter(None, (line.strip() for line in output.splitlines())))
     return [line.strip() for line in output.splitlines() if line.strip()]
 
-def run_command(command_str: str):
+def run_command(command_str: str, environ_variable: tuple[str, str] = ("", "")):
     """
     Run the command 'command_str' and print its output. 
     Tabbed output is aligned in columns.
@@ -252,13 +252,27 @@ def run_command(command_str: str):
     command: list[str] = []
     command.extend(command_str.split(" "))
 
-    plain_command = ""
+    if environ_variable == ("", ""):
+        plain_command = ""
+        my_env = os.environ
+    else:
+        plain_command = environ_variable[0] + "=" + environ_variable[1] + " "
+        # Copy current environment as dictionary
+        my_env = os.environ.copy()
+        # Add the variable
+        my_env[environ_variable[0]] = environ_variable[1]
+
     for token in command:
         plain_command += token + " "
     print_dots()        
     print(f"--> Command: {plain_command}")
 
-    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    result = subprocess.run(command, capture_output=True, text=True, check=False, env=my_env)
+    # if environ_variable == ("", ""):
+    #     result = subprocess.run(command, capture_output=True, text=True, check=False)
+    # else:
+    #     result = subprocess.run(command, capture_output=True, text=True, check=False, env=my_env)
+
     if result.stderr.strip():
         lines = get_nonempty_lines(result.stderr)
         print(">>> Error occurred .........")
