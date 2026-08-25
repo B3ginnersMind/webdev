@@ -28,6 +28,7 @@ def check_wordpress_sites(cms: CmsPaths):
         u.run_command(f"{wp_cli(owner)} core verify-checksums")
         u.run_command(f"{wp_cli(owner)} plugin verify-checksums --all")
         u.run_command(f"{wp_cli(owner)} plugin list")
+        u.run_command(f"{wp_cli(owner)} theme list")
         # u.run_command(f"{wpcli(owner)} plugin status")
         if settings.show_cms_users:
             u.print_dots()
