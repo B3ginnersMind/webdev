@@ -3,12 +3,12 @@ from wr.utils import CmsPaths
 import wr.utils as u
 
 def check_drupal_sites(cms: CmsPaths):
-    u.print_double_line()
     if len(cms.drupal_sites) == 0:
-        print("==> Drupal sites: none")
-    print("==> Drupal sites:")
+        u.print_headline("Drupal sites: none")
+    else:
+        u.print_headline("Drupal sites")
     for dir in cms.drupal_sites:
-        u.print_line()
+        u.print_double_line()
         print("==> Drupal website at:", dir)
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)

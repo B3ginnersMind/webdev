@@ -2,7 +2,6 @@ import os
 from wr.config import settings
 from wr import utils as u
 from wr.utils import CmsPaths
-from wr.utils import print_line, print_double_line
 
 # Important to use the pool owner to prevent damage if the site has been hacked.
 def wp_cli(owner: str) -> str:
@@ -14,12 +13,12 @@ def wp_cli(owner: str) -> str:
     return settings.wp_cli
 
 def check_wordpress_sites(cms: CmsPaths):
-    print_double_line()
     if len(cms.wordpress_sites) == 0:
-        print("==> Wordpress sites: none")
-    print("==> Wordpress sites:")
+        u.print_headline("Wordpress sites: none")
+    else:
+        u.print_headline("Wordpress sites:")
     for dir in cms.wordpress_sites:
-        print_line()
+        u.print_double_line()
         print("==> Wordpress website at:", dir)
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)

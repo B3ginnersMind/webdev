@@ -2,7 +2,6 @@ import os, re
 from wr.config import settings
 from wr import utils as u
 from wr.utils import CmsPaths, Release
-from wr.utils import print_line
 from pathlib import Path
 _UNSET_RELEASE = Release()
 
@@ -35,12 +34,12 @@ def detect_mediawiki_version(folder: Path) -> Release:
     return _UNSET_RELEASE
 
 def check_mediawiki_sites(cms: CmsPaths):
-    print_line()
     if len(cms.mediawiki_sites) == 0:
-        print("==> Mediawiki sites: none")
-    print("==> Mediawiki sites:")
+        u.print_headline("Mediawiki sites: none")
+    else:
+        u.print_headline("==> Mediawiki sites")
     for dir in cms.mediawiki_sites:
-        print_line()
+        u.print_double_line()
         print("==> Mediawiki website at:", dir)
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)

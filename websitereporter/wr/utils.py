@@ -60,9 +60,19 @@ def print_dots():
 def print_line():
     print()
     print(_LINE_LEN * "-")
-def print_double_line():    
+def print_double_line():
+    print()
     print()
     print(_LINE_LEN * "=")
+def print_headline(text: str = ""):
+    print()
+    headline = _LINE_LEN * "#"
+    if text:
+        head = " " + text + " "
+        headline = headline[:4] + head + headline[4 + len(head):]
+        # headline = headline[:_LINE_LEN]
+        
+    print(headline)
 
 def has_file_extension(start_directory: str, file_extension: str) -> bool:
     """
@@ -239,12 +249,35 @@ def check_static_sites(cms: CmsPaths):
     for dir in cms.static_sites:
         print(dir)
 
-def get_nonempty_lines(output: str) -> list[str]:
-    # return [stripped for line in output.splitlines() if (stripped := line.strip())]
-    # return list(filter(None, (line.strip() for line in output.splitlines())))
-    return [line.strip() for line in output.splitlines() if line.strip()]
+def remove_ansi_esc_sequences(raw_text: str) -> str:
+    """ Get rid of ANSI escape sequences for text formatting in the terminal """
+    if re.match(r'\x1b\[[0-9;]*m', raw_text):
+        return re.sub(r'\x1b\[[0-9;]*m', '', raw_text)
+    return raw_text
 
-def run_command(command_str: str, environ_variable: tuple[str, str] = ("", "")):
+def get_nonempty_lines(raw_text: str) -> list[str]:
+    # [stripped for line in raw_text.splitlines() if (stripped := line.strip())]
+    # list(filter(None, (line.strip() for line in raw_text.splitlines())))
+    return [line.strip() for line in raw_text.splitlines() if line.strip()]
+
+def insert_vspace_before_found(lines: list[str]) -> list[str]:
+    token = "Found"
+    count = 0
+    for l in lines:
+        if l.startswith(token):
+            count += 1
+    if count < 2:
+        return lines
+    new_lines: list[str] = []
+    new_lines.append(lines[0])
+    for l in lines[1:]:
+        if l.startswith(token):
+            new_lines.append("")
+        new_lines.append(l)
+    return new_lines
+
+def run_command(command_str: str, 
+                environ_variable: tuple[str, str] = ("", "")):
     """
     Run the command 'command_str' and print its output. 
     Tabbed output is aligned in columns.
@@ -274,18 +307,23 @@ def run_command(command_str: str, environ_variable: tuple[str, str] = ("", "")):
         # Filters out all lines containing the warning text
         lines = [line for line in lines if warning_msg not in line]
         if lines:
-            print(">>> Error occurred .........")
+            print(">>> stderr output ................")
             print(*lines, sep="\n")
-            print("............................")
-
-    lines = get_nonempty_lines(result.stdout)
+            print("..................................")
+    clean_text = remove_ansi_esc_sequences(result.stdout)
+    lines = get_nonempty_lines(clean_text)
     if not lines:
         return
-    rows = [line.split("\t") for line in lines]
 
+    lines = insert_vspace_before_found(lines)
+    rows = [line.split("\t") for line in lines]
     # Compute max. number of columns.
-    max_cols = max(len(row) for row in rows)    
-    # Pad any lines that are too short with empty strings (‘’) so that all 
+    max_cols = max(len(row) for row in rows)
+    if max_cols == 1:
+        print(*lines, sep="\n")
+        return
+
+    # Pad any lines that are too short with empty strings (‘’) so that all
     # lines have exactly the same number of elements (indices).
     rows = [row + [""] * (max_cols - len(row)) for row in rows]
     # Compute the widths of the columns

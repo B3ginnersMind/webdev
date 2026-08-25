@@ -1,7 +1,7 @@
 import os, re
+from wr import utils as u
 from wr.config import settings
 from wr.utils import CmsPaths, Release
-from wr.utils import print_line, print_double_line, run_command
 from pathlib import Path
 _UNSET_RELEASE = Release()
 
@@ -37,12 +37,12 @@ def joomla_cli(owner: str) -> str:
 # cli/joomla.php has been available since Joomla 4.0
 # php cli/joomla.php core:version
 def check_joomla_sites(cms: CmsPaths):
-    print_double_line()
     if len(cms.joomla_sites) == 0:
-        print("==> Joomla sites: none")
-    print("==> Joomla sites:")
+        u.print_headline("Joomla sites: none")
+    else:
+        u.print_headline("Joomla sites")
     for dir in cms.joomla_sites:
-        print_line()
+        u.print_double_line()
         print("==> Joomla website at:", dir)
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)
@@ -54,7 +54,7 @@ def check_joomla_sites(cms: CmsPaths):
             print(f"Found Joomla version {version}")
             print("Joomla version < 4.0.0 still without full CLI.")
         else:
-            run_command(f"{joomla_cli(owner)} core:update:check")
-            run_command(f"{joomla_cli(owner)} update:extensions:check")
+            u.run_command(f"{joomla_cli(owner)} core:update:check")
+            u.run_command(f"{joomla_cli(owner)} update:extensions:check")
             if settings.show_cms_users:
-                run_command(f"{joomla_cli(owner)} user:list")
+                u.run_command(f"{joomla_cli(owner)} user:list")
