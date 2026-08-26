@@ -47,6 +47,8 @@ def check_joomla_sites(cms: CmsPaths):
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)
         os.chdir(dir)
+        if u.has_basic_auth(dir):
+            print("--> WEBSITE PROTECTED BY BASIC AUTH")
         version = detect_joomla_version(dir)
         if version == _UNSET_RELEASE:
             print("Joomla version could not be detected.")

@@ -44,6 +44,8 @@ def check_mediawiki_sites(cms: CmsPaths):
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)
         os.chdir(dir)
+        if u.has_basic_auth(dir):
+            print("--> WEBSITE PROTECTED BY BASIC AUTH")
 
         run_file = dir / "maintenance" / "run.php"
         show_sitestats_file = dir / "maintenance" / "showSiteStats.php"

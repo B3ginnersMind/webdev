@@ -23,6 +23,8 @@ def check_wordpress_sites(cms: CmsPaths):
         owner = str(dir.owner())  # type: ignore
         print("Owner:", owner)
         os.chdir(dir)
+        if u.has_basic_auth(dir):
+            print("--> WEBSITE PROTECTED BY BASIC AUTH")
         u.run_command(f"{wp_cli(owner)} core version")
         u.run_command(f"{wp_cli(owner)} core check-update")
         u.run_command(f"{wp_cli(owner)} core verify-checksums")

@@ -241,6 +241,24 @@ def detect_cms(doc_roots: list[Path]) -> CmsPaths:
     # get_shell_command_output(f"sudo ls -l {common_root}", verbose=True)
     return cms_paths
 
+def has_basic_auth(directory: Path) -> bool:
+    htaccess_file = directory / ".htaccess"
+    if not htaccess_file.is_file():
+        return False
+
+    try:
+        content = htaccess_file.read_text(encoding="utf-8")
+        # Checks for commented-out or active AuthType/AuthName entries.
+        # Case sensitivity is ignored.
+        has_auth_type = bool(re.search(r"^\s*AuthType\s+Basic", content, re.MULTILINE | re.IGNORECASE))
+        has_require = bool(re.search(r"^\s*Require\s+(valid-user|user|group)", content, re.MULTILINE | re.IGNORECASE))
+        # BasicAuth requires at least AuthType Basic and a Require rule
+        return has_auth_type and has_require
+
+    except (PermissionError, UnicodeDecodeError):
+        # Falls Datei nicht lesbar ist oder Kodierungsfehler vorliegen
+        return False
+
 def check_static_sites(cms: CmsPaths):
     print_line()
     if len(cms.static_sites) == 0:
