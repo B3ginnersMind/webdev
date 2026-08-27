@@ -18,7 +18,7 @@ import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")

@@ -315,7 +315,7 @@ def run_command(command_str: str,
 
     for token in command:
         plain_command += token + " "
-    print_dots()        
+    print_dots()
     print(f"--> Command: {plain_command}")
     result = subprocess.run(command, capture_output=True, text=True, check=False, env=my_env)
 
