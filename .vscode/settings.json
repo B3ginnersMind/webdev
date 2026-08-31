@@ -2,5 +2,6 @@
     "python.analysis.typeCheckingMode": "strict",
     "python.analysis.extraPaths": [
          "${workspaceFolder}/websitemanager"
-    ]
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }
