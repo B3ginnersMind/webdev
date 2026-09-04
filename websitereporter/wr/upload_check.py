@@ -116,11 +116,18 @@ def show_suspicious_files():
             print("file:", str(p))
         print("_____BEGIN_FILE__________________________________________________")
         lines = text.splitlines()
+        max_columns = 120
         max_lines = 8
+        longest_line = 0
         if len(lines) > max_lines:
             for zeile in lines[:max_lines]:
+                if len(zeile) > max_columns:
+                    longest_line = max(longest_line, len(zeile))
+                    zeile = zeile[:max_columns] + "...[truncated]"
                 print(zeile)
             print(f"... output truncated as {len(lines)} lines exceeds {max_lines}")
+            if longest_line > max_columns:
+                print(f"... lines truncated as {longest_line} lines exceeds {max_columns}")
         else:
             print(text)
         print("_____END_FILE____________________________________________________")
