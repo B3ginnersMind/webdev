@@ -114,7 +114,7 @@ def show_suspicious_files():
         print()
         for p in paths:
             print("file:", str(p))
-        max_columns = 120
+        max_columns = 110
         max_lines = 12
         lines = text.splitlines()
         num_lines = len(lines)
@@ -151,13 +151,18 @@ def save_file_hashes():
         print("There are no additional script hashes for storage.")
         return
     file = settings.known_benign_scripts
+    print("Write new script hash file to:", file)
     if len(benign_file_hashes) > 0:
         backup_file = file.name + ".bak"
-        print("Save current script hashes to:", backup_file)
+        print(f"Current script hash file contains {len(benign_file_hashes)} hashes")
+        print("Save current script hash file to:", backup_file)
         shutil.copy2(file, file.with_name(backup_file)) 
-
-    print("Write new script hashes to:", file)
-    lines = "\n".join(f"{digest}" for digest in hash_to_file)
+        print(f"Adding {len(hash_to_file)} file hashes.")
+    else:
+        print(f"Writing {len(hash_to_file)} file hashes.")
+    for hash in hash_to_file:
+        benign_file_hashes.add(hash)
+    lines = "\n".join(f"{hash}" for hash in benign_file_hashes)
     file.write_text(lines + "\n")
 
 def load_file_hashes() -> None:
