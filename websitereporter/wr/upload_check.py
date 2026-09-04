@@ -127,7 +127,7 @@ def show_suspicious_files():
                 print(zeile)
             print(f"... output truncated as {len(lines)} lines exceeds {max_lines}")
             if longest_line > max_columns:
-                print(f"... lines truncated as {longest_line} lines exceeds {max_columns}")
+                print(f"... lines truncated as {longest_line} chars exceeds {max_columns}")
         else:
             print(text)
         print("_____END_FILE____________________________________________________")
