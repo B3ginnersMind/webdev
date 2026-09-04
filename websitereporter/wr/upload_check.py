@@ -114,22 +114,34 @@ def show_suspicious_files():
         print()
         for p in paths:
             print("file:", str(p))
-        print("_____BEGIN_FILE__________________________________________________")
-        lines = text.splitlines()
         max_columns = 120
-        max_lines = 8
+        max_lines = 12
+        lines = text.splitlines()
+        num_lines = len(lines)
+        num_chars = len(text)
+        if num_lines == 0:
+            print(f"... file is empty")
+            return
+
+        print("_____BEGIN_FILE__________________________________________________")
+        if num_lines == 1 and num_chars > max_columns:
+            rows = [text[i:i+100] for i in range(0, len(text), 100)]
+            for i, r in enumerate(rows):
+                if i > max_lines:
+                    print(f"... output of oneliner with {num_chars} chars truncated")
+                    return
+                print(r)
+        
         longest_line = 0
-        if len(lines) > max_lines:
-            for zeile in lines[:max_lines]:
-                if len(zeile) > max_columns:
-                    longest_line = max(longest_line, len(zeile))
-                    zeile = zeile[:max_columns] + "...[truncated]"
-                print(zeile)
-            print(f"... output truncated as {len(lines)} lines exceeds {max_lines}")
-            if longest_line > max_columns:
-                print(f"... lines truncated as {longest_line} chars exceeds {max_columns}")
-        else:
-            print(text)
+        for row in lines[:max_lines]:
+            if len(row) > max_columns:
+                longest_line = max(longest_line, len(row))
+                row = row[:max_columns] + "...[truncated]"
+            print(row)
+        if num_lines > max_lines:
+            print(f"... output truncated as {num_lines} lines exceeds {max_lines}")
+        if longest_line > max_columns:
+            print(f"... lines truncated as {longest_line} chars exceeds {max_columns}")
         print("_____END_FILE____________________________________________________")
 
 def save_file_hashes():
