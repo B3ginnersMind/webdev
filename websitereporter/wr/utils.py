@@ -11,15 +11,29 @@ _LINE_LEN = 100
 class CmsTypes:
     drupal: str = "Drupal"
     drupal_detect: str = "core/lib/Drupal.php"
+    drupal_checked_subdirs: list[str] = field(default_factory=list[str])
+
     joomla: str = "Joomla"
     joomla_detect: str = "configuration.php"
+    joomla_checked_subdirs: list[str] = field(
+        default_factory=lambda: ["images", "tmp"])
+
     mediawiki: str = "Mediawiki"
     mediawiki_detect: str = "LocalSettings.php"
+    mediawiki_checked_subdirs: list[str] = field(
+        default_factory=lambda: ["images"])
+
     wordpress: str = "Wordpress"
     wordpress_detect: str = "wp-settings.php"
+    wordpress_checked_subdirs: list[str] = field(
+        default_factory=lambda: ["wp-content/uploads"])
+
     unknown: str = "UnknownPHP"
     unknown_php_detect: str = "php"
     static: str = "Static"
+
+# global instance
+cms_types = CmsTypes()
 
 @dataclass
 class CmsPaths:
@@ -182,7 +196,6 @@ def list_directories(pathlist: list[Path]) -> None:
 
 def detect_cms(doc_roots: list[Path]) -> CmsPaths:
     print("Scanned WebDocRoots:".ljust(_INDENT), len(doc_roots))
-    types = CmsTypes()
     cms_type = ""
     cms_paths = CmsPaths()
     common_root = os.path.commonpath(doc_roots)
@@ -194,7 +207,7 @@ def detect_cms(doc_roots: list[Path]) -> CmsPaths:
     # iterdir() yields all files and folders in the directory (no recursion)
     for web_root in doc_roots:
         # Filter: Only process the item if it is a directory
-        cms_type = types.static
+        cms_type = cms_types.static
         if web_root.is_symlink():
             num_skipped_symlinks += 1
             if _VERBOSE:
@@ -203,32 +216,32 @@ def detect_cms(doc_roots: list[Path]) -> CmsPaths:
         if not web_root.exists() or not web_root.is_dir():
             num_non_existent_folders += 1
             continue
-        if (web_root / types.joomla_detect).exists():
-            cms_type = types.joomla
+        if (web_root / cms_types.joomla_detect).exists():
+            cms_type = cms_types.joomla
             cms_paths.joomla_sites.append(web_root)
-        elif (web_root / types.mediawiki_detect).exists():
-            cms_type = types.mediawiki
+        elif (web_root / cms_types.mediawiki_detect).exists():
+            cms_type = cms_types.mediawiki
             cms_paths.mediawiki_sites.append(web_root)
-        elif (web_root / types.wordpress_detect).exists():
-            cms_type = types.wordpress
+        elif (web_root / cms_types.wordpress_detect).exists():
+            cms_type = cms_types.wordpress
             cms_paths.wordpress_sites.append(web_root)
-        elif (web_root / types.drupal_detect).exists():
-            cms_type = types.drupal
+        elif (web_root / cms_types.drupal_detect).exists():
+            cms_type = cms_types.drupal
             cms_paths.drupal_sites.append(web_root)
-        elif has_file_extension(str(web_root), types.unknown_php_detect):
-            cms_type = types.unknown
+        elif has_file_extension(str(web_root), cms_types.unknown_php_detect):
+            cms_type = cms_types.unknown
             cms_paths.unknown_php_sites.append(web_root)
         else:
             cms_paths.static_sites.append(web_root)
         if _VERBOSE:
             print(f"Folder {web_root} : {cms_type} detected")
 
-    show_num_websites(CmsTypes.drupal, cms_paths.drupal_sites, common_root)
-    show_num_websites(CmsTypes.joomla, cms_paths.joomla_sites, common_root)
-    show_num_websites(CmsTypes.mediawiki, cms_paths.mediawiki_sites, common_root)
-    show_num_websites(CmsTypes.wordpress, cms_paths.wordpress_sites, common_root)
-    show_num_websites(CmsTypes.static, cms_paths.static_sites, common_root)
-    show_num_websites(CmsTypes.unknown, cms_paths.unknown_php_sites, common_root)
+    show_num_websites(cms_types.drupal, cms_paths.drupal_sites, common_root)
+    show_num_websites(cms_types.joomla, cms_paths.joomla_sites, common_root)
+    show_num_websites(cms_types.mediawiki, cms_paths.mediawiki_sites, common_root)
+    show_num_websites(cms_types.wordpress, cms_paths.wordpress_sites, common_root)
+    show_num_websites(cms_types.static, cms_paths.static_sites, common_root)
+    show_num_websites(cms_types.unknown, cms_paths.unknown_php_sites, common_root)
     if num_skipped_symlinks > 0:
         print("Skipped Symlinks:".ljust(_INDENT), num_skipped_symlinks)
     if num_non_existent_folders > 0:

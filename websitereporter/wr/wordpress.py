@@ -1,8 +1,9 @@
-import json, os, subprocess, sys
+import json, os, subprocess
 import urllib.error, urllib.parse, urllib.request
 from wr.config import settings
 from wr import utils as u
-from wr.utils import CmsPaths
+from wr.utils import CmsPaths, cms_types
+from wr.upload_check import sus_files
 from pathlib import Path
 from typing import Any, Optional
 _VERBOSE = False
@@ -176,3 +177,4 @@ def check_wordpress_sites(cms: CmsPaths):
                     u.run_command(f"{wp_cli(owner)} user list")           
         if settings.wordfence_cli != "none":
            u.run_command(f"{settings.wordfence_cli} vuln-scan --no-banner .")
+        sus_files(dir, cms_types.wordpress_checked_subdirs)

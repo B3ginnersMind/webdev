@@ -1,7 +1,8 @@
 import os, re
 from wr.config import settings
 from wr import utils as u
-from wr.utils import CmsPaths, Release
+from wr.utils import CmsPaths, cms_types, Release
+from wr.upload_check import sus_files
 from pathlib import Path
 _UNSET_RELEASE = Release()
 
@@ -60,3 +61,4 @@ def check_mediawiki_sites(cms: CmsPaths):
         else:
             u.run_command(f"{mediawiki_cli(owner)} Version.php")
             u.run_command(f"{mediawiki_cli(owner)} showSiteStats.php")
+            sus_files(dir, cms_types.mediawiki_checked_subdirs)

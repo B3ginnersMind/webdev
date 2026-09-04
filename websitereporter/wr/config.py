@@ -8,6 +8,7 @@ JOOMLA_CLI: str = "php8.4 cli/joomla.php"
 MEDIAWIKI_CLI: str = "php8.4 maintenance/"
 WP_CLI: str = "wp"
 WORDFENCE_CLI: str = "none" # off by default
+KNOWN_BENIGN_SCRIPTS: str = "known_script_hashes"
 
 @dataclass
 class Configuration:
@@ -16,6 +17,7 @@ class Configuration:
     mediawiki_cli: str = MEDIAWIKI_CLI
     wp_cli: str = WP_CLI
     wordfence_cli: str = WORDFENCE_CLI
+    known_benign_scripts: Path = Path(KNOWN_BENIGN_SCRIPTS)
     show_cms_users: bool = False
     apache_vhost_dir: Path = Path(APACHE_VHOST_DIR)
     web_roots: list[Path] = field(default_factory=list[Path])
@@ -64,6 +66,7 @@ def read_config(config_file: Path) -> None:
             settings.mediawiki_cli = sec.get("mediawiki_cli", MEDIAWIKI_CLI)
             settings.wp_cli = sec.get("wp_cli", WP_CLI)
             settings.wordfence_cli = sec.get("wordfence_cli", WORDFENCE_CLI)
+            settings.known_benign_scripts = Path(sec.get("known_benign_scripts", KNOWN_BENIGN_SCRIPTS))
             settings.show_cms_users = sec.getboolean("show_cms_users", False)
             if "apache_vhost_dir" in sec:
                 settings.apache_vhost_dir = Path(

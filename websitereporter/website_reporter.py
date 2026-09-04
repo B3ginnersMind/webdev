@@ -13,12 +13,14 @@ used. See "demo_website_reporter_config.ini" for the default settings.
 import argparse, os, platform, time
 from pathlib import Path
 from wr.config import read_config, settings
+from wr.upload_check import load_file_hashes, upload_checks, show_suspicious_files
+from wr.upload_check import AppMode
 import wr.utils as u
 import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -44,6 +46,12 @@ p.add_argument("-u", "--users", action="store_true",
                 help="output CMS user lists")
 p.add_argument("-v", "--version", action='version', 
                 version='%(prog)s version {version}'.format(version=__version__))
+
+p.add_argument("--check_files", action="store_true",
+                help="check program source files in upload folders")
+p.add_argument("--accept_files", action="store_true",
+                help="accept program source files in upload folders")
+
 p.add_argument("website", nargs='?', type=str, default='none',
                help="the only website document root to be analysed")
 args = p.parse_args()
@@ -75,6 +83,14 @@ else:
     doc_roots: list[Path] = u.get_document_roots("/etc/apache2/sites-enabled")
     cms: u.CmsPaths = u.detect_cms(doc_roots)
 
+if args.check_files:
+    upload_checks(AppMode.TEST_MODE, cms)
+    quit()
+elif args.accept_files:
+    upload_checks(AppMode.ACCEPT_MODE, cms)
+    quit()
+
+load_file_hashes()
 if args.joomla and cms.joomla_sites:
     j.check_joomla_sites(cms)
 if args.mediawiki and cms.mediawiki_sites:
@@ -84,3 +100,4 @@ if args.wordpress and cms.wordpress_sites:
 if args.drupal and cms.drupal_sites:
     d.check_drupal_sites(cms)
 # u.check_static_sites(cms)
+show_suspicious_files()

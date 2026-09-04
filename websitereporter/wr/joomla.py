@@ -1,7 +1,8 @@
 import os, re
 from wr import utils as u
 from wr.config import settings
-from wr.utils import CmsPaths, Release
+from wr.utils import CmsPaths, cms_types, Release
+from wr.upload_check import sus_files
 from pathlib import Path
 _UNSET_RELEASE = Release()
 
@@ -55,8 +56,10 @@ def check_joomla_sites(cms: CmsPaths):
         elif version <= Release("4.0.0"):
             print(f"Found Joomla version {version}")
             print("Joomla version < 4.0.0 still without full CLI.")
+            sus_files(dir, cms_types.joomla_checked_subdirs)
         else:
             u.run_command(f"{joomla_cli(owner)} core:update:check")
             u.run_command(f"{joomla_cli(owner)} update:extensions:check")
             if settings.show_cms_users:
                 u.run_command(f"{joomla_cli(owner)} user:list")
+            sus_files(dir, cms_types.joomla_checked_subdirs)

@@ -18,3 +18,4 @@ def check_drupal_sites(cms: CmsPaths):
         # get version for Drupal 8/9/10/11
         command = 'cat core/lib/Drupal.php | grep "const VERSION"'
         u.get_shell_command_output(command, verbose=True)
+        

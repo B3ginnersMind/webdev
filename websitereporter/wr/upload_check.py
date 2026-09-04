@@ -1,47 +1,67 @@
-import hashlib, re, sys
+import hashlib, re, shutil
+from enum import Enum
 from pathlib import Path
-from wr.utils import CmsPaths
+from wr.config import settings
+from wr.utils import CmsPaths, CmsTypes
 import wr.utils as u
-import termios, tty # type: ignore
 
+# In this dict suspicious PHP files are collected. Key is a hash of the file content.
+# hash -> (file_content, list_of_paths_where_file_found)
 FileDict = dict[str, tuple[str, list[Path]]] # Without TypeAlias for Python 3.10
 hash_to_file: FileDict = {}
+# Set of file hashes where is has been checked that the files are benign.
+benign_file_hashes: set[str] = set()
+# List of file types which should not occur in upload directories.
+tested_file_types: list[str] = [ "*.js" ]
+
+class AppMode(Enum):
+    TEST_MODE = "check_mode"
+    ACCEPT_MODE = "adjust_mode"
 
 
-# __ Konfiguration ____________________________________________________________
-# _STATE_DIR = Path("/usr/home/gwupqo/.gwup-monitor")     # absolut, kein ~
-
-def upload_checks(cms_paths: CmsPaths):
+def sus_files(cmsPath: Path, checked_subdirs: list[str]):
+    """
+    Look for suspicious program source files in upload folders.
+    """
+    for subdir in checked_subdirs:
+        sus_php_in_uploads(cmsPath / subdir)
+        sus_file_types(cmsPath/ subdir)
+ 
+def upload_checks(mode: AppMode, cms_paths: CmsPaths):
+    """
+    Perform all upload checks. If in ACCEPT_MODE write new
+    file of accepted program source files in upload folders.
+    """
+    load_file_hashes()
+    types = CmsTypes()
+    for p in cms_paths.drupal_sites:
+        sus_files(p, types.drupal_checked_subdirs)
     for p in cms_paths.joomla_sites:
-        cmd_upload_check(p / "images")
+        sus_files(p, types.joomla_checked_subdirs)
+    for p in cms_paths.mediawiki_sites:
+        sus_files(p, types.mediawiki_checked_subdirs)
     for p in cms_paths.wordpress_sites:
-        cmd_upload_check(p / "wp-content" / "uploads")
-    show_files()
-
-def cmd_upload_check(upload_dir: Path) -> None:
-    """Prüft alle WP-Roots auf verdächtige PHP-Dateien in uploads/."""
-    # Auf PHP/JS-Dateien in uploads prüfen (Backdoor-Indikator)
-    u.print_dots()
-    print(f"--> Check uploads in: {upload_dir}")
-    sus_php_in_uploads(upload_dir)
+        sus_files(p, types.wordpress_checked_subdirs)
+    show_suspicious_files()
+    if mode == AppMode.ACCEPT_MODE:
+        save_file_hashes()
 
 def sus_php_in_uploads(uploads: Path) -> None:
+    """ 
+    Look for suspicious PHP files and collect them in the set hash_to_file. 
+    """
+    u.print_dots()
+    print(f"--> Check for '*.php' in: {uploads}")
     global hash_to_file
     if not uploads.is_dir():
         return
-    baseline_hashes: dict[Path, str] = {}
-    # bf = baseline_file(uploads)
-    # if bf.exists():
-    #     baseline_hashes = load_baseline(uploads)
-
     num_found = 0
     num_found_stored = 0
-    # print("sus_php_in_uploads")
+
     for p in uploads.rglob("*.php"):
         if p.is_file():
-            key = p
-            digest = hashlib.sha256(p.read_bytes()).hexdigest()
-            if baseline_hashes.get(key) == digest:
+            hash = hashlib.sha256(p.read_bytes()).hexdigest()
+            if hash in benign_file_hashes:
                 continue  # known + unchanged
             if p.name == "index.php":
                 # If the file is < 1001 bytes: parse it. Otherwise, it’s suspicious anyway.
@@ -49,47 +69,92 @@ def sus_php_in_uploads(uploads: Path) -> None:
                     print(f"🔴 Datei: {p}")
                     num_found += 1
             else:
-                # That file doesn’t really belong there. Just a case of uncontrolled plugin proliferation?
+                # That file doesn’t belong there. Just a case of uncontrolled plugin proliferation?
                 print(f"🔴 Datei: {p}")
                 num_found += 1
             if num_found > num_found_stored:
                 num_found_stored = num_found
-                if digest not in hash_to_file:
-                    hash_to_file[digest] = (p.read_text(),[p])
+                if hash not in hash_to_file:
+                    hash_to_file[hash] = (p.read_text(),[p])
                 else:
-                    hash_to_file[digest][1].append(p)
+                    hash_to_file[hash][1].append(p)
 
-    print(f"Number of suspicious PHP files found: {num_found}")
+    print(f"Number of suspicious '*.php' files found: {num_found}")
     return
 
-def show_files() -> None:
+def sus_file_types(uploads: Path) -> None:
+    """ 
+    Look for suspicious file types and collect them in the set hash_to_file. 
+    """
+    global hash_to_file
+    num_found = 0
+    num_found_stored = 0
+    for ft in tested_file_types:
+        print(f"--> Check for '{ft}' in: {uploads}")
+        for p in uploads.rglob(ft):
+            if p.is_file():
+                hash = hashlib.sha256(p.read_bytes()).hexdigest()
+                if hash in benign_file_hashes:
+                    continue  # known + unchanged
+                print(f"🔴 Datei: {p}")
+                num_found += 1
+                if num_found > num_found_stored:
+                    num_found_stored = num_found
+                    hash = hashlib.sha256(p.read_bytes()).hexdigest()
+                    if hash not in hash_to_file:
+                        hash_to_file[hash] = (p.read_text(),[p])
+                    else:
+                        hash_to_file[hash][1].append(p)
+        print(f"Number of suspicious '{ft}' files found: {num_found}")
+
+def show_suspicious_files():
     u.print_double_line()
-    print(f"Total number of suspicious PHP files found: {len(hash_to_file)}")
+    print(f"Total number of suspicious upload files found: {len(hash_to_file)}")
     for _, (text, paths) in hash_to_file.items():
-        # print("hash:", key)
         print()
         for p in paths:
             print("file:", str(p))
-        print("_____BEGIN_FILE_____")
-        print(text)
-        print("_____END_FILE_______")
+        print("_____BEGIN_FILE__________________________________________________")
+        lines = text.splitlines()
+        max_lines = 8
+        if len(lines) > max_lines:
+            for zeile in lines[:max_lines]:
+                print(zeile)
+            print(f"... output truncated as {len(lines)} lines exceeds {max_lines}")
+        else:
+            print(text)
+        print("_____END_FILE____________________________________________________")
 
+def save_file_hashes():
+    global benign_file_hashes
+    u.print_double_line()
+    if not hash_to_file:
+        print("There are no additional script hashes for storage.")
+        return
+    file = settings.known_benign_scripts
+    if len(benign_file_hashes) > 0:
+        backup_file = file.name + ".bak"
+        print("Save current script hashes to:", backup_file)
+        shutil.copy2(file, file.with_name(backup_file)) 
 
-# def baseline_file(wp_root: Path) -> Path:
-#     return _STATE_DIR / f"baseline_{path_to_slug(wp_root)}.sha256"
+    print("Write new script hashes to:", file)
+    lines = "\n".join(f"{digest}" for digest in hash_to_file)
+    file.write_text(lines + "\n")
 
-# def load_baseline(wp_root: Path) -> dict[Path, str]:
-#     """Gespeicherte Baseline einlesen."""
-#     bf = baseline_file(wp_root)
-#     if not bf.exists():
-#         return {}
-#     hashes: dict[Path, str] = {}
-#     for line in bf.read_text().splitlines():
-#         digest, _, path = line.partition("  ")
-#         hashes[Path(path)] = digest
-#     return hashes
+def load_file_hashes() -> None:
+    global benign_file_hashes
+    u.print_dots()
+    file = settings.known_benign_scripts
+    if file.exists():
+        print(f"Read: {file}")
+        for line in file.read_text().splitlines():
+            benign_file_hashes.add(line.strip())
+        print("Number of loaded known benign files hashes", len(benign_file_hashes))
+    else:
+        print(f"Still no file {file} with known scripts.")
+    return
 
-def contains_executable_code(php_content: str) -> bool:
+def contains_executable_php_code(php_content: str) -> bool:
     # Remove PHP tags (<?php, <?, ?>, but leave the = in <?= as it means “echo”)
     # Replaces <?php, <? and ?> with nothing.
     php_content = re.sub(r'<\?(?:php)?|\?>', '', php_content, flags=re.IGNORECASE)
@@ -123,8 +188,4 @@ def not_empty_php(php_file: Path) -> bool:
     text = php_file.read_text(encoding="utf-8", errors="replace")
     if text.strip() == "":
         return False
-    return contains_executable_code(text)
-
-def path_to_slug(wp_root: Path) -> str:
-    """Pfad in sicheren Dateinamen umwandeln, z.B. für Baseline-Dateien."""
-    return str(wp_root).replace("/", "_").replace(" ", "_")
+    return contains_executable_php_code(text)
