@@ -331,6 +331,13 @@ def run_command(command_str: str,
     print_dots()
     print(f"--> Command: {plain_command}")
     result = subprocess.run(command, capture_output=True, text=True, check=False, env=my_env)
+    exit_code = result.returncode
+    if exit_code == 137:
+        print("Error 137: Process terminated by operating system (OOM kill / Insufficient memory).")
+    elif exit_code == 255:
+        print("Error 255: Fatal (e.g. memory_limit exceeded).")
+    elif exit_code != 0:
+        print(f"Failed with return code: {exit_code}")
 
     if result.stderr.strip():
         lines = get_nonempty_lines(result.stderr)
