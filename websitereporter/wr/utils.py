@@ -160,8 +160,8 @@ def show_num_websites(cms: str, path_list: list[Path], common_root: str):
         detected_sites = f"Detected {cms}:".ljust(_INDENT1)
         line = detected_sites + name_str
         indent = _INDENT1 * ' '
-        wrappedLine = textwrap.fill(line, get_line_len(), subsequent_indent=indent)
-        print(wrappedLine)
+        wrapped_line = textwrap.fill(line, get_line_len(), subsequent_indent=indent)
+        print(wrapped_line)
 
 def list_directories(pathlist: list[Path]) -> None:
     if not pathlist:
@@ -329,7 +329,10 @@ def run_command(command_str: str,
     for token in command:
         plain_command += token + " "
     print_dots()
-    print(f"--> Command: {plain_command}")
+    line = "--> Command: " + plain_command
+    wrapped_line = textwrap.fill(line, get_line_len(), subsequent_indent=13 * ' ')
+    print(wrapped_line)
+
     result = subprocess.run(command, capture_output=True, text=True, check=False, env=my_env)
     exit_code = result.returncode
     if exit_code == 137:
