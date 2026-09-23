@@ -22,16 +22,6 @@ import json, os, requests, sqlite3, time
 from pathlib import Path
 from wr.config import read_config, settings
 
-# Access key from the Wordfence account
-API_TOKEN = "lTV2A2mZBn20IcEKVBonzoOdxVWCno5vpaaPzjoI" 
-
-# Where to get the current wordfence v3 vulnerability JSON feed.
-#FEED_URL = "https://www.wordfence.com/api/intelligence/v3/vulnerabilities/production"
-#JSON_FILE = "wordfence_production.json"
-#ETAG_FILE = "wordfence_production.etag"
-# Sqlite database file to store the vulnerabilities in a flat table for fast lookups
-#DB_FILE = "wordfence_production.db"
-
 def update_vulnerability_database():
     currenttime = time.strftime('%d.%m.%Y %H:%M')
     print(f"Attempting to refresh the Wordfence vulnerability data as JSON file at {currenttime}")
