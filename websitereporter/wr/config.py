@@ -7,8 +7,21 @@ APACHE_VHOST_DIR = "/etc/apache2/sites-enabled"
 JOOMLA_CLI: str = "php8.4 cli/joomla.php"
 MEDIAWIKI_CLI: str = "php8.4 maintenance/"
 WP_CLI: str = "wp"
-WORDFENCE_CLI: str = "none" # off by default
 KNOWN_BENIGN_SCRIPTS: str = "known_script_hashes"
+
+# Command to call the Wordfence CLI which was shut down in Oct 2026.
+WORDFENCE_CLI: str = "none" # off by default
+# Access key from the Wordfence account.
+# Wordfence API Token (v3) - This is a public token for the Wordfence API. 
+WF_API_TOKEN = "none"  # off by default
+# Where to get the current wordfence v3 vulnerability JSON feed.
+WF_FEED_URL = "https://www.wordfence.com/api/intelligence/v3/vulnerabilities/production"
+# JSON file of vulnerabilities downloaded from the Wordfence API.
+# This file is used to build the SQLite database.
+WF_JSON_FILE = "wordfence_production.json"
+WF_ETAG_FILE = "wordfence_production.etag"
+# Sqlite database file to store the vulnerabilities in a flat table for fast lookups
+WF_DB_FILE = "wordfence_production.db"
 
 @dataclass
 class Configuration:
@@ -16,8 +29,13 @@ class Configuration:
     joomla_cli: str = JOOMLA_CLI
     mediawiki_cli: str = MEDIAWIKI_CLI
     wp_cli: str = WP_CLI
-    wordfence_cli: str = WORDFENCE_CLI
     known_benign_scripts: Path = Path(KNOWN_BENIGN_SCRIPTS)
+    wordfence_cli: str = WORDFENCE_CLI
+    wf_api_token: str = WF_API_TOKEN 
+    wf_feed_url: str = WF_FEED_URL
+    wf_json_file: Path = Path(WF_JSON_FILE)
+    wf_etag_file: Path = Path(WF_ETAG_FILE)
+    wf_db_file: Path = Path(WF_DB_FILE)
     show_cms_users: bool = False
     apache_vhost_dir: Path = Path(APACHE_VHOST_DIR)
     web_roots: list[Path] = field(default_factory=list[Path])
@@ -65,8 +83,15 @@ def read_config(config_file: Path) -> None:
             settings.joomla_cli = sec.get("joomla_cli", JOOMLA_CLI)
             settings.mediawiki_cli = sec.get("mediawiki_cli", MEDIAWIKI_CLI)
             settings.wp_cli = sec.get("wp_cli", WP_CLI)
-            settings.wordfence_cli = sec.get("wordfence_cli", WORDFENCE_CLI)
             settings.known_benign_scripts = Path(sec.get("known_benign_scripts", KNOWN_BENIGN_SCRIPTS))
+
+            settings.wordfence_cli = sec.get("wordfence_cli", WORDFENCE_CLI)
+            settings.wf_api_token = sec.get("wf_api_token", WF_API_TOKEN)
+            settings.wf_feed_url = sec.get("wf_feed_url", WF_FEED_URL)
+            settings.wf_json_file = Path(sec.get("wf_json_file", WF_JSON_FILE))
+            settings.wf_etag_file = Path(sec.get("wf_etag_file", WF_ETAG_FILE))
+            settings.wf_db_file = Path(sec.get("wf_db_file", WF_DB_FILE))
+
             settings.show_cms_users = sec.getboolean("show_cms_users", False)
             if "apache_vhost_dir" in sec:
                 settings.apache_vhost_dir = Path(
