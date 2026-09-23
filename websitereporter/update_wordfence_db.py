@@ -1,4 +1,10 @@
+#!/usr/bin/env python
 """
+--------------------------------------------------------------------------------
+Update the Wordfence vulnerability database in JSON format and convert it into a
+memory-optimized SQLite database. The JSON file is downloaded from the Wordfence
+API. The SQLite database is used for fast lookups of plugin vulnerabilities.
+--------------------------------------------------------------------------------
 The HTTP caching header `ETag` ist stored, which is an identifier for 
 a specific version of a resource. This is sent along with the next request, 
 so that the web server can check whether there is a new version of the resource
@@ -16,6 +22,7 @@ file in chunks of 8-kilobyte blocks and write it directly to the hard drive.
 If one were to use 'response.json()' instead, Python would first have to 
 store the entire huge document in memory (RAM), which, on 
 small web servers, would quickly cause your script to crash.
+--------------------------------------------------------------------------------
 """
 import gc # Garbage Collector
 import json, os, requests, sqlite3, time
@@ -23,7 +30,7 @@ from pathlib import Path
 from wr.config import read_config, settings
 
 def update_vulnerability_database():
-    currenttime = time.strftime('%d.%m.%Y %H:%M')
+    currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
     print(f"Attempting to refresh the Wordfence vulnerability data as JSON file at {currenttime}")
 
     # 1. Always include the Token with every request
@@ -68,6 +75,7 @@ def update_vulnerability_database():
         print(f"[Error] Network problem: {e}")
         return False
 
+# ------------------------------------------------------------------------------
 def build_flat_sqlite_memory_optimized():
     if not os.path.exists(settings.wf_json_file):
         print(f"JSON file missing: {settings.wf_json_file}")
@@ -167,7 +175,7 @@ def build_flat_sqlite_memory_optimized():
     del data
     gc.collect()
 
-    print(f"Finished:! {total_inserted} entries written into the database.")
+    print(f"Finished: {total_inserted} entries written into the database.")
 
 if __name__ == "__main__":
     read_config(Path(__file__).parent / "website_reporter_config.ini")
@@ -175,9 +183,9 @@ if __name__ == "__main__":
         print(f"Skript not run as root. Exiting...")
         quit()
 
-    # Step 1: Update the Feed (or download initially)
+    # Update the Feed (or download initially)
     success = update_vulnerability_database()
     if success:
-        currenttime = time.strftime('%d.%m.%Y %H:%M')
+        currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
         print(f"Database JSON downloaded successfully at {currenttime}")
         build_flat_sqlite_memory_optimized()
