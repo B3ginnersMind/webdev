@@ -41,71 +41,102 @@ def check_wp_components_status(installed_components: list[dict[str, Any]],
         return
 
     conn = sqlite3.connect(db_file)
-    # row_factory ensures that we can access data using column names rather than just indices
     conn.row_factory = sqlite3.Row 
     cursor = conn.cursor()
     vuln: list[dict[str, Any]] = []
 
-    #--------------------------------------------------------------
-    # Function to check each plugin's version against the database
-    #--------------------------------------------------------------
     def check_component(slug: str, version: str) -> None:
-        if _VERBOSE2:
-            print(f"Prüfe Plugin: '{slug}' (Version: {version})")
         if not slug:
             return
         comp_version = Release(version)
         if comp_version.is_nonnumeric:
-            if _VERBOSE1:
-                print(f"Non-numeric version for plugin '{slug}': {repr(comp_version)}")
             return
+        
         cursor.execute("SELECT * FROM plugin_vulns WHERE slug = ?", (slug,))
         rows = cursor.fetchall()
-        if _VERBOSE2:
-            num_selected = len(rows)
-            print(f"Found {num_selected} CVEs for plugin '{slug}'")
         if not rows:
-            if _VERBOSE2:
-                print(f"No CVEs for Plugin '{slug}' found.")
             return
 
+        # Hilfsfunktion zum Erstellen des Warning-Eintrags
+        def append_vuln_entry(r: sqlite3.Row):
+            t = r['title'][:LEN_TITLE] + ".." if len(r['title']) > LEN_TITLE else r['title']
+            vuln.append({
+                "slug": slug, "version": version, "cve": r['cve'], 
+                "severe": r['cvss_severity'], "published": r['published'], 
+                "type": r['software_type'], "patch": r['patched_version'], "title": t
+            })
+
+        # 1. Gruppiere Datenbankzeilen nach CVE (oder ID, falls CVE None ist)
+        cve_groups: dict[str, list[sqlite3.Row]] = {}
         for row in rows:
-            patch_version = Release(row['patched_version'])
-            add_warning = False
-            if patch_version.is_nonnumeric:
-                if comp_version.is_greater_than(row['patched_version']):
-                    continue  # CVE already fixed.
+            # Manche Schwachstellen haben keine CVE; wir nutzen dann die ID als Schluessel
+            cve_key = row['cve'] if row['cve'] else f"NO_CVE_{row['id']}"
+            if cve_key not in cve_groups:
+                cve_groups[cve_key] = []
+            cve_groups[cve_key].append(row)
+
+        # 2. Verarbeite jede CVE-Gruppe
+        for cve_key, cve_rows in cve_groups.items():
+            
+            # --- FALL A: Es gibt nur EINE gepatchte Version fuer diese CVE ---
+            if len(cve_rows) == 1:
+                row = cve_rows[0]
+                patch_version = Release(row['patched_version'])
+                
+                if patch_version.is_nonnumeric:
+                    # Behandlung fuer nicht-numerische Patch-Versionen
+                    if not comp_version.is_greater_than(row['patched_version']):
+                        append_vuln_entry(row)
                 else:
-                    add_warning = True
-                    if _VERBOSE1:
-                        print(f"{repr(patch_version)} of component '{slug}' patched {row['cve']}.")
-                        print(f"{repr(comp_version)} is the installed version.")
-                continue
-            if patch_version > comp_version:
-                add_warning = True
+                    if patch_version > comp_version:
+                        append_vuln_entry(row)
 
-            if add_warning:    
-                title = row['title'][:LEN_TITLE] + ".." if len(row['title']) > LEN_TITLE else row['title']
+            # --- FALL B: Es gibt MEHRERE gepatchte Versionen fuer dieselbe CVE (z.B. Free & Pro) ---
+            else:
+                # Filtere valide Release-Objekte aus den Zeilen heraus
+                valid_patches: list[tuple[Release, sqlite3.Row]] = []
+                for r in cve_rows:
+                    rel = Release(r['patched_version'])
+                    if not rel.is_nonnumeric:
+                        valid_patches.append((rel, r))
+                
+                if not valid_patches:
+                    continue  # Keine vergleichbaren Versionen enthalten
 
-                vuln.append({"slug": slug, "version": version, "cve": row['cve'], "severe": row['cvss_severity'],
-                             "published": row['published'], "type": row['software_type'], 
-                             "patch": row['patched_version'], "title": title})
-                if _VERBOSE1:
-                    print(f"Plugin '{slug}' version {version} vulnerable to: {row['cve']} (patched in {row['patched_version']})")
+                # Sortiere nach Release-Objekt, um Min und Max zu bestimmen
+                valid_patches.sort(key=lambda item: item[0])
+                
+                patch_version_min, row_min = valid_patches[0]
+                patch_version_max, row_max = valid_patches[-1]
+
+                # Bedingung 1: comp_version < patch_version_min -> 1 Warneintrag (min)
+                if comp_version < patch_version_min:
+                    append_vuln_entry(row_min)
+
+                # Bedingung 2: comp_version >= patch_version_max -> Kein Warneintrag
+                elif comp_version >= patch_version_max:
+                    pass  # System ist sicher gepatcht
+
+                # Bedingung 3: patch_version_min <= comp_version < patch_version_max -> 2 Warneintraege
+                elif patch_version_min <= comp_version < patch_version_max:
+                    append_vuln_entry(row_min)
+                    append_vuln_entry(row_max)
+
     # end check_component
 
     for plugin_data in installed_components:
         slug: str = str(plugin_data.get("name"))
         version: str = str(plugin_data.get("version"))
         check_component(slug, version)
+
     if not vuln:
         print(f"No vulnerabilities found in wordfence for {comp_type}s")
         return
+
     print("-" * LEN_LINE)
     print(f"{'Slug':<15} | {'Version':<7} | {'Severe':<8} | {'Published':10} | {'Patch':<9} | {'Title'}")
     print("-" * LEN_LINE)
     for v in vuln:
-        # omitted {v['cve']:<15}  {v['type']}
         print(f"{v['slug']:<15} | {v['version']:<7} | {v['severe']:<8} | {v['published']:10} | "
               f"{v['patch']:<9} | {v['title']}")
     return
