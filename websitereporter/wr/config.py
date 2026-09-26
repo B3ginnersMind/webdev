@@ -93,6 +93,8 @@ def read_config(config_file: Path) -> None:
             settings.wf_api_token = sec.get("wf_api_token", WF_API_TOKEN)
             settings.wf_feed_url = sec.get("wf_feed_url", WF_FEED_URL)
             settings.wf_folder = Path(sec.get("wf_json_file", "."))
+            if settings.wf_folder == Path("."):
+                settings.wf_folder = config_file.parent
             settings.wf_json_file = Path(sec.get("wf_json_file", WF_JSON_FILE))
             settings.wf_etag_file = Path(sec.get("wf_etag_file", WF_ETAG_FILE))
             settings.wf_json_reduced_file = Path(sec.get("wf_json_reduced_file", WF_JSON_REDUCED_FILE))

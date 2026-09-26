@@ -38,9 +38,6 @@ class Return(Enum):
 
 #-------------------------------------------------------------------------------
 def update_vulnerability_database(json_file: Path, etag_file: Path) -> Return:
-    currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
-    print(f"Attempting to refresh the Wordfence vulnerability JSON at {currenttime}")
-
     # 1. Always include the Token with every request
     headers = {'Authorization': f'Bearer {settings.wf_api_token}' }
     

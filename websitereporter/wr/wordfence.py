@@ -13,12 +13,13 @@ _VERBOSE2 = False
 _VERBOSE1 = False 
 
 def is_wordfence_db_ok(db_file: Path) -> bool:
+    print_dots()
+    print(f"Test the database file at: {db_file.absolute()}")
     if not os.path.exists(db_file):
         print(f"Error: Database '{db_file}' missing.")
         return False
     mtime_timestamp = os.path.getmtime(db_file)
     mtime_readable = datetime.datetime.fromtimestamp(mtime_timestamp)
-    print_dots()
     print(f"Database '{db_file}' last modified: {mtime_readable:%Y-%m-%d %H:%M}")
 
     try:
