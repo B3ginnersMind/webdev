@@ -9,6 +9,8 @@ show_ips_exampleDomains.txt
 show_dns_exampleDomains.txt
 website_reporter_config.ini
 *.log
+*.db
+report.txt
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

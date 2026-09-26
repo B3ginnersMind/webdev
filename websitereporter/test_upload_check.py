@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 """
 --------------------------------------------------------------------------------
-test upload_checks
+Look for suspicious files in CMS upload folders. 
+In accept mode a hash of the found files will be stored in the database to 
+avoid future false positives.
+This script is intended to be run on a Linux server.
 --------------------------------------------------------------------------------
 """
 import argparse, os, platform, time
@@ -13,7 +16,7 @@ from wr.upload_check import AppMode
 __version__ = "1.0.0"
 
 if platform.system() != 'Linux':
-    print(f"Skript does only support Linux. Exiting...")
+    print(f"Script does only support Linux. Exiting...")
     quit()
 
 currenttime = time.strftime('%d.%m.%Y %H:%M')
@@ -38,7 +41,7 @@ if settings.run_as_root and os.getuid() != 0: # type: ignore
     print(f"Skript not run as root. Exiting...")
     quit()
 
-print('=== Generate reports on active virtual hosts ===')
+print('=== Investigate suspicious files in CMS upload folders ===')
 print('This is Python script', script_name, 'version', __version__)
 print('Query time:', currenttime)
 

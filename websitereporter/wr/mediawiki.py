@@ -1,7 +1,8 @@
 import os, re
 from wr.config import settings
 from wr import utils as u
-from wr.utils import CmsPaths, cms_types, Release
+from wr.utils import CmsPaths, cms_types
+from wr.release import Release
 from wr.upload_check import sus_files
 from pathlib import Path
 _UNSET_RELEASE = Release()
@@ -16,9 +17,10 @@ def mediawiki_cli(owner: str, script: str = "run.php") -> str:
 def detect_mediawiki_version(folder: Path) -> Release:
     """
     folder is the root of a MediaWiki installation.
-    Look within includes/Defines.php after:
+    Look for version within includes/Defines.php after:
         define( 'MW_VERSION', 'VERSION' );
-    und return VERSION zurück (e.g. '1.43.6').
+    Older Mediawikis store the version in includes/DefaultSettings.php:
+        $wgVersion = 'VERSION';
     """
     defines_path: Path = folder / "includes" / "Defines.php"
     if not defines_path.is_file():
@@ -29,6 +31,20 @@ def detect_mediawiki_version(folder: Path) -> Release:
     with open(defines_path, "r", encoding="utf-8") as f:
         for line in f:
             match = pattern.search(line)
+            if match:
+                release = match.group(1)
+                return Release(release)
+    # In older Mediawikis the version is stored in DefaultSettings.php
+    default_settings: Path = folder / "includes" / "DefaultSettings.php"
+    if not default_settings.is_file():
+        return _UNSET_RELEASE
+    print(f"Look for version in {default_settings}")
+    pattern_old = re.compile(
+        r"\s*\$wgVersion\s*=\s*['\"]([^'\"]+)['\"]\s*;"
+    )
+    with open(default_settings, "r", encoding="utf-8") as f:
+        for line in f:
+            match = pattern_old.search(line)
             if match:
                 release = match.group(1)
                 return Release(release)
@@ -61,4 +77,5 @@ def check_mediawiki_sites(cms: CmsPaths):
         else:
             u.run_command(f"{mediawiki_cli(owner)} Version.php")
             u.run_command(f"{mediawiki_cli(owner)} showSiteStats.php")
-            sus_files(dir, cms_types.mediawiki_checked_subdirs)
+
+        sus_files(dir, cms_types.mediawiki_checked_subdirs)

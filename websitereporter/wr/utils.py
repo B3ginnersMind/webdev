@@ -44,27 +44,6 @@ class CmsPaths:
     static_sites: list[Path] = field(default_factory=list[Path])
     unknown_php_sites: list[Path] = field(default_factory=list[Path])
 
-@dataclass(order=True)
-class Release:
-   """ CMS release (dataclass with ordering for comparison) """
-   main: int = 0
-   major: int = 0
-   minor: int = 0
-   def __init__(self, lead: int | str = 0, major: int = 0, minor: int = 0) -> None:
-      if isinstance(lead, str):
-         parts = lead.split(".")
-         if len(parts) < 2 or len(parts) > 3:
-            raise ValueError(f"Invalid release: {lead}")
-         self.main = int(parts[0])
-         self.major = int(parts[1])
-         self.minor = int(parts[2])
-      else:
-         self.main = lead
-         self.major = major
-         self.minor = minor
-   def __str__(self) -> str:
-      return f"{self.main}.{self.major}.{self.minor}"
-
 def get_indent():
     return _INDENT
 def get_line_len():

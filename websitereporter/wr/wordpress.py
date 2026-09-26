@@ -17,9 +17,25 @@ def wp_cli(owner: str) -> str:
         return f"sudo -u {owner} " + settings.wp_cli
     return settings.wp_cli
 
+def get_component_json(comp_type: str, dir: Path) -> list[dict[str, Any]]:
+    """
+    Run "{comp_type} list --format=json" of WP-CLI and return the 
+    JSON output as a list of dictionaries.
+    """
+    command = f"{wp_cli(str(dir.owner()))} {comp_type} list --format=json" # type: ignore
+    print(f"--> Command: {command}")
+    cmd: list[str] = command.split()
+    try:
+        process = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        installed_components: list[dict[str, Any]] = json.loads(process.stdout)
+        return installed_components
+    except Exception as e:
+        print("error", f"Exception: {e}")
+        return [{"error": f"Exception: {e}"}]
+
 def check_wp_plugins_status(dir: Path) -> dict[str, list[Any]]:
     """
-    Run "plugin list --format=json" of WP-CLI and check each plugin slug 
+    Get the installed plugins as a dict and check each plugin slug 
     against the official WordPress.org API. Detect whether a plugin is
     active, closed, or not contained at WordPress.org.
     """
@@ -29,17 +45,13 @@ def check_wp_plugins_status(dir: Path) -> dict[str, list[Any]]:
         "not_on_org": [],
         "errors": []
     }
-    command = f"{wp_cli(str(dir.owner()))} plugin list --format=json" # type: ignore
-    u.print_dots()        
-    print(f"--> Command: {command}")
-    cmd: list[str] = command.split()
-    try:
-        # cmd: list[str] = ["sudo", "-u", "www-data", "wp", "plugin", "list", "--format=json", f"--path={dir}"]
-        process = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        installed_plugins: list[dict[str, Any]] = json.loads(process.stdout)
-    except Exception as e:
-        print("error", f"Exception: {e}")
-        results["errors"].append(f"Exception: {e}")
+    
+    installed_plugins = get_component_json("plugin", dir)
+    if installed_plugins and "error" in installed_plugins[0]:
+        results["errors"].append(installed_plugins[0]["error"])
+        return results
+    if not installed_plugins:
+        results["errors"].append("No plugins found or error retrieving plugin list.")
         return results
 
     print(f"--> Checking whether plugins are active, closed, or not contained at WordPress.org")
@@ -146,8 +158,13 @@ def check_wordpress_sites(cms: CmsPaths):
         u.run_command(f"{wp_cli(owner)} core check-update")
         u.run_command(f"{wp_cli(owner)} core verify-checksums")
         u.run_command(f"{wp_cli(owner)} plugin verify-checksums --all")
-        u.run_command(f"{wp_cli(owner)} plugin list")
-        u.run_command(f"{wp_cli(owner)} theme list")
+        u.print_dots()
+        print_as_table(get_component_json("plugin", dir))
+        u.print_dots()
+        print_as_table(get_component_json("theme", dir))
+        u.print_dots()
+        # u.run_command(f"{wp_cli(owner)} plugin list")
+        # u.run_command(f"{wp_cli(owner)} theme list")
         # u.run_command(f"{wpcli(owner)} plugin status")
         report: dict[str, list[Any]] = check_wp_plugins_status(dir)
 
@@ -174,8 +191,12 @@ def check_wordpress_sites(cms: CmsPaths):
                     print(f"Over {max_users} Wordpress users: Only show administrators")
                     u.run_command(f"{wp_cli(owner)} user list --role=administrator")
                 else:
-                    u.run_command(f"{wp_cli(owner)} user list")           
+                    u.run_command(f"{wp_cli(owner)} user list")
         if settings.wordfence_cli != "none":
            u.run_command(f"{settings.wordfence_cli} vuln-scan --no-banner"
                          " -w . -p ./wp-content/plugins -t ./wp-content/themes")
+        from wr.wordfence import check_vulnerabilities_from_wordfence
+        # db_file
+        db_file = settings.wf_folder / settings.wf_db_file
+        check_vulnerabilities_from_wordfence(db_file, dir)
         sus_files(dir, cms_types.wordpress_checked_subdirs)

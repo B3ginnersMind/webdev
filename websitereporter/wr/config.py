@@ -20,8 +20,10 @@ WF_FEED_URL = "https://www.wordfence.com/api/intelligence/v3/vulnerabilities/pro
 # This file is used to build the SQLite database.
 WF_JSON_FILE = "wordfence_production.json"
 WF_ETAG_FILE = "wordfence_production.etag"
+# JSON file where some unused properties were removed
+WF_JSON_REDUCED_FILE = "wordfence_reduced.json"
 # Sqlite database file to store the vulnerabilities in a flat table for fast lookups
-WF_DB_FILE = "wordfence_production.db"
+WF_DB_FILE = "wordfence.db"
 
 @dataclass
 class Configuration:
@@ -33,8 +35,10 @@ class Configuration:
     wordfence_cli: str = WORDFENCE_CLI
     wf_api_token: str = WF_API_TOKEN 
     wf_feed_url: str = WF_FEED_URL
+    wf_folder: Path = Path(".")
     wf_json_file: Path = Path(WF_JSON_FILE)
     wf_etag_file: Path = Path(WF_ETAG_FILE)
+    wf_json_reduced_file: Path = Path(WF_JSON_REDUCED_FILE)
     wf_db_file: Path = Path(WF_DB_FILE)
     show_cms_users: bool = False
     apache_vhost_dir: Path = Path(APACHE_VHOST_DIR)
@@ -88,8 +92,10 @@ def read_config(config_file: Path) -> None:
             settings.wordfence_cli = sec.get("wordfence_cli", WORDFENCE_CLI)
             settings.wf_api_token = sec.get("wf_api_token", WF_API_TOKEN)
             settings.wf_feed_url = sec.get("wf_feed_url", WF_FEED_URL)
+            settings.wf_folder = Path(sec.get("wf_json_file", "."))
             settings.wf_json_file = Path(sec.get("wf_json_file", WF_JSON_FILE))
             settings.wf_etag_file = Path(sec.get("wf_etag_file", WF_ETAG_FILE))
+            settings.wf_json_reduced_file = Path(sec.get("wf_json_reduced_file", WF_JSON_REDUCED_FILE))
             settings.wf_db_file = Path(sec.get("wf_db_file", WF_DB_FILE))
 
             settings.show_cms_users = sec.getboolean("show_cms_users", False)
