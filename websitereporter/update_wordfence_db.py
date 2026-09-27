@@ -11,7 +11,7 @@ a specific version of a resource. This is sent along with the next request,
 so that the web server can check whether there is a new version of the resource
 at all. The server then responds either with the new file or with an empty 
 HTTP status 304 (Not Modified). By setting
-  headers[“If-None-Match”] = etag 
+  headers["If-None-Match"] = etag 
 in
   response = requests.get(FEED_URL, headers=headers, stream=True, timeout=30)
 this header is included in the request.
@@ -30,6 +30,7 @@ import json, os, requests, sqlite3, time
 from enum import Enum
 from pathlib import Path
 from wr.config import read_config, settings
+__version__ = "1.0.0"
 
 class Return(Enum):
     NEW = 1
@@ -311,6 +312,8 @@ def build_flat_sqlite_memory_optimized(json_file: Path, db_file: Path):
 
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
+    script_name = os.path.basename(__file__)    
+    print('This is Python script', script_name, 'version', __version__)
     read_config(Path(__file__).parent / "website_reporter_config.ini")
     if settings.run_as_root and os.getuid() != 0: # type: ignore
         print(f"Skript not run as root. Exiting...")

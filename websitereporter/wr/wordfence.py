@@ -8,9 +8,6 @@ from wr.release import Release
 
 LEN_TITLE = 65
 LEN_LINE = 130
-# Set to True for detailed output, False for minimal output
-_VERBOSE2 = False 
-_VERBOSE1 = False 
 
 def is_wordfence_db_ok(db_file: Path) -> bool:
     print_dots()
@@ -57,7 +54,7 @@ def check_wp_components_status(installed_components: list[dict[str, Any]],
         if not rows:
             return
 
-        # Hilfsfunktion zum Erstellen des Warning-Eintrags
+        # Helper function for creating the warning entry
         def append_vuln_entry(r: sqlite3.Row):
             t = r['title'][:LEN_TITLE] + ".." if len(r['title']) > LEN_TITLE else r['title']
             vuln.append({
@@ -66,61 +63,72 @@ def check_wp_components_status(installed_components: list[dict[str, Any]],
                 "type": r['software_type'], "patch": r['patched_version'], "title": t
             })
 
-        # 1. Gruppiere Datenbankzeilen nach CVE (oder ID, falls CVE None ist)
+        # 1. Group database rows by CVE (or ID, if the CVE is None)
         cve_groups: dict[str, list[sqlite3.Row]] = {}
         for row in rows:
-            # Manche Schwachstellen haben keine CVE; wir nutzen dann die ID als Schluessel
+            # Some vulnerabilities do not have a CVE; in such cases, we use the ID as the key
             cve_key = row['cve'] if row['cve'] else f"NO_CVE_{row['id']}"
             if cve_key not in cve_groups:
                 cve_groups[cve_key] = []
             cve_groups[cve_key].append(row)
 
-        # 2. Verarbeite jede CVE-Gruppe
+        # 2. Process each CVE group
         for cve_key, cve_rows in cve_groups.items():
             
-            # --- FALL A: Es gibt nur EINE gepatchte Version fuer diese CVE ---
+            # --- CASE A: There is only ONE patched version for this CVE ---
             if len(cve_rows) == 1:
                 row = cve_rows[0]
                 patch_version = Release(row['patched_version'])
                 
                 if patch_version.is_nonnumeric:
-                    # Behandlung fuer nicht-numerische Patch-Versionen
+                    # Handling of non-numeric patch versions
                     if not comp_version.is_greater_than(row['patched_version']):
                         append_vuln_entry(row)
                 else:
                     if patch_version > comp_version:
                         append_vuln_entry(row)
 
-            # --- FALL B: Es gibt MEHRERE gepatchte Versionen fuer dieselbe CVE (z.B. Free & Pro) ---
+            # --- CASE B: There are SEVERAL patched versions for the same CVE (e.g. Free & Pro) ---
             else:
-                # Filtere valide Release-Objekte aus den Zeilen heraus
-                valid_patches: list[tuple[Release, sqlite3.Row]] = []
+                # Filter comparable release objects from the rows
+                comparable_patches: list[tuple[Release, sqlite3.Row]] = []
+                nonnumeric_patches: list[tuple[Release, sqlite3.Row]] = []
                 for r in cve_rows:
                     rel = Release(r['patched_version'])
-                    if not rel.is_nonnumeric:
-                        valid_patches.append((rel, r))
+                    if rel.is_nonnumeric:
+                        nonnumeric_patches.append((rel, r))
+                    else:
+                        comparable_patches.append((rel, r))
                 
-                if not valid_patches:
-                    continue  # Keine vergleichbaren Versionen enthalten
+                if not comparable_patches:
+                    for rel, r in nonnumeric_patches:
+                        if not comp_version.is_greater_than(r['patched_version']):
+                            append_vuln_entry(r)
+                    continue
 
-                # Sortiere nach Release-Objekt, um Min und Max zu bestimmen
-                valid_patches.sort(key=lambda item: item[0])
+                # Sort by release object to determine the minimum and maximum
+                comparable_patches.sort(key=lambda item: item[0])
                 
-                patch_version_min, row_min = valid_patches[0]
-                patch_version_max, row_max = valid_patches[-1]
+                patch_version_min, row_min = comparable_patches[0]
+                patch_version_max, row_max = comparable_patches[-1]
 
-                # Bedingung 1: comp_version < patch_version_min -> 1 Warneintrag (min)
+                # comp_version < patch_version_min -> 1 warning entry (min)
                 if comp_version < patch_version_min:
                     append_vuln_entry(row_min)
 
-                # Bedingung 2: comp_version >= patch_version_max -> Kein Warneintrag
+                # comp_version >= patch_version_max -> no warning entry
                 elif comp_version >= patch_version_max:
-                    pass  # System ist sicher gepatcht
+                    pass  # system has been patched securely
 
-                # Bedingung 3: patch_version_min <= comp_version < patch_version_max -> 2 Warneintraege
+                # patch_version_min <= comp_version < patch_version_max 
+                # -> 2 warning entries (min & max)
+                # also check non-numeric patches for additional warnings
                 elif patch_version_min <= comp_version < patch_version_max:
                     append_vuln_entry(row_min)
                     append_vuln_entry(row_max)
+                    for rel, r in nonnumeric_patches:
+                        if not comp_version.is_greater_than(r['patched_version']):
+                            append_vuln_entry(r)
 
     # end check_component
 
