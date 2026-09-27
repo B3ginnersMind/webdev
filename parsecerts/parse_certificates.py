@@ -1,17 +1,19 @@
-!/usr/bin/env python
+#!/usr/bin/env python
 from datetime import datetime
 import re
 import os.path
 
-def shape_expiry(expiry_line):
+def shape_expiry(expiry_line: str) -> str:
    expiry_line = re.sub(' Date', '', expiry_line)
    expiry_line = re.sub(' Name', '', expiry_line)
-   expiry_line = re.sub('\:', '', expiry_line)
-   expiry_line = re.sub('\d+\+\d+', '', expiry_line)
+   expiry_line = re.sub(':', '', expiry_line)
+   expiry_line = re.sub(r'\d+\+\d+', '', expiry_line)
    return expiry_line
 
-def get_valid_days(line):
-   match = re.search('VALID \d+ days', line)
+def get_valid_days(line: str) -> int:
+   match = re.search(r'VALID \d+ days', line)
+   if match is None:
+      raise ValueError(f"Unexpected line: {line}")
    substring = match.group()
    substring = re.sub('VALID ', '', substring)
    substring = re.sub(' days', '', substring)
@@ -26,19 +28,19 @@ if not os.path.isfile(certbot_output):
    print(certbot_output, 'is missing')
    quit()
 cert_file = open(certbot_output, mode='r')
-lines_read = cert_file.readlines()
+lines_read: list[str] = cert_file.readlines()
 
 for i, l in enumerate(lines_read):
     lines_read[i] = l.strip()
 
-max_len = 0
+max_len: int = 0
 for l in lines_read:
    if (l.startswith('Certificate Name')):
       if len(l) > max_len:
          max_len = len(l)
 
-certs = []
-cert = ''
+certs: list[tuple[int, str]] = []
+cert: str = ''
 for l in lines_read:
    if (l.startswith('Certificate Name')):
       cert = l.ljust(max_len)
