@@ -2,8 +2,9 @@ import json, os, subprocess
 import urllib.error, urllib.parse, urllib.request
 from wr.config import settings
 from wr import utils as u
-from wr.utils import CmsPaths, cms_types
+from wr.utils import before_slash, CmsPaths, cms_types
 from wr.upload_check import sus_files
+from wr.wordfence import check_vulnerabilities_from_wordfence
 from pathlib import Path
 from typing import Any, Optional
 _VERBOSE = False
@@ -33,7 +34,19 @@ def get_component_json(comp_type: str, dir: Path) -> list[dict[str, Any]]:
         print("error", f"Exception: {e}")
         return [{"error": f"Exception: {e}"}]
 
-def check_wp_plugins_status(dir: Path) -> dict[str, list[Any]]:
+def adjust_bundled_plugins(plugins: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    slugs: set[str] = set()
+    adjusted_plugins: list[dict[str, Any]] = list()
+    for plug in plugins:
+        slug: str = before_slash(str(plug.get("name")))
+        if not slug or slug in slugs:
+            continue
+        slugs.add(slug)
+        version: str = str(plug.get("version"))
+        adjusted_plugins.append({"name": slug, "version": version})
+    return adjusted_plugins
+
+def check_wp_plugins_status(installed_plugins: list[dict[str, Any]]) -> dict[str, list[Any]]:
     """
     Get the installed plugins as a dict and check each plugin slug 
     against the official WordPress.org API. Detect whether a plugin is
@@ -45,8 +58,7 @@ def check_wp_plugins_status(dir: Path) -> dict[str, list[Any]]:
         "not_on_org": [],
         "errors": []
     }
-    
-    installed_plugins = get_component_json("plugin", dir)
+
     if installed_plugins and "error" in installed_plugins[0]:
         results["errors"].append(installed_plugins[0]["error"])
         return results
@@ -156,18 +168,26 @@ def check_wordpress_sites(cms: CmsPaths):
             print("--> WEBSITE PROTECTED BY BASIC AUTH")
         u.run_command(f"{wp_cli(owner)} core version")
         u.run_command(f"{wp_cli(owner)} core check-update")
+        installed_plugins = get_component_json("plugin", dir)
+        installed_themes = get_component_json("theme", dir)
+
         u.run_command(f"{wp_cli(owner)} core verify-checksums")
-        u.run_command(f"{wp_cli(owner)} plugin verify-checksums --all")
+        output_filter = [
+            "Warning: Couldn't fetch response from https",
+            "Warning: Could not retrieve the checksums"
+        ]
+        u.run_command(f"{wp_cli(owner)} plugin verify-checksums --all", output_filter)
+
         u.print_dots()
-        print_as_table(get_component_json("plugin", dir))
+        print_as_table(installed_plugins)
         u.print_dots()
-        print_as_table(get_component_json("theme", dir))
+        print_as_table(installed_themes)
         u.print_dots()
         # u.run_command(f"{wp_cli(owner)} plugin list")
         # u.run_command(f"{wp_cli(owner)} theme list")
         # u.run_command(f"{wpcli(owner)} plugin status")
-        report: dict[str, list[Any]] = check_wp_plugins_status(dir)
-
+        adjusted_plugins = adjust_bundled_plugins(installed_plugins)
+        report: dict[str, list[Any]] = check_wp_plugins_status(adjusted_plugins)
         if len(report['closed_org']):
             print("\n🔴 Geschlossene / Gefährdete Plugins (wordpress.org) ---")
             print_as_table(report["closed_org"])
@@ -192,11 +212,11 @@ def check_wordpress_sites(cms: CmsPaths):
                     u.run_command(f"{wp_cli(owner)} user list --role=administrator")
                 else:
                     u.run_command(f"{wp_cli(owner)} user list")
+
         if settings.wordfence_cli != "none":
            u.run_command(f"{settings.wordfence_cli} vuln-scan --no-banner"
                          " -w . -p ./wp-content/plugins -t ./wp-content/themes")
-        from wr.wordfence import check_vulnerabilities_from_wordfence
-        # db_file
+
         db_file = settings.wf_folder / settings.wf_db_file
-        check_vulnerabilities_from_wordfence(db_file, dir)
+        check_vulnerabilities_from_wordfence(adjusted_plugins, installed_themes, db_file, dir)
         sus_files(dir, cms_types.wordpress_checked_subdirs)

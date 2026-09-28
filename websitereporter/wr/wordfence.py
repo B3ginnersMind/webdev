@@ -149,12 +149,12 @@ def check_wp_components_status(installed_components: list[dict[str, Any]],
               f"{v['patch']:<9} | {v['title']}")
     return
 
-def check_vulnerabilities_from_wordfence(db_file: Path, path_to_wp: Path = Path(".")):
-    from wr.wordpress import get_component_json
+def check_vulnerabilities_from_wordfence(plugins: list[dict[str, Any]],
+                                         themes: list[dict[str, Any]],
+                                         db_file: Path, 
+                                         path_to_wp: Path = Path(".")):
     if not is_wordfence_db_ok(db_file):
         return
     print("Looking for vulnerabilities of WordPress components in Wordfence DB...")
-    installed_components = get_component_json("plugin", path_to_wp)
-    check_wp_components_status(installed_components, "plugin", db_file)
-    installed_components = get_component_json("theme", path_to_wp)
-    check_wp_components_status(installed_components, "theme", db_file)
+    check_wp_components_status(plugins, "plugin", db_file)
+    check_wp_components_status(themes, "theme", db_file)

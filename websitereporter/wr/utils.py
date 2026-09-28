@@ -67,6 +67,9 @@ def print_headline(text: str = ""):
         
     print(headline)
 
+def before_slash(text: str) -> str:
+    return text.split("/", 1)[0]
+
 def has_file_extension(start_directory: str, file_extension: str) -> bool:
     """
     Searches the entire directory tree recursively for a specific file extension.
@@ -286,33 +289,20 @@ def insert_vspace_before_found(lines: list[str]) -> list[str]:
         new_lines.append(l)
     return new_lines
 
-def run_command(command_str: str, 
-                environ_variable: tuple[str, str] = ("", "")):
+def run_command(command_str: str, omitted_on_output: list[str] = []):
     """
     Run the command 'command_str' and print its output. 
     Tabbed output is aligned in columns.
     """
     command: list[str] = []
     command.extend(command_str.split(" "))
-
-    if environ_variable == ("", ""):
-        plain_command = ""
-        my_env = os.environ
-    else:
-        plain_command = environ_variable[0] + "=" + environ_variable[1] + " "
-        # Copy current environment as dictionary
-        my_env = os.environ.copy()
-        # Add the variable
-        my_env[environ_variable[0]] = environ_variable[1]
-
-    for token in command:
-        plain_command += token + " "
     print_dots()
-    line = "--> Command: " + plain_command
+
+    line = "--> Command: " + command_str
     wrapped_line = textwrap.fill(line, get_line_len(), subsequent_indent=13 * ' ')
     print(wrapped_line)
 
-    result = subprocess.run(command, capture_output=True, text=True, check=False, env=my_env)
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
     exit_code = result.returncode
     if exit_code == 137:
         print("Error 137: Process terminated by operating system (OOM kill / Insufficient memory).")
@@ -324,11 +314,14 @@ def run_command(command_str: str,
     if result.stderr.strip():
         lines = get_nonempty_lines(result.stderr)
         warning_msg = "human output format requires a terminal with color"
-        # Filters out all lines containing the warning text
-        lines = [line for line in lines if warning_msg not in line]
-        if lines:
+        filter_list = omitted_on_output + [warning_msg]
+        filtered_lines = [
+            line for line in lines 
+            if not any(omitted in line for omitted in filter_list)
+        ]
+        if filtered_lines:
             print(">>> stderr output ................")
-            print(*lines, sep="\n")
+            print(*filtered_lines, sep="\n")
             print("..................................")
     clean_text = remove_ansi_esc_sequences(result.stdout)
     lines = get_nonempty_lines(clean_text)
