@@ -64,8 +64,26 @@ def print_headline(text: str = ""):
         head = " " + text + " "
         headline = headline[:4] + head + headline[4 + len(head):]
         # headline = headline[:_LINE_LEN]
-        
     print(headline)
+
+def show_wordfence_json_state(json_file: Path, etag_file: Path):
+    if not os.path.exists(json_file):
+        print(f"Wordfence JSON '{json_file}' missing.")
+        return
+    mtime_timestamp = os.path.getmtime(json_file)
+    mtime_readable = datetime.fromtimestamp(mtime_timestamp)
+    print(f"Wordfence JSON: '{json_file}'")
+    print(f"last modified:  {mtime_readable:%Y-%m-%d %H:%M}")
+    if not os.path.exists(etag_file):
+        print(f"Wordfence etaf '{etag_file}' missing.")
+        return
+    mtime_timestamp = os.path.getmtime(etag_file)
+    mtime_readable = datetime.fromtimestamp(mtime_timestamp)
+    print(f"Wordfence ETag: '{etag_file}'")
+    print(f"last modified:  {mtime_readable:%Y-%m-%d %H:%M}")
+    with open(etag_file, 'r') as f:
+        etag = f.read().strip()
+        print(f"ETag:           {etag})")
 
 def before_slash(text: str) -> str:
     return text.split("/", 1)[0]

@@ -30,7 +30,8 @@ import json, os, requests, sqlite3, time
 from enum import Enum
 from pathlib import Path
 from wr.config import read_config, settings
-__version__ = "1.0.0"
+from wr.utils import show_wordfence_json_state
+__version__ = "1.0.1"
 
 class Return(Enum):
     NEW = 1
@@ -322,8 +323,7 @@ if __name__ == "__main__":
     # Update the Feed (or download initially)
     json_file = settings.wf_folder / settings.wf_json_file
     etag_file = settings.wf_folder / settings.wf_etag_file
-    print(f"JSON file: {json_file}")
-    print(f"ETag file: {etag_file}")
+    show_wordfence_json_state(json_file, etag_file)
     currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
     print(f"Attempting to refresh the Wordfence vulnerability JSON at {currenttime}")
     if update_vulnerability_database(json_file, etag_file) == Return.NEW:

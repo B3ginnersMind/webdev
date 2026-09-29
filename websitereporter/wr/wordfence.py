@@ -1,5 +1,5 @@
 import os
-import datetime
+from datetime import datetime
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -16,7 +16,7 @@ def is_wordfence_db_ok(db_file: Path) -> bool:
         print(f"Error: Database '{db_file}' missing.")
         return False
     mtime_timestamp = os.path.getmtime(db_file)
-    mtime_readable = datetime.datetime.fromtimestamp(mtime_timestamp)
+    mtime_readable = datetime.fromtimestamp(mtime_timestamp)
     print(f"Database '{db_file}' last modified: {mtime_readable:%Y-%m-%d %H:%M}")
 
     try:
