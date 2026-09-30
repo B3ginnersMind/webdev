@@ -31,8 +31,8 @@ import json, os, requests, sqlite3, time
 from enum import Enum
 from pathlib import Path
 from wr.config import read_config, settings
-from wr.utils import show_wordfence_json_state
-__version__ = "1.1.0"
+from wr.utils import show_wordfence_json_state, print_file_task_details
+__version__ = "1.1.1"
 
 class Return(Enum):
     NEW = 1
@@ -327,17 +327,20 @@ if __name__ == "__main__":
     last_mod_file = settings.wf_folder / settings.wf_last_mod_file
     show_wordfence_json_state(json_file, last_mod_file)
     currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
-    print(f"Attempting to refresh the Wordfence vulnerability JSON at {currenttime}")
+    print(f"Attempting to refresh the Wordfence vulnerability JSON at {currenttime} ...")
+
     if update_vulnerability_database(json_file, last_mod_file) == Return.NEW:
-        print(f"New Wordfence JSON downloaded successfully at {currenttime}")
+        print_file_task_details("Wordfence JSON downloaded",
+                           "JSON file", json_file)
+
         json_reduced_file = settings.wf_folder / settings.wf_json_reduced_file
         keys_to_drop = {"description", "references", "copyrights", "researchers"}
         downsize_wordfence_json(json_file, json_reduced_file, keys_to_drop)
-        currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
-        print(f"New Wordfence JSON downsized successfully at {currenttime}")
-        print(f"Downsized JSON file: {json_reduced_file}")
+        print_file_task_details("Wordfence JSON downsized",
+                           "JSON file", json_reduced_file)
+
         db_file = settings.wf_folder / settings.wf_db_file
         build_flat_sqlite_memory_optimized(json_reduced_file, db_file)
-        print(f"Created SQlite database: {db_file}")
-        print(f"Database created successfully at {currenttime}")
+        print_file_task_details("SQlite database created",
+                           "JSON file", db_file)
  
