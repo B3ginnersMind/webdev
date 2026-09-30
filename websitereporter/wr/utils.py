@@ -66,24 +66,24 @@ def print_headline(text: str = ""):
         # headline = headline[:_LINE_LEN]
     print(headline)
 
-def show_wordfence_json_state(json_file: Path, etag_file: Path):
+def show_wordfence_json_state(json_file: Path, last_mod_file: Path):
     if not os.path.exists(json_file):
         print(f"Wordfence JSON '{json_file}' missing.")
         return
     mtime_timestamp = os.path.getmtime(json_file)
     mtime_readable = datetime.fromtimestamp(mtime_timestamp)
-    print(f"Wordfence JSON: '{json_file}'")
-    print(f"last modified:  {mtime_readable:%Y-%m-%d %H:%M}")
-    if not os.path.exists(etag_file):
-        print(f"Wordfence etaf '{etag_file}' missing.")
+    print(f"{'Wordfence JSON file:':<30} '{json_file}'")
+    print(f"{'Last downloaded:':<30} {mtime_readable:%Y-%m-%d %H:%M}")
+    if not os.path.exists(last_mod_file):
+        print(f"Wordfence '{last_mod_file}' missing.")
         return
-    mtime_timestamp = os.path.getmtime(etag_file)
+    mtime_timestamp = os.path.getmtime(last_mod_file)
     mtime_readable = datetime.fromtimestamp(mtime_timestamp)
-    print(f"Wordfence ETag: '{etag_file}'")
-    print(f"last modified:  {mtime_readable:%Y-%m-%d %H:%M}")
-    with open(etag_file, 'r') as f:
-        etag = f.read().strip()
-        print(f"ETag:           {etag})")
+    print(f"{'Wordfence last modified file:':<30} '{last_mod_file}'")
+    print(f"{'Last downloaded:':<30} {mtime_readable:%Y-%m-%d %H:%M}")
+    with open(last_mod_file, 'r') as f:
+        last_mod = f.read().strip()
+        print(f"{'Contained last-modified time:':<30} {last_mod})")
 
 def before_slash(text: str) -> str:
     return text.split("/", 1)[0]

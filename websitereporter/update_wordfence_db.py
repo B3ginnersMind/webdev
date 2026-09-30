@@ -6,15 +6,16 @@ memory-optimized SQLite database. The JSON file is downloaded from the Wordfence
 API and is then processed to reduce its size. The SQLite database is used for fast
 lookups of plugin vulnerabilities.
 ----------------------------------------------------------------------------------
-The HTTP caching header `ETag` ist stored, which is an identifier for 
-a specific version of a resource. This is sent along with the next request, 
-so that the web server can check whether there is a new version of the resource
-at all. The server then responds either with the new file or with an empty 
-HTTP status 304 (Not Modified). By setting
-  headers["If-None-Match"] = etag 
-in
-  response = requests.get(FEED_URL, headers=headers, stream=True, timeout=30)
-this header is included in the request.
+The HTTP caching header 'ETag', which is an identifier for a specific version of
+a resource, does not work with the Wordfence JSON file! We always get the ETag
+W/"da39a3ee5e6b4b0d3255bfef95601890afd80709" which is the SHA-1 hash of an empty
+string! The Wordfence API has a bug (or saves computing power) when delivering 
+this huge JSON feed. Instead of calculating the hash of the actual 155 MB of data,
+the backend (or the proxy server in front of it) calculates the hash of an empty 
+buffer.
+
+Read instead the 'Last-Modified' header, which is a timestamp indicating when 
+the resource was last modified.
 
 Note: This may not prevent us from exceeding the Wordfence rate limit!
 
@@ -31,7 +32,7 @@ from enum import Enum
 from pathlib import Path
 from wr.config import read_config, settings
 from wr.utils import show_wordfence_json_state
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 class Return(Enum):
     NEW = 1
@@ -39,16 +40,16 @@ class Return(Enum):
     ERROR = 3
 
 #-------------------------------------------------------------------------------
-def update_vulnerability_database(json_file: Path, etag_file: Path) -> Return:
+def update_vulnerability_database(json_file: Path, last_mod_file: Path) -> Return:
     # 1. Always include the Token with every request
     headers = {'Authorization': f'Bearer {settings.wf_api_token}' }
     
-    # 2. Add ETag for caching
-    if os.path.exists(etag_file) and os.path.exists(json_file):
-        with open(etag_file, 'r') as f:
-            etag = f.read().strip()
-            headers['If-None-Match'] = etag
-            print(f"Cached version found (ETag: {etag}). Checking for updates...")
+    # 2. Add Last-Modified for caching
+    if os.path.exists(last_mod_file) and os.path.exists(json_file):
+        with open(last_mod_file, 'r') as f:
+            last_mod = f.read().strip()
+            headers['If-Modified-Since'] = last_mod
+            print(f"Cached version found (Last-Modified: {last_mod}). Checking for updates...")
 
     try:
         # Send the request (Headers are passed, stream=True is important)
@@ -60,15 +61,16 @@ def update_vulnerability_database(json_file: Path, etag_file: Path) -> Return:
             
         elif response.status_code == 200:
             print("[OK] Status 200: Downloading new JSON file...")
-            new_etag = response.headers.get('ETag')
+            # Read the new date from the header
+            new_last_mod = response.headers.get('Last-Modified')
 
             with open(json_file, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
 
-            if new_etag:
-                with open(etag_file, 'w') as f:
-                    f.write(new_etag)
+            if new_last_mod:
+                with open(last_mod_file, 'w') as f:
+                    f.write(new_last_mod)
             return Return.NEW
             
         elif response.status_code == 429:
@@ -322,11 +324,11 @@ if __name__ == "__main__":
 
     # Update the Feed (or download initially)
     json_file = settings.wf_folder / settings.wf_json_file
-    etag_file = settings.wf_folder / settings.wf_etag_file
-    show_wordfence_json_state(json_file, etag_file)
+    last_mod_file = settings.wf_folder / settings.wf_last_mod_file
+    show_wordfence_json_state(json_file, last_mod_file)
     currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
     print(f"Attempting to refresh the Wordfence vulnerability JSON at {currenttime}")
-    if update_vulnerability_database(json_file, etag_file) == Return.NEW:
+    if update_vulnerability_database(json_file, last_mod_file) == Return.NEW:
         print(f"New Wordfence JSON downloaded successfully at {currenttime}")
         json_reduced_file = settings.wf_folder / settings.wf_json_reduced_file
         keys_to_drop = {"description", "references", "copyrights", "researchers"}
