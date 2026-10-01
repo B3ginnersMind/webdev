@@ -24,7 +24,8 @@ def detect_mediawiki_version(folder: Path) -> Release:
     """
     defines_path: Path = folder / "includes" / "Defines.php"
     if not defines_path.is_file():
-        raise FileNotFoundError(f"Defines.php not found in: {defines_path}")
+        print(f"Defines.php not found in: {defines_path}")
+        return _UNSET_RELEASE
     pattern = re.compile(
         r"define\s*\(\s*['\"]MW_VERSION['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*\)\s*;"
     )

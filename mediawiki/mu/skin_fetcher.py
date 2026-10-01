@@ -61,7 +61,7 @@ def fetch_missing_skins(d: UpdateData, missing_skins: list[str]) -> None:
             if target_folder.is_dir():
                 logging.info(f"Skin {skin} installed into new Mediawiki installation.")
             else:
-                raise RuntimeError(f"Failed to move extension {skin} to target folder.") 
+                utils.error_exit(f"Failed to move skin {skin} to target folder.")
         else:
             logging.warning(f"No special handling for skin: {skin}, skipping.")
             continue

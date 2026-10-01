@@ -58,17 +58,15 @@ def download_mediawiki_archive(url: str, target_path: Path) -> None:
                 out.write(chunk)
 
     except HTTPError as e:
-        raise RuntimeError(f"HTTP-Fehler {e.code} beim Download von {url}") from e
+        utils.error_exit(f"Fehler beim Download von {url}", str(e))
     except URLError as e:
         # Prüfung: War die Ursache für den URLError ein Timeout beim Verbindungsaufbau?
         if isinstance(e.reason, (TimeoutError, socket.timeout)):
-            raise RuntimeError(f"Timeout beim Verbindungsaufbau zu {url}") from e
-        raise RuntimeError(f"Netzwerkfehler beim Download von {url}: {e.reason}") from e
+            utils.error_exit(f"Timeout beim Verbindungsaufbau zu {url}", str(e.reason))
+        utils.error_exit(f"Netzwerkfehler beim Download von {url}: {e.reason}", str(e))
     except (TimeoutError, socket.timeout) as e:
         # Wird geworfen, wenn der Timeout WÄHREND des Lesens (response.read) auftritt
-        raise RuntimeError(
-            f"Timeout während der Datenübertragung von {url}"
-        ) from e
+        utils.error_exit(f"Timeout während der Datenübertragung von {url}", str(e))
 
 def download_mediawiki_archive_robust(url: str, target_path: Path, max_retries: int = 5) -> None:
     logging.info(f"Downloading from: {url}")
@@ -131,14 +129,14 @@ def download_mediawiki_archive_robust(url: str, target_path: Path, max_retries: 
             if e.code == 416:
                 logging.info("Download war bereits vollständig.")
                 return
-            raise RuntimeError(f"HTTP-Fehler {e.code} beim Download") from e
+            utils.error_exit(f"Fehler beim Download von {url}", str(e))
             
         except (URLError, TimeoutError, ConnectionResetError) as e:
             logging.warning(f"Netzwerkfehler: {e}. Versuche es erneut...")
             retries += 1
             time.sleep(2)
-
-    raise RuntimeError(f"Download nach {max_retries} Versuchen fehlgeschlagen.")
+    
+    utils.error_exit(f"Download nach {max_retries} Versuchen fehlgeschlagen.")
 
 def get_mediawiki_release(d: UpdateData) -> None:
     """
@@ -186,14 +184,10 @@ def get_mediawiki_release(d: UpdateData) -> None:
         logging.info(f"Time elapsed during the download: {elapsed_time} sec")
     if not archive_path.is_file():
         logging.error("Downloaded archive file missing. Exit.")
-        raise RuntimeError(
-            f"Error: Missing archive file download: {archive_path}"
-        )
+        utils.error_exit(f"Missing archive file download: {archive_path}")
     if not is_valid_targz(archive_path):
-        logging.error("Downloaded archive corrupted. Exit.")
-        raise RuntimeError(
-            f"Error: Corrupted archive file download: {archive_path}"
-        )
+        utils.error_exit(f"Corrupted archive file download: {archive_path}")
+
 
     d.mw_folder_new = target_folder / f"mediawiki-{d.release_new}"
     utils.remtree(d.mw_folder_new)
@@ -203,10 +197,7 @@ def get_mediawiki_release(d: UpdateData) -> None:
     with tarfile.open(archive_path, 'r:gz') as tar:
         tar.extractall(path=target_folder)
     if not d.mw_folder_new.is_dir():
-        raise RuntimeError(
-            f"Error: Missing extracted Mediawiki folder: {d.mw_folder_new}"
-        )
+        utils.error_exit(f"Missing extracted Mediawiki folder: {d.mw_folder_new}")
     else:
-        logging.info(f"Extracted Mediawiki folder exists: {d.mw_folder_new}")
-
+        logging.info(f"Extracted Mediawiki folder exists: {d.mw_folder_new}")   
     logging.info(const.LONG_LINE)

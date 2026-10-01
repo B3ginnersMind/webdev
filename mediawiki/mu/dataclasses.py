@@ -1,6 +1,7 @@
 import logging, os
 from pathlib import Path
 from dataclasses import dataclass
+import mu.utils as utils
 _UNSET_PATH = Path("/unset/path")
 
 # Decorator for dataclass with ordering
@@ -14,7 +15,7 @@ class Release:
       if isinstance(lead, str):
          parts = lead.split(".")
          if len(parts) < 2 or len(parts) > 3:
-            raise ValueError(f"Invalid release: {lead}")
+            utils.error_exit(f"Invalid release: {lead}")
          self.main = int(parts[0])
          self.major = int(parts[1])
          self.minor = int(parts[2])
@@ -45,11 +46,11 @@ class UpdateData:
 
    def release_basefolder(self) -> Path:
       if self.mw_basefolder_new is _UNSET_PATH or self.release_new is _UNSET_RELEASE:
-         raise ValueError("mw_basefolder_new and release_new must be set")
+         utils.error_exit("mw_basefolder_new and release_new must be set")
       rel_folder = self.mw_basefolder_new / \
                    f"{self.release_new.main}.{self.release_new.major}"
       if rel_folder.is_file():
-         raise NotADirectoryError(f"Release basefolder is a file: {rel_folder}")
+         utils.error_exit(f"Release basefolder is a file: {rel_folder}")
       if not rel_folder.is_dir():
          os.makedirs(rel_folder)
       return rel_folder
@@ -69,17 +70,17 @@ class UpdateData:
    
    def test_input(self):
       if not self.mw_folder_live.is_dir():
-         raise ValueError(f"Invalid live release: {self.mw_folder_live}")
+         utils.error_exit(f"Live Mediawiki folder does not exist: {self.mw_folder_live}")
       if (self.release_new.main == 0 
-         or self.release_new.major == 0
+            or self.release_new.major == 0
          ):
-         raise ValueError(f"Invalid required release: {self.release_new}")
+         utils.error_exit(f"Invalid required release: {self.release_new}")
 
    def test_before_update(self):
       self.test_input()
       if (self.release_live.main == 0 
          or self.release_live.major == 0
          ):
-         raise ValueError(f"Invalid live release: {self.release_live}")
+         utils.error_exit(f"Invalid live release: {self.release_live}")
       if self.release_new <= self.release_live:
-         raise ValueError(f"Required release not newer than live release")
+         utils.error_exit(f"Required release not newer than live release: {self.release_new} <= {self.release_live}")

@@ -2,6 +2,7 @@ import logging, re
 from pathlib import Path
 from mu.dataclasses import Release
 import mu.constants as const
+import mu.utils as utils
 
 def detect_mediawiki_version(folder: Path) -> Release:
     """
@@ -14,7 +15,8 @@ def detect_mediawiki_version(folder: Path) -> Release:
     defines_path: Path = folder / "includes" / "Defines.php"
     
     if not defines_path.is_file():
-        raise FileNotFoundError(f"Defines.php not found in: {defines_path}")
+        utils.error_exit(f"Defines.php not found in: {defines_path}")
+        quit()
 
     pattern = re.compile(
         r"define\s*\(\s*['\"]MW_VERSION['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*\)\s*;"
@@ -29,6 +31,8 @@ def detect_mediawiki_version(folder: Path) -> Release:
                 logging.info(f"Found Mediawiki release: {release}")
                 logging.info(const.LONG_LINE)
                 return Release(release)
+            
+    utils.error_exit(f"Constant MW_VERSION not found in Defines.php: {defines_path}")
+    quit()
 
-    raise ValueError("Constant MW_VERSION not found in Defines.php")
-
+    

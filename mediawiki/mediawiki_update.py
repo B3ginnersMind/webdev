@@ -14,7 +14,7 @@ group_owner = www-data
 dir_mode = 0o750
 file_mode = 0o640
 """
-__version__ = "1.10.1"
+__version__ = "1.10.2"
 import argparse, logging, os, platform
 from pathlib import Path
 import mu.utils as utils
@@ -67,7 +67,7 @@ def update(config_path: Path, config_section: str):
             data.release_new,
             detected_new_release
         )
-        raise ValueError("Version mismatch after download")
+        utils.error_exit("Version mismatch after download")
 
     # which extensions are missing in the new code base?
     missing_extensions = get_missing_folders(data, "extensions")

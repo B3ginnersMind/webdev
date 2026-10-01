@@ -10,6 +10,13 @@ def query_continue():
     if ch == 'q':
         quit()
 
+def error_exit(reason: str, error_code: str=""):
+    logging.error(reason)
+    if error_code:
+        logging.error(error_code)
+    logging.error("Exiting...")
+    quit()
+
 def read_config(config_path: Path, section: str = "settings") -> UpdateData:
     """
     Read input data from the config file. This is an example config:
@@ -23,7 +30,7 @@ def read_config(config_path: Path, section: str = "settings") -> UpdateData:
     logging.info(f"Reading configuration from: {config_path}")
     logging.info(f"Configuration section: {section}")
     if not config_path.is_file():
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        error_exit(f"Configuration file not found: {config_path}")
     config = configparser.ConfigParser()
     config.read(config_path)
     data: UpdateData = UpdateData()
@@ -45,7 +52,7 @@ def remtree(path: Path) -> None:
         logging.warning(f"Removing already existing folder: {path}")
         shutil.rmtree(str(path))
     elif path.is_file():
-        raise RuntimeError(f"Expected directory but found file: {path}")
+        error_exit(f"Expected directory but found file: {path}")
 
 def get_zip_root_folder(zip_path: str) -> str:
     """
@@ -65,9 +72,7 @@ def get_zip_root_folder(zip_path: str) -> str:
                 roots.add(parts[0])
 
         if len(roots) != 1:
-            raise ValueError(
-                f"ZIP does not contain exactly one root directory: {roots}"
-            )
+            error_exit(f"ZIP does not contain exactly one root directory: {roots}")
 
         return roots.pop()
 
@@ -119,7 +124,7 @@ def fix_permissions_mw_folder_new(d: UpdateData):
     if not do_chown:
         logging.warning(f"Skipping owner fix since skript not run as root.")
     if not folder.is_dir():
-        raise ValueError(f"{folder} is not a directory")
+        error_exit(f"{folder} is not a directory")
     if do_chown: # Resolve uid and gid
         uid = pwd.getpwnam(d.user_owner).pw_uid  # type: ignore
         gid = grp.getgrnam(d.group_owner).gr_gid # type: ignore

@@ -58,6 +58,6 @@ def fetch_missing_extensions(d: UpdateData, missing_extensions: list[str]) -> No
         if target_folder.is_dir():
            logging.info(f"Extension {ext} installed into new Mediawiki installation.")
         else:
-            raise RuntimeError(f"Failed to move extension {ext} to target folder.") 
+           utils.error_exit(f"Failed to move extension {ext} to target folder.")
 
     logging.info(const.LONG_LINE)

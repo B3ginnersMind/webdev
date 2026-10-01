@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from mu.dataclasses import UpdateData
 import mu.constants as const
+import mu.utils as utils
 
 def get_missing_folders(d: UpdateData, subfolder: str) -> list[str]:
     """
@@ -18,7 +19,7 @@ def get_missing_folders(d: UpdateData, subfolder: str) -> list[str]:
     logging.info("Which subfolders are missing in the new release?")
 
     if not  base_live.is_dir():
-        raise FileNotFoundError(f"Live installation not found: {base_live}")
+        utils.error_exit(f"Live installation not found: {base_live}")
 
     if not base_new.is_dir():
         # If the target subfolder is missing, all are considered missing.
