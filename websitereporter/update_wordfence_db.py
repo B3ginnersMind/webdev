@@ -32,7 +32,7 @@ from enum import Enum
 from pathlib import Path
 from wr.config import read_config, settings
 from wr.utils import show_wordfence_json_state, print_file_task_details
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 class Return(Enum):
     NEW = 1

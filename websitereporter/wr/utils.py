@@ -72,29 +72,29 @@ def show_wordfence_json_state(json_file: Path, last_mod_file: Path):
         return
     mtime_timestamp = os.path.getmtime(json_file)
     mtime_readable = datetime.fromtimestamp(mtime_timestamp)
-    print(f"{'Wordfence JSON file:':<30} '{json_file}'")
+    print(f"{'Wordfence JSON file':<30}: '{json_file}'")
     size_bytes = json_file.stat().st_size
-    print(f"{'File size:':<30} {size_bytes:,} Bytes".replace(",", "."))
-    print(f"{'Last downloaded:':<30} {mtime_readable:%Y-%m-%d %H:%M}")
+    print(f"{'File size':<30}: {size_bytes:,} Bytes".replace(",", "."))
+    print(f"{'Last downloaded':<30}: {mtime_readable:%Y-%m-%d %H:%M}")
     if not os.path.exists(last_mod_file):
         print(f"Wordfence '{last_mod_file}' missing.")
         return
     mtime_timestamp = os.path.getmtime(last_mod_file)
     mtime_readable = datetime.fromtimestamp(mtime_timestamp)
-    print(f"{'Wordfence last modified file:':<30} '{last_mod_file}'")
-    print(f"{'Last downloaded:':<30} {mtime_readable:%Y-%m-%d %H:%M}")
+    print(f"{'Wordfence last modified file':<30}: '{last_mod_file}'")
+    print(f"{'Last downloaded':<30}: {mtime_readable:%Y-%m-%d %H:%M}")
     with open(last_mod_file, 'r') as f:
         last_mod = f.read().strip()
-        print(f"{'Contained last-modified time:':<30} {last_mod})")
+        print(f"{'Contained last-modified time:':<30}: {last_mod})")
 
 def print_file_task_details(task: str, description: str, file_path: Path):
     if os.path.exists(file_path):
         currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
         finished_msg = f"{task} at:"
-        print(f"{finished_msg:<30} {currenttime}")
+        print(f"{finished_msg:<30}: {currenttime}")
         print(f"{description:<30}: {file_path}")
         size_bytes = file_path.stat().st_size
-        print(f"{'File size:':<30} {size_bytes:,} Bytes".replace(",", "."))
+        print(f"{'File size':<30}: {size_bytes:,} Bytes".replace(",", "."))
     else:
         print(f"Error: '{file_path}' does not exist.")
 
