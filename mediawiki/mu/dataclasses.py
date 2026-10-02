@@ -1,6 +1,6 @@
 import logging, os
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import mu.utils as utils
 _UNSET_PATH = Path("/unset/path")
 
@@ -33,11 +33,11 @@ class UpdateData:
    """
    Data for live and new Mediawiki files
    """
-   mw_folder_live: Path = _UNSET_PATH
-   release_live: Release = _UNSET_RELEASE
-   mw_basefolder_new: Path = _UNSET_PATH
-   release_new: Release = _UNSET_RELEASE
-   mw_folder_new: Path = _UNSET_PATH
+   mw_folder_live: Path = field(default_factory=lambda: _UNSET_PATH)
+   release_live: Release = field(default_factory=lambda: _UNSET_RELEASE)
+   mw_basefolder_new: Path = field(default_factory=lambda: _UNSET_PATH)
+   release_new: Release = field(default_factory=lambda: _UNSET_RELEASE)
+   mw_folder_new: Path = field(default_factory=lambda: _UNSET_PATH)
    php_command: str = "php"
    user_owner: str = "www-data"
    group_owner: str = "www-data"
@@ -45,7 +45,7 @@ class UpdateData:
    file_mode: int = int(0o640)
 
    def release_basefolder(self) -> Path:
-      if self.mw_basefolder_new is _UNSET_PATH or self.release_new is _UNSET_RELEASE:
+      if self.mw_basefolder_new == _UNSET_PATH or self.release_new == _UNSET_RELEASE:
          utils.error_exit("mw_basefolder_new and release_new must be set")
       rel_folder = self.mw_basefolder_new / \
                    f"{self.release_new.main}.{self.release_new.major}"
@@ -60,7 +60,7 @@ class UpdateData:
       logging.info(f"Live Mediawiki version: {self.release_live}")
       logging.info(f"Base folder of new release: {self.mw_basefolder_new}")
       logging.info(f"Requested release: {self.release_new}")
-      if self.mw_folder_new is not _UNSET_PATH:
+      if self.mw_folder_new != _UNSET_PATH:
          logging.info(f"New folder after download: {self.mw_folder_new}")
       logging.info(f"PHP command: {self.php_command}")
       logging.info(f"Owner: {self.user_owner}")
