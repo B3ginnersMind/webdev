@@ -60,7 +60,7 @@ class UpdateData:
       logging.info(f"Live Mediawiki version: {self.release_live}")
       logging.info(f"Base folder of new release: {self.mw_basefolder_new}")
       logging.info(f"Requested release: {self.release_new}")
-      if self.mw_folder_new:
+      if self.mw_folder_new is not _UNSET_PATH:
          logging.info(f"New folder after download: {self.mw_folder_new}")
       logging.info(f"PHP command: {self.php_command}")
       logging.info(f"Owner: {self.user_owner}")
