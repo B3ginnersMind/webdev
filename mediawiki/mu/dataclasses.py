@@ -2,7 +2,7 @@ import logging, os
 from pathlib import Path
 from dataclasses import dataclass, field
 import mu.utils as utils
-_UNSET_PATH = Path("/unset/path")
+_UNSET_PATH = Path("/unset/path/to/nowhere")
 
 # Decorator for dataclass with ordering
 @dataclass(order=True)
@@ -28,6 +28,21 @@ class Release:
 
 _UNSET_RELEASE = Release()
 
+# Notes from a C++ programmer:
+# In Dataclasses, mutable default values are not permitted, as otherwise all 
+# instances would share the same object. The following is therefore prohibited:
+#     release: Release = Release()
+# The callable `default_factory` thus always returns a new object:
+#     release: Release = field(default_factory=Release)
+# _UNSET_RELEASE is a singleton object intended to indicate whether a genuine 
+# Release has been specified.
+# The lambda function "lambda: _UNSET_RELEASE" is a technical workaround to 
+# bypass Dataclass validation. However, it always returns the same object. This:
+#     release: Release | None = None
+# would also be possible, but to do so, the type hints would have to be rewritten
+# as "Release | None" throughout the code. It would also be possible to specify
+#     @dataclass(frozen=True)
+# as a decorator for the Release class.
 @dataclass
 class UpdateData:
    """
@@ -45,6 +60,11 @@ class UpdateData:
    file_mode: int = int(0o640)
 
    def release_basefolder(self) -> Path:
+      """
+      Returns the base folder for the new release, creating it if necessary.
+      """
+      # Operator == works always, since Release(0.0.0) is not a valid release, 
+      # and Release(0.0.0) is the default value of release_new.
       if self.mw_basefolder_new == _UNSET_PATH or self.release_new == _UNSET_RELEASE:
          utils.error_exit("mw_basefolder_new and release_new must be set")
       rel_folder = self.mw_basefolder_new / \
