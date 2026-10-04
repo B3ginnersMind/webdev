@@ -48,8 +48,9 @@ def get_indent():
     return _INDENT
 def get_line_len():
     return _LINE_LEN
-def print_dots():
-    print(_LINE_LEN * ".")
+def print_dots(tag: str=""):
+    n_dots = _LINE_LEN - len(tag)
+    print(tag + (n_dots * "."))
 def print_line():
     print()
     print(_LINE_LEN * "-")

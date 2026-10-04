@@ -178,9 +178,9 @@ def check_wordpress_sites(cms: CmsPaths):
         ]
         u.run_command(f"{wp_cli(owner)} plugin verify-checksums --all", output_filter)
 
-        u.print_dots()
+        u.print_dots("PLUGINS")
         print_as_table(installed_plugins)
-        u.print_dots()
+        u.print_dots("THEMES")
         print_as_table(installed_themes)
         u.print_dots()
         # u.run_command(f"{wp_cli(owner)} plugin list")
