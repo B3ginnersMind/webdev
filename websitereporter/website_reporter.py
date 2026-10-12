@@ -15,12 +15,13 @@ from pathlib import Path
 from wr.config import read_config, settings
 from wr.upload_check import load_file_hashes, upload_checks, show_suspicious_files
 from wr.upload_check import AppMode
+from wr.wordfence import wordfence_lines
 import wr.utils as u
 import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.7.1"
+__version__ = "1.7.2"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -100,4 +101,11 @@ if args.wordpress and cms.wordpress_sites:
 if args.drupal and cms.drupal_sites:
     d.check_drupal_sites(cms)
 # u.check_static_sites(cms)
+
 show_suspicious_files()
+
+u.print_headline("Wordfence summary")
+if not wordfence_lines:
+    print("No vulnerabilities found in Wordfence database")
+for line in wordfence_lines:
+    print(line)

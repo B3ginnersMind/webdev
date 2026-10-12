@@ -3,8 +3,10 @@ from datetime import datetime
 import sqlite3
 from pathlib import Path
 from typing import Any
-from wr.utils import print_dots
+from wr.utils import print_dots, print_double_line
+
 from wr.release import Release
+wordfence_lines: list[str] = list()
 
 LEN_TITLE = 65
 LEN_LINE = 130
@@ -56,11 +58,16 @@ def check_wp_components_status(installed_components: list[dict[str, Any]],
 
         # Helper function for creating the warning entry
         def append_vuln_entry(r: sqlite3.Row):
-            t = r['title'][:LEN_TITLE] + ".." if len(r['title']) > LEN_TITLE else r['title']
             vuln.append({
-                "slug": slug, "version": version, "cve": r['cve'], 
-                "severe": r['cvss_severity'], "published": r['published'], 
-                "type": r['software_type'], "patch": r['patched_version'], "title": t
+                "slug": slug, 
+                "version": version, 
+                "cve": r['cve'], 
+                "score": r['cvss_score'],
+                "severe": r['cvss_severity'], 
+                "published": r['published'], 
+                "type": r['software_type'], 
+                "patch": r['patched_version'], 
+                "title": r['title']
             })
 
         # 1. Group database rows by CVE (or ID, if the CVE is None)
@@ -145,8 +152,23 @@ def check_wp_components_status(installed_components: list[dict[str, Any]],
     print(f"{'Slug':<15} | {'Version':<7} | {'Severe':<8} | {'Published':10} | {'Patch':<9} | {'Title'}")
     print("-" * LEN_LINE)
     for v in vuln:
+        t = v['title'][:LEN_TITLE] + ".." if len(v['title']) > LEN_TITLE else v['title']
         print(f"{v['slug']:<15} | {v['version']:<7} | {v['severe']:<8} | {v['published']:10} | "
-              f"{v['patch']:<9} | {v['title']}")
+              f"{v['patch']:<9} | {t}")
+
+    max_len = LEN_LINE - 2
+    for v in vuln:
+        t = v['title'][:max_len] + ".." if len(v['title']) > max_len else v['title']
+        wordfence_lines.append("." * LEN_LINE)
+        wordfence_lines.append(t + "\n")
+        wordfence_lines.append(f"{v['type']:<9}: {v['slug']:<20}"
+                               f"version  : {v['version']:<20}"
+                               f"patched  : {v['patch']:<20}"
+                              )
+        wordfence_lines.append(f"cve      : {v['cve']:<20}"
+                               f"score    : {v['score']:<20}"
+                               f"severity : {v['severe']:<20}"
+                              )
     return
 
 def check_vulnerabilities_from_wordfence(plugins: list[dict[str, Any]],
@@ -155,6 +177,11 @@ def check_vulnerabilities_from_wordfence(plugins: list[dict[str, Any]],
                                          path_to_wp: Path = Path(".")):
     if not is_wordfence_db_ok(db_file):
         return
+    wordfence_lines.append("-" * LEN_LINE)
+    wordfence_lines.append(f"==> Wordpress website at: {path_to_wp}")
+    num_lines = len(wordfence_lines)
     print("Looking for vulnerabilities of WordPress components in Wordfence DB...")
     check_wp_components_status(plugins, "plugin", db_file)
     check_wp_components_status(themes, "theme", db_file)
+    if num_lines == len(wordfence_lines):
+        del wordfence_lines[-2:]

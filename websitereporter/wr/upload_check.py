@@ -108,7 +108,7 @@ def sus_file_types(uploads: Path) -> None:
         print(f"Number of suspicious '{ft}' files found: {num_found}")
 
 def show_suspicious_files():
-    u.print_double_line()
+    u.print_headline("Suspicious files found in upload directories")
     print(f"Total number of suspicious upload files found: {len(hash_to_file)}")
     for _, (text, paths) in hash_to_file.items():
         print()
