@@ -9,8 +9,6 @@ MEDIAWIKI_CLI: str = "php8.4 maintenance/"
 WP_CLI: str = "wp"
 KNOWN_BENIGN_SCRIPTS: str = "known_script_hashes"
 
-# Command to call the Wordfence CLI which was shut down in Oct 2026.
-WORDFENCE_CLI: str = "none" # off by default
 # Access key from the Wordfence account.
 # Wordfence API Token (v3) - This is a public token for the Wordfence API. 
 WF_API_TOKEN = "none"  # off by default
@@ -33,7 +31,6 @@ class Configuration:
     mediawiki_cli: str = MEDIAWIKI_CLI
     wp_cli: str = WP_CLI
     known_benign_scripts: Path = Path(KNOWN_BENIGN_SCRIPTS)
-    wordfence_cli: str = WORDFENCE_CLI
     wf_api_token: str = WF_API_TOKEN 
     wf_feed_url: str = WF_FEED_URL
     wf_folder: Path = Path(".")
@@ -91,7 +88,6 @@ def read_config(config_file: Path) -> None:
             settings.wp_cli = sec.get("wp_cli", WP_CLI)
             settings.known_benign_scripts = Path(sec.get("known_benign_scripts", KNOWN_BENIGN_SCRIPTS))
 
-            settings.wordfence_cli = sec.get("wordfence_cli", WORDFENCE_CLI)
             settings.wf_api_token = sec.get("wf_api_token", WF_API_TOKEN)
             settings.wf_feed_url = sec.get("wf_feed_url", WF_FEED_URL)
             settings.wf_folder = Path(sec.get("wf_json_file", "."))

@@ -213,10 +213,6 @@ def check_wordpress_sites(cms: CmsPaths):
                 else:
                     u.run_command(f"{wp_cli(owner)} user list")
 
-        if settings.wordfence_cli != "none":
-           u.run_command(f"{settings.wordfence_cli} vuln-scan --no-banner"
-                         " -w . -p ./wp-content/plugins -t ./wp-content/themes")
-
         db_file = settings.wf_folder / settings.wf_db_file
         check_vulnerabilities_from_wordfence(adjusted_plugins, installed_themes, db_file, dir)
         sus_files(dir, cms_types.wordpress_checked_subdirs)
