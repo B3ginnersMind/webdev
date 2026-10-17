@@ -23,10 +23,14 @@ def sus_files(cmsPath: Path, checked_subdirs: list[str]):
     """
     Look for suspicious program source files in upload folders.
     """
+    u.print_dots()
+    total_found = 0
     for subdir in checked_subdirs:
-        sus_php_in_uploads(cmsPath / subdir)
-        sus_file_types(cmsPath/ subdir)
- 
+        total_found += sus_php_in_uploads(cmsPath / subdir)
+        total_found += sus_file_types(cmsPath / subdir)
+    if total_found > 0:
+        print(f"--> Number of suspicious files found: {total_found}")
+
 def upload_checks(mode: AppMode, cms_paths: CmsPaths):
     """
     Perform all upload checks. If in ACCEPT_MODE write new
@@ -46,15 +50,14 @@ def upload_checks(mode: AppMode, cms_paths: CmsPaths):
     if mode == AppMode.ACCEPT_MODE:
         save_file_hashes()
 
-def sus_php_in_uploads(uploads: Path) -> None:
+def sus_php_in_uploads(uploads: Path) -> int:
     """ 
     Look for suspicious PHP files and collect them in the set hash_to_file. 
     """
-    u.print_dots()
+    if not uploads.is_dir():
+        return 0
     print(f"--> Check for '*.php' in: {uploads}")
     global hash_to_file
-    if not uploads.is_dir():
-        return
     num_found = 0
     num_found_stored = 0
 
@@ -78,17 +81,16 @@ def sus_php_in_uploads(uploads: Path) -> None:
                     hash_to_file[hash] = (p.read_text(),[p])
                 else:
                     hash_to_file[hash][1].append(p)
+    return num_found
 
-    print(f"Number of suspicious '*.php' files found: {num_found}")
-    return
-
-def sus_file_types(uploads: Path) -> None:
+def sus_file_types(uploads: Path) -> int:
     """ 
     Look for suspicious file types and collect them in the set hash_to_file. 
     """
+    if not uploads.is_dir():
+        return 0
     global hash_to_file
     num_found = 0
-    num_found_stored = 0
     for ft in tested_file_types:
         print(f"--> Check for '{ft}' in: {uploads}")
         for p in uploads.rglob(ft):
@@ -98,14 +100,12 @@ def sus_file_types(uploads: Path) -> None:
                     continue  # known + unchanged
                 print(f"🔴 Datei: {p}")
                 num_found += 1
-                if num_found > num_found_stored:
-                    num_found_stored = num_found
-                    hash = hashlib.sha256(p.read_bytes()).hexdigest()
-                    if hash not in hash_to_file:
-                        hash_to_file[hash] = (p.read_text(),[p])
-                    else:
-                        hash_to_file[hash][1].append(p)
-        print(f"Number of suspicious '{ft}' files found: {num_found}")
+                hash = hashlib.sha256(p.read_bytes()).hexdigest()
+                if hash not in hash_to_file:
+                    hash_to_file[hash] = (p.read_text(),[p])
+                else:
+                    hash_to_file[hash][1].append(p)
+    return num_found
 
 def show_suspicious_files():
     u.print_headline("Suspicious files found in upload directories")
