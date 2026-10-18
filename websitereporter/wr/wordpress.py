@@ -168,8 +168,6 @@ def check_wordpress_sites(cms: CmsPaths):
             print("--> WEBSITE PROTECTED BY BASIC AUTH")
         u.run_command(f"{wp_cli(owner)} core version")
         u.run_command(f"{wp_cli(owner)} core check-update")
-        installed_plugins = get_component_json("plugin", dir)
-        installed_themes = get_component_json("theme", dir)
 
         u.run_command(f"{wp_cli(owner)} core verify-checksums")
         output_filter = [
@@ -178,6 +176,9 @@ def check_wordpress_sites(cms: CmsPaths):
         ]
         u.run_command(f"{wp_cli(owner)} plugin verify-checksums --all", output_filter)
 
+        u.print_dots()
+        installed_plugins = get_component_json("plugin", dir)
+        installed_themes = get_component_json("theme", dir)
         u.print_dots("PLUGINS")
         print_as_table(installed_plugins)
         u.print_dots("THEMES")
