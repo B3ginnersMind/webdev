@@ -21,7 +21,7 @@ import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.7.4"
+__version__ = "1.7.5"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -68,6 +68,10 @@ if settings.run_as_root and os.getuid() != 0: # type: ignore
 print('=== Generate reports on active virtual hosts ===')
 print('This is Python script', script_name, 'version', __version__)
 print('Query time:', currenttime)
+os_info = platform.freedesktop_os_release()
+pretty_name = os_info.get("PRETTY_NAME")
+print(f"Running under OS: {pretty_name}")
+print(f"Python version: {platform.python_version()}")
 
 u.print_double_line()
 if args.website != 'none':
