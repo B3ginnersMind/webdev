@@ -131,7 +131,7 @@ def find_writable_backup_script(target_rel_file: str) -> list[str]:
     valid_directories: list[str] = []
 
     while True:
-        # 1. Exit condition: No longer has permission to read the current directory
+        # Exit condition: No longer has permission to read the current directory
         if not os.access(current_dir, os.R_OK | os.X_OK):
             break
         target_file = current_dir / target_rel_path
@@ -142,8 +142,9 @@ def find_writable_backup_script(target_rel_file: str) -> list[str]:
                 valid_directories.append(str(target_file.parent))
             else:
                 # 2. Exit condition: File found, but no write permissions
+                print('Warning: Found non-writable target:', target_file)
                 break
-        # 3. Exit condition: Root directory (e.g. ‘/’) reached
+        # Exit condition: Root directory (e.g. ‘/’) reached
         parent_dir = current_dir.parent
         if parent_dir == current_dir:
             break
@@ -175,7 +176,7 @@ def create_folder(folder_path: str) -> None:
 # main script -----------------------------------------------...
 def main():
     print()
-    # look for an existing installation folde
+    # look for an existing installation folder
     script_file_searched_for = "Backup/script/website_manager.py"
     folder_list = find_writable_backup_script(script_file_searched_for)
 

@@ -34,3 +34,9 @@ module.query_continue()
 print('Calling installation script...')
 # Call the main function of the imported module
 module.main()
+
+# Clear temporary installation files
+print("Should the installation files be deleted now?")
+module.query_continue()
+os.remove('webdev.zip')
+os.removedirs(latest_webdev_dir)
