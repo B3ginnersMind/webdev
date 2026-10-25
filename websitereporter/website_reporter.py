@@ -13,6 +13,7 @@ used. See "demo_website_reporter_config.ini" for the default settings.
 import argparse, os, platform, time
 from pathlib import Path
 from wr.config import read_config, settings
+from wr.php import get_php_cli_version, get_installed_php_versions
 from wr.upload_check import load_file_hashes, upload_checks, show_suspicious_files
 from wr.upload_check import AppMode
 from wr.wordfence import wordfence_lines
@@ -70,10 +71,17 @@ print('This is Python script', script_name, 'version', __version__)
 print('Query time:', currenttime)
 os_info = platform.freedesktop_os_release()
 pretty_name = os_info.get("PRETTY_NAME")
+php_cli_version = get_php_cli_version()
 print(f"Running under OS: {pretty_name}")
 print(f"Python version: {platform.python_version()}")
+print(f"Default PHP CLI version: {php_cli_version}")
+installed_php_versions = get_installed_php_versions()
+for version, info in installed_php_versions:
+    print(f"Installed PHP version: {version} - {info}")
 
 u.print_double_line()
+# A single website document root can be specified as command line argument. 
+# In this case, the script will only check this website.
 if args.website != 'none':
     doc_root: list[Path] = [Path(args.website)]
     cms: u.CmsPaths = u.detect_cms(doc_root)

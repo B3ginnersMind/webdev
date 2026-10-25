@@ -134,6 +134,12 @@ def get_document_roots(apache_config_dir: str) -> list[Path]:
     """
     print("DocumentRoots are from:".ljust(_INDENT), apache_config_dir)
     docroot_list: list[Path] = []
+    # -h: Suppress the prefixing of file names on output.
+    # -i: Ignore case
+    # -E: extended regular expressions
+    # [[:space:]] Whitespace characters (spaces, tabs, newlines)
+    # The first grep looks after lines with 'documentroot'.
+    # The second grep command filters out lines that are commented out.
     command = ("find -L " + apache_config_dir + " -name '*.conf' -exec "
                "grep -h -i 'documentroot' {} + | grep -E -v '^[[:space:]]*#'")
     lines = get_shell_command_output(command)
