@@ -17,6 +17,7 @@ _TOOL_LIST: list[ tuple[str, str] ] = [
     ('websitemanager', 'website_manager.py'),
     ('websitemanager', 'load_site_from_ftp.py'),
     ('websitemanager', 'dbaccess_adjustment.py'),
+    ('websitemanager', 'php_killswitch.py'),
     ('websitereporter', 'website_reporter.py'),
     ('websitereporter', 'test_upload_check.py'),
     ('websitereporter', 'update_wordfence_db.py'),
