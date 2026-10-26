@@ -20,7 +20,7 @@ import difflib, filecmp
 import shutil, subprocess, sys, textwrap
 from pathlib import Path
 from wm.utils import abort, is_file_or_abort, query_continue, print_line
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 TOKEN_FILE = "php_killswitch_token.txt" 
 
 def set_php_sites_to_maintenance(
@@ -28,7 +28,6 @@ def set_php_sites_to_maintenance(
     backup_dir: Path, 
     maintenance_dir: Path
 ) -> None:
-    
     # 1. Check if the script is executed as root (sudo)
     if os.geteuid() != 0:
         print("Error: This script must be run as root (sudo).")
@@ -74,6 +73,10 @@ def set_php_sites_to_maintenance(
     # Matches strings like 'php8.4' or 'php7'
     php_pattern = re.compile(r'php\d+(?:\.\d+)?')
     # Matches 'DocumentRoot' (case-insensitive), captures spacing and the path
+    # (?i) case-insensitive flag
+    # (...) first capture group with any front whitespace chars \s*
+    #       and at least one trailing whitespace char
+    # (...) 2nd capture group with at least obe char
     docroot_pattern = re.compile(r'(?i)^(\s*DocumentRoot\s+)(.+)$')
     
     # 5. Process all *.conf files
@@ -89,6 +92,7 @@ def set_php_sites_to_maintenance(
             
         php_releases: set[str] = set()
         docroot_index = -1
+        prefix = ""
         website_dir: Path | None = None
         
         for i, line in enumerate(lines):
@@ -106,6 +110,8 @@ def set_php_sites_to_maintenance(
             docroot_match = docroot_pattern.match(line)
             if docroot_match:
                 docroot_index = i
+                # Remember keyword with original indentation
+                prefix = docroot_match.group(1)
                 # Extract path and strip any accidental quotes
                 extracted_path = docroot_match.group(2).strip('"\'')
                 website_dir = Path(extracted_path)
@@ -119,8 +125,7 @@ def set_php_sites_to_maintenance(
             # Add to our data list
             conf_data.append((conf_file.name, php_releases, website_dir))
             
-            # Replace the directory path with maintenance_dir (keeping original indentation)
-            prefix = docroot_pattern.match(lines[docroot_index]).group(1)
+            # Replace the directory path with maintenance_dir
             lines[docroot_index] = f"{prefix}{maintenance_dir}"
             
             # Save the modified .conf file
@@ -311,6 +316,7 @@ if __name__ == "__main__":
                    action="store_true")
     args = p.parse_args()
 
+    print_line('-')
     script_folder = os.path.dirname(os.path.realpath(__file__))
     paramsfile = script_folder + "/php_killswitch_config.ini"
     print("Reading:", paramsfile)
