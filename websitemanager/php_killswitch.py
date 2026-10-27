@@ -28,12 +28,7 @@ def set_php_sites_to_maintenance(
     backup_dir: Path, 
     maintenance_dir: Path
 ) -> None:
-    # 1. Check if the script is executed as root (sudo)
-    if os.geteuid() != 0:
-        print("Error: This script must be run as root (sudo).")
-        sys.exit(1)
-        
-    # 2. Check if maintenance_dir exists and contains index.html
+    # Check if maintenance_dir exists and contains index.html
     if not maintenance_dir.is_dir():
         print(f"Error: Maintenance directory '{maintenance_dir}' does not exist.")
         sys.exit(1)
@@ -50,7 +45,7 @@ def set_php_sites_to_maintenance(
     # Create backup directory if it does not exist
     backup_dir.mkdir(parents=True, exist_ok=True)
     
-    # 3. Perform backup of all *.conf files in new timestamp folder
+    # Perform backup of all *.conf files in new timestamp folder
     current_time = datetime.datetime.now()
     timestamp = current_time.strftime('%Y-%m-%d_%H-%M')
     curr_backup_dir = backup_dir / timestamp
@@ -66,7 +61,7 @@ def set_php_sites_to_maintenance(
     print("Switch now DocumentRoots to maintenance page?")
     query_continue()
 
-    # 4. List of tuples: (conf_filename, PHP-Releases, DocRoot-Path)
+    # List of tuples: (conf_filename, PHP-Releases, DocRoot-Path)
     conf_data: list[tuple[str, set[str], Path]] = []
     
     # Regex patterns
@@ -79,7 +74,7 @@ def set_php_sites_to_maintenance(
     # (...) 2nd capture group with at least obe char
     docroot_pattern = re.compile(r'(?i)^(\s*DocumentRoot\s+)(.+)$')
     
-    # 5. Process all *.conf files
+    # Process all *.conf files
     for conf_file in apache_conf_dir.glob("*.conf"):
         if not conf_file.is_file():
             continue
@@ -133,7 +128,7 @@ def set_php_sites_to_maintenance(
 
     write_token_file(apache_conf_dir)
 
-    # 6. Print the collected configuration data to stdout
+    # Print the collected configuration data to stdout
     print("\n--- Collected Configuration Data ---")
     for data_tuple in conf_data:
         print(data_tuple)
@@ -317,6 +312,10 @@ if __name__ == "__main__":
     args = p.parse_args()
 
     print_line('-')
+    # Check if the script is executed as root (sudo)
+    if os.geteuid() != 0:
+        print("Error: This script must be run as root (sudo).")
+        sys.exit(1)
     script_folder = os.path.dirname(os.path.realpath(__file__))
     paramsfile = script_folder + "/php_killswitch_config.ini"
     print("Reading:", paramsfile)
