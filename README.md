@@ -23,12 +23,15 @@ This is especially useful if you want to update webdev. Get the download script:
 
 This script requires the Python "requests" package to perform the download. 
 
+- Navigate to a folder designated for downloading Webdev.
 - Run *download_webdev.py*.
 - The archive is then downloaded and unzipped.
 - You will be asked whether you want to run the install script.
 - If you run the install script, only the python files will be updated.
 - This means that the readme and the sample files will not be copied.
 - You can run *install_webdev.py* any time when you want to copy the python files again.
+- If you allow tidying up, the download archive will be removed and its
+  content will be moved to folder ./latest_webdev.
 
 ## website_manager.py in folder websitemanager
 
