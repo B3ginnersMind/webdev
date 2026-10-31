@@ -1,48 +1,67 @@
-import os, re, stat, subprocess, textwrap, time
+import configparser, os, re, stat, subprocess, textwrap, time
 from datetime import datetime
-from dataclasses import dataclass, field
 from pathlib import Path
+from wr.cms import CmsPaths
+from wr.defaults import *
+from wr.php import scan_config_file
+from wr.globals import cms_types, settings
+
 _VERBOSE = False
 _INDENT = 25
 _INDENT1 = _INDENT + 1
 _LINE_LEN = 100
 
-@dataclass
-class CmsTypes:
-    drupal: str = "Drupal"
-    drupal_detect: str = "core/lib/Drupal.php"
-    drupal_checked_subdirs: list[str] = field(default_factory=list[str])
+def read_config(config_file: Path) -> None:
+    # global settings
+    if not config_file.is_file():
+        print("Missing:", config_file)
+        print("Proceeding with defaults...")
+    else:
+        print("Reading:", config_file)
+        config = configparser.ConfigParser()
+        config.read(config_file, encoding="utf-8")
+        section_name = "website_reporter"
+        # Read section [website_reporter]
+        if section_name not in config:
+            print("Missing section:", section_name)
+            print("Proceeding with defaults...")
+        else:
+            sec = config[section_name]
+            # read plain parameters
+            settings.run_as_root = sec.getboolean("run_as_root", True)
+            settings.joomla_cli = sec.get("joomla_cli", JOOMLA_CLI)
+            settings.mediawiki_cli = sec.get("mediawiki_cli", MEDIAWIKI_CLI)
+            settings.wp_cli = sec.get("wp_cli", WP_CLI)
+            settings.known_benign_scripts = Path(sec.get("known_benign_scripts", KNOWN_BENIGN_SCRIPTS))
 
-    joomla: str = "Joomla"
-    joomla_detect: str = "configuration.php"
-    joomla_checked_subdirs: list[str] = field(
-        default_factory=lambda: ["images", "tmp"])
+            settings.wf_api_token = sec.get("wf_api_token", WF_API_TOKEN)
+            settings.wf_feed_url = sec.get("wf_feed_url", WF_FEED_URL)
+            settings.wf_folder = Path(sec.get("wf_json_file", "."))
+            if settings.wf_folder == Path("."):
+                settings.wf_folder = config_file.parent
+            settings.wf_json_file = Path(sec.get("wf_json_file", WF_JSON_FILE))
+            settings.wf_last_mod_file = Path(sec.get("wf_last_mod_file", WF_LAST_MOD_FILE))
+            settings.wf_json_reduced_file = Path(sec.get("wf_json_reduced_file", WF_JSON_REDUCED_FILE))
+            settings.wf_db_file = Path(sec.get("wf_db_file", WF_DB_FILE))
 
-    mediawiki: str = "Mediawiki"
-    mediawiki_detect: str = "LocalSettings.php"
-    mediawiki_checked_subdirs: list[str] = field(
-        default_factory=lambda: ["images"])
-
-    wordpress: str = "Wordpress"
-    wordpress_detect: str = "wp-settings.php"
-    wordpress_checked_subdirs: list[str] = field(
-        default_factory=lambda: ["wp-content/uploads"])
-
-    unknown: str = "UnknownPHP"
-    unknown_php_detect: str = "php"
-    static: str = "Static"
-
-# global instance
-cms_types = CmsTypes()
-
-@dataclass
-class CmsPaths:
-    drupal_sites: list[Path] = field(default_factory=list[Path])
-    joomla_sites: list[Path] = field(default_factory=list[Path])
-    mediawiki_sites: list[Path] = field(default_factory=list[Path])
-    wordpress_sites: list[Path] = field(default_factory=list[Path])
-    static_sites: list[Path] = field(default_factory=list[Path])
-    unknown_php_sites: list[Path] = field(default_factory=list[Path])
+            settings.show_cms_users = sec.getboolean("show_cms_users", False)
+            # if the Apache vhost conf dir is given, the web_roots list is ignored
+            if "apache_vhost_dir" in sec:
+                settings.apache_vhost_dir = Path(
+                    sec.get("apache_vhost_dir", APACHE_VHOST_DIR)
+                )
+                print("Web roots are taken from vhost configs...")
+                return
+            else:
+                settings.apache_vhost_dir = Path()
+            # transform comma-separated list into Path objects
+            if "web_roots" in sec and sec["web_roots"].strip():
+                print("Web roots are taken from list 'web_roots'...")
+                settings.web_roots = [
+                    Path(p.strip()) 
+                    for p in sec["web_roots"].split(",") 
+                    if p.strip()
+                ]
 
 def get_indent():
     return _INDENT
@@ -132,45 +151,23 @@ def get_document_roots(apache_config_dir: str) -> list[Path]:
     """
     Returns a list of DocumentRoot directories for all vhosts.
     """
-    print("DocumentRoots are from:".ljust(_INDENT), apache_config_dir)
-    docroot_list: list[Path] = []
-    # -h: Suppress the prefixing of file names on output.
-    # -i: Ignore case
-    # -E: extended regular expressions
-    # [[:space:]] Whitespace characters (spaces, tabs, newlines)
-    # The first grep looks after lines with 'documentroot'.
-    # The second grep command filters out lines that are commented out.
-    command = ("find -L " + apache_config_dir + " -name '*.conf' -exec "
-               "grep -h -i 'documentroot' {} + | grep -E -v '^[[:space:]]*#'")
-    lines = get_shell_command_output(command)
-    if _VERBOSE:
-        for line in lines:
-            print("Found DocumentRoot line:", line)
-    # Find the last block before the end of the line 
-    # that does not contain any spaces or quotation marks.
-    pattern = re.compile(r"['\"]?([^\s'\"]+)['\"]?\s*$")
-    for line in lines:
-        match = pattern.search(line)
-        if match:
-            docroot_list.append(Path(match.group(1)))
-    unique_docroots = list(set(docroot_list))
-    if _VERBOSE:
-        for path in unique_docroots:
-            print(f"Extracted document root: {path}")
-    return unique_docroots
+    print("Scan Apache configs in:".ljust(_INDENT), apache_config_dir)
 
-def get_subdirectories(base_path: Path) -> list[Path]:
-    print("Find subdirectories in       :", base_path)
-    # Ensure the provided path exists and is actually a directory
-    if not base_path.is_dir():
-        print(f"Error: '{base_path}' is not a valid directory.")
+    if not os.path.isdir(apache_config_dir):
+        print(f"Error: '{apache_config_dir}' is not a valid directory.")
         quit()
-    # iterdir() yields all files and folders in the directory (no recursion)
-    sub_dirs: list[Path] = [p for p in base_path.iterdir() if p.is_dir()]
-    if _VERBOSE:
-        for path in sub_dirs:
-            print(f"Found subdirectory: {path}")
-    return sub_dirs
+
+    docroot_list: list[Path] = []
+    for conf_file in Path(apache_config_dir).glob("*.conf"):
+        if not conf_file.is_file():
+            continue
+        docroot2php = scan_config_file(conf_file)
+        if not docroot2php:
+            continue
+        if _VERBOSE:
+            print(f"Conf {conf_file}, DocRoot {docroot2php[0]}, PHP {docroot2php[1]}")
+        docroot_list.append(docroot2php[0])
+    return docroot_list
 
 def show_num_websites(cms: str, path_list: list[Path], common_root: str):
     if (len(path_list) > 0):

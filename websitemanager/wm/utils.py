@@ -7,7 +7,7 @@ import os, platform, shutil, stat, sys, textwrap
 from enum import Enum
 from pathlib import Path, WindowsPath
 from collections.abc import Callable
-from typing import Any
+from typing import Any, NoReturn
 from types import TracebackType
 
 LINE_LENGTH = 80
@@ -53,14 +53,13 @@ class Operation(Enum):
     def isReplace(self):
         return (self == Operation.REPLACE or self == Operation.REPLACE_AFTER_SNAPSHOT)
 
-def abort(*msg: str) -> None:
+def abort(*msg: str) -> NoReturn:
     messageLine = '...'
     for m in msg: 
         messageLine += ' ' + m
     print(textwrap.fill(messageLine, WRAP_LENGTH))
     print('... aborting')
-    if 'simulate' not in RUNNER_OPTIONS:
-        sys.exit(1)
+    sys.exit(1)
 
 def check_root_user():
     if platform.system() != 'Windows' and os.getuid() != 0: # type: ignore

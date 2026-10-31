@@ -1,8 +1,9 @@
 import json, os, subprocess
 import urllib.error, urllib.parse, urllib.request
-from wr.config import settings
+from wr.globals import cms_types, settings
 from wr import utils as u
-from wr.utils import before_slash, CmsPaths, cms_types
+from wr.utils import before_slash
+from wr.cms import CmsPaths
 from wr.upload_check import sus_files
 from wr.wordfence import check_vulnerabilities_from_wordfence
 from pathlib import Path

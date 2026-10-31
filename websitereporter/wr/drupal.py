@@ -1,5 +1,5 @@
 import os
-from wr.utils import CmsPaths
+from wr.cms import CmsPaths
 import wr.utils as u
 
 def check_drupal_sites(cms: CmsPaths):

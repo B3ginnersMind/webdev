@@ -3,10 +3,9 @@ from datetime import datetime
 import sqlite3
 from pathlib import Path
 from typing import Any
-from wr.utils import print_dots, print_double_line
-
+from wr.utils import print_dots
 from wr.release import Release
-wordfence_lines: list[str] = list()
+from wr.globals import wordfence_lines
 
 LEN_TITLE = 65
 LEN_LINE = 130

@@ -1,7 +1,7 @@
 import os, re
-from wr.config import settings
 from wr import utils as u
-from wr.utils import CmsPaths, cms_types
+from wr.cms import CmsPaths
+from wr.globals import cms_types, settings
 from wr.release import Release
 from wr.upload_check import sus_files
 from pathlib import Path

@@ -67,4 +67,45 @@ def get_installed_php_versions() -> list[tuple[str, str]]:
         version_info = get_php_cli_version(version)
         php_releases.append((version, version_info))
     return php_releases
-   
+
+def scan_config_file(conf_file: Path) -> tuple[Path, set[str]] | None:
+    if not conf_file.is_file():
+        return None
+    try:
+        lines = conf_file.read_text(encoding='utf-8').splitlines()
+    except UnicodeDecodeError:
+        print(f"Warning: Could not read '{conf_file.name}' due to encoding issues.")
+        return None
+
+    # Regex matches strings like 'php8.4' or 'php7'
+    php_pattern = re.compile(r'php\d+(?:\.\d+)?')
+    # Matches 'DocumentRoot' (case-insensitive), captures spacing and the path
+    # (?i) case-insensitive flag
+    # (...) first capture group with any front whitespace chars \s*
+    #       and at least one trailing whitespace char
+    # (...) 2nd capture group with at least obe char
+    docroot_pattern = re.compile(r'(?i)^(\s*DocumentRoot\s+)(.+)$')
+    php_releases: set[str] = set()
+    docroot: Path | None = None
+    
+    for line in lines:
+        # Skip commented lines
+        if line.lstrip().startswith('#'):
+            continue
+        # Search for PHP socket/version
+        if "/run/php/" in line:
+            matches = php_pattern.findall(line)
+            for match in matches:
+                php_releases.add(match)
+        # Search for DocumentRoot
+        docroot_match = docroot_pattern.match(line)
+        if docroot_match:
+            # Extract path and strip any accidental quotes
+            extracted_path = docroot_match.group(2).strip('"\'')
+            docroot = Path(extracted_path)
+
+    # There is nothing to scan if we don't have a DocumentRoot
+    if docroot is None:
+        return None
+    print(f"DocRoot {docroot} with PHP: {php_releases}")
+    return (docroot, php_releases)

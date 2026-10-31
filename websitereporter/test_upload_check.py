@@ -2,14 +2,14 @@
 """
 --------------------------------------------------------------------------------
 Look for suspicious files in CMS upload folders. 
-In accept mode a hash of the found files will be stored in the database to 
+In accept mode a hash of the found files will be stored in a file to 
 avoid future false positives.
 This script is intended to be run on a Linux server.
 --------------------------------------------------------------------------------
 """
 import argparse, os, platform, time
 from pathlib import Path
-from wr.config import read_config, settings
+from wr.globals import settings
 import wr.utils as u
 from wr.upload_check import upload_checks
 from wr.upload_check import AppMode
@@ -35,7 +35,7 @@ p.add_argument("website", nargs='?', type=str, default='none',
                help="the only website document root to be analysed")
 args = p.parse_args()
 
-read_config(Path(__file__).parent / "website_reporter_config.ini")
+u.read_config(Path(__file__).parent / "website_reporter_config.ini")
 settings.show()
 if settings.run_as_root and os.getuid() != 0: # type: ignore
     print(f"Skript not run as root. Exiting...")
@@ -52,7 +52,6 @@ if args.website != 'none':
 elif len(settings.web_roots) > 0:
     cms: u.CmsPaths = u.detect_cms(settings.web_roots)
 else:
-    # doc_roots: list[Path] = u.get_subdirectories(Path("/var/www"))
     doc_roots: list[Path] = u.get_document_roots("/etc/apache2/sites-enabled")
     cms: u.CmsPaths = u.detect_cms(doc_roots)
 

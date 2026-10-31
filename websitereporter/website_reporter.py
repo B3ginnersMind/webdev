@@ -12,17 +12,17 @@ used. See "demo_website_reporter_config.ini" for the default settings.
 """
 import argparse, os, platform, time
 from pathlib import Path
-from wr.config import read_config, settings
+from wr.globals import settings
 from wr.php import get_php_cli_version, get_installed_php_versions
 from wr.upload_check import load_file_hashes, upload_checks, show_suspicious_files
 from wr.upload_check import AppMode
-from wr.wordfence import wordfence_lines
+from wr.globals import wordfence_lines
 import wr.utils as u
 import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.7.5"
+__version__ = "1.7.6"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -58,7 +58,7 @@ p.add_argument("website", nargs='?', type=str, default='none',
                help="the only website document root to be analysed")
 args = p.parse_args()
 
-read_config(Path(__file__).parent / "website_reporter_config.ini")
+u.read_config(Path(__file__).parent / "website_reporter_config.ini")
 if args.users:
     settings.show_cms_users = True
 settings.show()
@@ -92,7 +92,6 @@ if args.website != 'none':
 elif len(settings.web_roots) > 0:
     cms: u.CmsPaths = u.detect_cms(settings.web_roots)
 else:
-    # doc_roots: list[Path] = u.get_subdirectories(Path("/var/www"))
     doc_roots: list[Path] = u.get_document_roots("/etc/apache2/sites-enabled")
     cms: u.CmsPaths = u.detect_cms(doc_roots)
 

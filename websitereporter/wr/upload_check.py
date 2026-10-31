@@ -1,8 +1,8 @@
 import hashlib, re, shutil
 from enum import Enum
 from pathlib import Path
-from wr.config import settings
-from wr.utils import CmsPaths, CmsTypes
+from wr.globals import settings
+from wr.cms import CmsPaths, CmsTypes
 import wr.utils as u
 
 # In this dict suspicious PHP files are collected. Key is a hash of the file content.
@@ -23,6 +23,8 @@ def sus_files(cmsPath: Path, checked_subdirs: list[str]):
     """
     Look for suspicious program source files in upload folders.
     """
+    if not checked_subdirs:
+        return
     u.print_dots()
     total_found = 0
     for subdir in checked_subdirs:

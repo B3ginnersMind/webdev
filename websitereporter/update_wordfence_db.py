@@ -30,8 +30,8 @@ import gc # Garbage Collector
 import json, os, requests, sqlite3, time
 from enum import Enum
 from pathlib import Path
-from wr.config import read_config, settings
-from wr.utils import show_wordfence_json_state, print_file_task_details
+from wr.globals import settings
+import wr.utils as u
 __version__ = "1.1.2"
 
 class Return(Enum):
@@ -317,7 +317,7 @@ def build_flat_sqlite_memory_optimized(json_file: Path, db_file: Path):
 if __name__ == "__main__":
     script_name = os.path.basename(__file__)    
     print('This is Python script', script_name, 'version', __version__)
-    read_config(Path(__file__).parent / "website_reporter_config.ini")
+    u.read_config(Path(__file__).parent / "website_reporter_config.ini")
     if settings.run_as_root and os.getuid() != 0: # type: ignore
         print(f"Skript not run as root. Exiting...")
         quit()
@@ -325,22 +325,22 @@ if __name__ == "__main__":
     # Update the Feed (or download initially)
     json_file = settings.wf_folder / settings.wf_json_file
     last_mod_file = settings.wf_folder / settings.wf_last_mod_file
-    show_wordfence_json_state(json_file, last_mod_file)
+    u.show_wordfence_json_state(json_file, last_mod_file)
     currenttime = time.strftime('%d.%m.%Y %H:%M:%S')
     print(f"Attempting to refresh the Wordfence vulnerability JSON at {currenttime} ...")
 
     if update_vulnerability_database(json_file, last_mod_file) == Return.NEW:
-        print_file_task_details("Wordfence JSON downloaded",
-                           "JSON file", json_file)
+        u.print_file_task_details("Wordfence JSON downloaded",
+                                  "JSON file", json_file)
 
         json_reduced_file = settings.wf_folder / settings.wf_json_reduced_file
         keys_to_drop = {"description", "references", "copyrights", "researchers"}
         downsize_wordfence_json(json_file, json_reduced_file, keys_to_drop)
-        print_file_task_details("Wordfence JSON downsized",
-                           "JSON file", json_reduced_file)
+        u.print_file_task_details("Wordfence JSON downsized",
+                                  "JSON file", json_reduced_file)
 
         db_file = settings.wf_folder / settings.wf_db_file
         build_flat_sqlite_memory_optimized(json_reduced_file, db_file)
-        print_file_task_details("SQlite database created",
+        u.print_file_task_details("SQlite database created",
                            "JSON file", db_file)
  

@@ -72,13 +72,6 @@ For the release history see "history.md".
 
 ## Further tools
 
-### load_site_from_ftp.py
-
-- Overwrite a website with the content of a remote backup archive.
-- A local configuration file of the site may be saved and restored again.
-- The timestamp tag of the archive has to contain yyyy-mm-dd.
-- This little helper utility is intended to refresh a local dev installation.
-
 ### dbaccess_adjustment.py
 
 Read, compare and, optionally, adjust database credentials of CMS websites.
@@ -91,6 +84,33 @@ Read, compare and, optionally, adjust database credentials of CMS websites.
 - Optionally, adjust database credentials in the CMS config files to
   the corresponding values in the website table.
 - This is supported for Joomla, Mediawiki and WordPress.
+
+### load_site_from_ftp.py
+
+- Overwrite a website with the content of a remote backup archive.
+- A local configuration file of the site may be saved and restored again.
+- The timestamp tag of the archive has to contain yyyy-mm-dd.
+- This little helper utility is intended to refresh a local dev installation.
+
+### php_killswitch.py
+
+This script can be used to redirect all PHP-powered websites to a static 
+maintenance page. This may be advisable in the event of a critical security
+vulnerability in PHP for which a patch is pending.
+
+- All Apache vhost conf files are backed up.
+- It checks all vhosts to see if they use PHP.
+- If so, their document root will be switched to a folder containing static HTML.
+- The Apache web server is then restarted.
+- The websites can then be recreated by restoring their vhost confs from backup. 
+
+### switch_to_maintenance.py
+
+Switch between the original website and a maintenance page by renaming
+its document folders. The script reads the configuration from the file switch_to_maintenance.ini. The ini file has to contain a list of website
+docroots. See demo_switch_to_maintenance.ini.
+
+The folder to be treated can be chosen interactively.
 
 ### test_cert_renewal.sh in folder certs
 
@@ -154,7 +174,9 @@ Examples for possible arguments:
     mysite                      : read section 'mysite' from default INI file
     mysite -c /path/to/conf.ini : read from INI file /path/to/conf.ini instead
 
-### website_reporter.py in folder websitereporter
+## Folder websitereporter
+
+### website_reporter.py
 
 Generate reports on the virtual hosts installed in the web root directories.
 The document roots are taken from the Apache vhost config files on default.
@@ -164,3 +186,20 @@ Detectable vhost types are Joomla, MediaWiki, WordPress, Drupal and static sites
 Setting are read from file "website_reporter_config.ini" which has to be in the 
 same directory as this script. If this file is missing, the default settings are
 used. See "demo_website_reporter_config.ini" for the default settings.
+
+### update_wordfence_db.py
+
+Helper script for website_reporter.py. It updates the Wordfence vulnerability
+database in JSON format and converts it into a memory-optimized SQLite database.
+This database is used from website_reporter.py to test whether CVEs are present
+in installed wordpress cores, plugins and themes. Input data is also read from
+the website_reporter_config.ini file.
+
+### test_upload_check.py
+
+Similar to website_reporter.py, this script searches for suspicious files in the
+CMS upload folders. Furthermore, it has an 'accept' mode where the hashes of the
+found files will be stored in a file to avoid future false positives.
+website_reporter.py will not warn you about files with known hashes.
+Input data is also read from the website_reporter_config.ini file.
+
