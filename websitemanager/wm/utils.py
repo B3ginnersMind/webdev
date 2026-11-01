@@ -1,11 +1,6 @@
-
-try:                 # for line editing on input for Linux
-    import readline  # type: ignore
-except ImportError:
-    readline = None
 import os, platform, shutil, stat, sys, textwrap
 from enum import Enum
-from pathlib import Path, WindowsPath
+from pathlib import Path
 from collections.abc import Callable
 from typing import Any, NoReturn
 from types import TracebackType
@@ -25,7 +20,7 @@ class OsCommandRunner:
             print(textwrap.fill(cmd, WRAP_LENGTH))
             print_line('-')
         if 'simulate' not in self.options:
-            exitcode = os.system(cmd)
+            exitcode = os.system(cmd)      # pyright: ignore[reportDeprecated]
             if (exitcode != 0):
                 abort('ERROR in command:', cmd)
             return exitcode
@@ -94,6 +89,33 @@ def ensure_dir(dir: str) -> None:
     if 'simulate' not in RUNNER_OPTIONS:
         os.makedirs(dir, 0o700)
 
+def _make_writable_and_retry(func: Callable[[str], Any], path: str) -> None:
+    """Remove the write protection and repeat the operation that failed."""
+    # "os.chmod(path, stat.S_IWRITE)" removed all read/execution permissions 
+    # for all users, which is not intended. Instead, only the write permission
+    # for the user should be added.
+    os.chmod(path, os.stat(path).st_mode | stat.S_IWUSR)
+    func(path)
+
+def rmtree_force(path: str | os.PathLike[str]) -> None:
+    """Like shutil.rmtree, but it also deletes read-only files."""
+    # Python 3.12 added onexc (new signature for remove_readonly!) 
+    # und deprecated onerror, which may be removed in 3.14.
+    if sys.version_info >= (3, 12):
+        def onexc(func: Callable[[str], Any], p: str, exc: BaseException) -> None:
+            _make_writable_and_retry(func, p)
+
+        shutil.rmtree(path, onexc=onexc)
+    else:
+        def onerror(
+            func: Callable[[str], Any],
+            p: str,
+            exc_info: tuple[type[BaseException], BaseException, TracebackType],
+        ) -> None:
+            _make_writable_and_retry(func, p)
+
+        shutil.rmtree(path, onerror=onerror)
+
 def remove_readonly(
         func: Callable[[str], Any], 
         path: str, 
@@ -101,10 +123,9 @@ def remove_readonly(
     """Remove write protection and continue delete process."""
     mode = os.stat(path).st_mode
     os.chmod(path, mode | stat.S_IWUSR)
-    # The following line removed all read/execution permissions for all users,
-    # which is not intended. Instead, only the write permission for the user 
-    # should be added.
-    # os.chmod(path, stat.S_IWRITE)
+    # "os.chmod(path, stat.S_IWRITE)" removed all read/execution permissions 
+    # for all users, which is not intended. Instead, only the write permission
+    # for the user should be added.
     func(path)
 
 def delete_dir(dir: str, usePython: bool=True):
@@ -116,11 +137,8 @@ def delete_dir(dir: str, usePython: bool=True):
     if not p.is_dir():
         return
     print('Removing', dir, 'directory...')
-    # in Python 3.12 onexc added und onerror deprecated, may be removed in 3.14
     if usePython == True:
-        shutil.rmtree(p, onerror=remove_readonly)
-    elif platform.system() == 'Windows':
-        RUNNER.do('rd /s /q ' + str(WindowsPath(dir)))
+        rmtree_force(p)
     else:
         RUNNER.do('rm -R ' + dir)
 

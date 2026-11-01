@@ -39,6 +39,7 @@ for further information.
 """
 
 import argparse, os
+import contextlib, importlib
 from wm.backup import get_archive_dir, backup, dumpwebsite
 from wm.restore import prepare_database, get_archive_timestamp, restore
 
@@ -76,6 +77,10 @@ p.add_argument("altDir", nargs='?', type=str, default='none',
 p.add_argument("-v", "--version", action='version', 
                version='%(prog)s version {version}'.format(version=__version__))
 args = p.parse_args()
+
+# Enables line editing and history for input(), where available.
+with contextlib.suppress(ImportError):
+    importlib.import_module("readline")
 
 script_folder = os.path.dirname(os.path.realpath(__file__))
 paramsfile = script_folder + '/website_manager_config.ini'

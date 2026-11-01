@@ -107,5 +107,8 @@ def scan_config_file(conf_file: Path) -> tuple[Path, set[str]] | None:
     # There is nothing to scan if we don't have a DocumentRoot
     if docroot is None:
         return None
-    print(f"DocRoot {docroot} with PHP: {php_releases}")
+    if not php_releases:
+        print(f"{conf_file.name:<24}  {str(docroot):<35} uses: -")
+    else:
+        print(f"{conf_file.name:<24}  {str(docroot):<35} uses: {php_releases}")
     return (docroot, php_releases)

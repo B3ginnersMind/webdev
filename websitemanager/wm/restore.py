@@ -1,8 +1,4 @@
 
-try:                # for line editing on input for Linux
-    import readline # type: ignore
-except ImportError:
-    readline = None
 import glob, os, shutil, tarfile, textwrap
 import wm.utils as u
 import wm.dbaccess as acc
