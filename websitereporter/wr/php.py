@@ -108,7 +108,7 @@ def scan_config_file(conf_file: Path) -> tuple[Path, set[str]] | None:
     if docroot is None:
         return None
     if not php_releases:
-        print(f"{conf_file.name:<24}  {str(docroot):<35} uses: -")
+        print(f"{conf_file.name:<30}  {str(docroot):<35} uses: -")
     else:
-        print(f"{conf_file.name:<24}  {str(docroot):<35} uses: {php_releases}")
+        print(f"{conf_file.name:<30}  {str(docroot):<35} uses: {php_releases}")
     return (docroot, php_releases)

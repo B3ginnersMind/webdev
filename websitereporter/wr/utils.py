@@ -12,6 +12,7 @@ _INDENT1 = _INDENT + 1
 _LINE_LEN = 100
 
 def read_config(config_file: Path) -> None:
+    print()
     # global settings
     if not config_file.is_file():
         print("Missing:", config_file)
@@ -152,6 +153,7 @@ def get_document_roots(apache_config_dir: str) -> list[Path]:
     Returns a list of DocumentRoot directories for all vhosts.
     """
     print("Scan Apache configs in:".ljust(_INDENT), apache_config_dir)
+    print_dots()
 
     if not os.path.isdir(apache_config_dir):
         print(f"Error: '{apache_config_dir}' is not a valid directory.")
@@ -212,6 +214,7 @@ def list_directories(pathlist: list[Path]) -> None:
     return
 
 def detect_cms(doc_roots: list[Path]) -> CmsPaths:
+    print_dots()
     print("Scanned WebDocRoots:".ljust(_INDENT), len(doc_roots))
     cms_type = ""
     cms_paths = CmsPaths()

@@ -175,7 +175,7 @@ def load_file_hashes() -> None:
         print(f"Read: {file}")
         for line in file.read_text().splitlines():
             benign_file_hashes.add(line.strip())
-        print("Number of loaded known benign files hashes", len(benign_file_hashes))
+        print("Number of loaded known benign files hashes:", len(benign_file_hashes))
     else:
         print(f"Still no file {file} with known scripts.")
     return

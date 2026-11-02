@@ -5,17 +5,25 @@ from pathlib import Path
 from typing import Any
 from wr.utils import print_dots
 from wr.release import Release
-from wr.globals import wordfence_lines
+from wr.globals import settings, wordfence_lines
 
 LEN_TITLE = 65
 LEN_LINE = 130
+carry_out_wordfence_checks = True
 
-def is_wordfence_db_ok(db_file: Path) -> bool:
+def get_wordfence_db_file() -> Path:
+    return settings.wf_folder / settings.wf_db_file
+
+def is_wordfence_db_ok() -> None:
+    global carry_out_wordfence_checks
+    db_file = get_wordfence_db_file()
+
     print_dots()
-    print(f"Test the database file at: {db_file.absolute()}")
+    print(f"Checking Wordfence database file: {db_file.absolute()}")
     if not os.path.exists(db_file):
         print(f"Error: Database '{db_file}' missing.")
-        return False
+        carry_out_wordfence_checks = False
+        return
     mtime_timestamp = os.path.getmtime(db_file)
     mtime_readable = datetime.fromtimestamp(mtime_timestamp)
     print(f"Database '{db_file}' last modified: {mtime_readable:%Y-%m-%d %H:%M}")
@@ -28,16 +36,17 @@ def is_wordfence_db_ok(db_file: Path) -> bool:
             print(f"Number of CVE lines in database: {num_cve_lines}")
     except Exception as e:
         print("error", f"Fehler: {e}")
-        return False
-    return True
+        carry_out_wordfence_checks = False
+        return
+    return
 
 def check_wp_components_status(installed_components: list[dict[str, Any]], 
-                               comp_type: str,
-                               db_file: Path) -> None:
+                               comp_type: str) -> None:
     if not installed_components:
         print(f"No installed {comp_type}s found")
         return
 
+    db_file = get_wordfence_db_file()
     conn = sqlite3.connect(db_file)
     conn.row_factory = sqlite3.Row 
     cursor = conn.cursor()
@@ -172,15 +181,14 @@ def check_wp_components_status(installed_components: list[dict[str, Any]],
 
 def check_vulnerabilities_from_wordfence(plugins: list[dict[str, Any]],
                                          themes: list[dict[str, Any]],
-                                         db_file: Path, 
                                          path_to_wp: Path = Path(".")):
-    if not is_wordfence_db_ok(db_file):
+    if not carry_out_wordfence_checks:
         return
     wordfence_lines.append("-" * LEN_LINE)
     wordfence_lines.append(f"==> Wordpress website at: {path_to_wp}")
     num_lines = len(wordfence_lines)
     print("Looking for vulnerabilities of WordPress components in Wordfence DB...")
-    check_wp_components_status(plugins, "plugin", db_file)
-    check_wp_components_status(themes, "theme", db_file)
+    check_wp_components_status(plugins, "plugin")
+    check_wp_components_status(themes, "theme")
     if num_lines == len(wordfence_lines):
         del wordfence_lines[-2:]

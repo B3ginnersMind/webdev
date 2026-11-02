@@ -17,12 +17,13 @@ from wr.php import get_php_cli_version, get_installed_php_versions
 from wr.upload_check import load_file_hashes, upload_checks, show_suspicious_files
 from wr.upload_check import AppMode
 from wr.globals import wordfence_lines
+from wr.wordfence import is_wordfence_db_ok
 import wr.utils as u
 import wr.joomla as j
 import wr.mediawiki as m
 import wr.wordpress as w
 import wr.drupal as d
-__version__ = "1.7.7"
+__version__ = "1.7.8"
 
 if platform.system() != 'Linux':
     print(f"Skript does only support Linux. Exiting...")
@@ -102,6 +103,7 @@ elif args.accept_files:
     upload_checks(AppMode.ACCEPT_MODE, cms)
     quit()
 
+is_wordfence_db_ok()
 load_file_hashes()
 if args.joomla and cms.joomla_sites:
     j.check_joomla_sites(cms)

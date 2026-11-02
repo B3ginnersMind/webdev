@@ -215,6 +215,5 @@ def check_wordpress_sites(cms: CmsPaths):
                 else:
                     u.run_command(f"{wp_cli(owner)} user list")
 
-        db_file = settings.wf_folder / settings.wf_db_file
-        check_vulnerabilities_from_wordfence(adjusted_plugins, installed_themes, db_file, dir)
+        check_vulnerabilities_from_wordfence(adjusted_plugins, installed_themes, dir)
         sus_files(dir, cms_types.wordpress_checked_subdirs)
