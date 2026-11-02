@@ -187,6 +187,8 @@ Setting are read from file "website_reporter_config.ini" which has to be in the
 same directory as this script. If this file is missing, the default settings are
 used. See "demo_website_reporter_config.ini" for the default settings.
 
+Call option -h to see the different options of the tool.
+
 ### update_wordfence_db.py
 
 Helper script for website_reporter.py. It updates the Wordfence vulnerability
@@ -194,12 +196,4 @@ database in JSON format and converts it into a memory-optimized SQLite database.
 This database is used from website_reporter.py to test whether CVEs are present
 in installed wordpress cores, plugins and themes. Input data is also read from
 the website_reporter_config.ini file.
-
-### test_upload_check.py
-
-Similar to website_reporter.py, this script searches for suspicious files in the
-CMS upload folders. Furthermore, it has an 'accept' mode where the hashes of the
-found files will be stored in a file to avoid future false positives.
-website_reporter.py will not warn you about files with known hashes.
-Input data is also read from the website_reporter_config.ini file.
 
