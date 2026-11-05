@@ -122,7 +122,7 @@ Streamlines bugfixing. Designed for Ubuntu file paths.
 - Check the configuration syntax and load the configuration into Apache2.
 - Run a Certbot dry run to simulate the certificate renewal.
 
-### parse_certificates.py in folder parsecerts
+### parse_certificates.py in folder certs
 
 Display the Letsencrypt certificates in a clear format so that those that need to be renewed soon are at the top.
 

@@ -9,8 +9,10 @@ except ImportError:
 
 # List of tuples comprising subdirectories and scripts they contain:
 _TOOL_LIST: list[ tuple[str, str] ] = [
+    ('certs', 'parse_certificates.py'),
+    ('certs', 'test_cert_renewal.sh'),
+    ('mediawiki', 'mediawiki_update.py'),
     ('showdns', 'show_dns.py'),
-    ('parsecerts', 'parse_certificates.py'),
     ('vhosts', 'show_vhosts.py'),
     ('vhosts', 'backup_vhost_confs.sh'),
     ('vhosts', 'create_vhost_pool.sh'),
@@ -21,8 +23,6 @@ _TOOL_LIST: list[ tuple[str, str] ] = [
     ('websitemanager', 'switch_to_maintenance.py'),
     ('websitereporter', 'website_reporter.py'),
     ('websitereporter', 'update_wordfence_db.py'),
-    ('mediawiki', 'mediawiki_update.py'),
-    ('certs', 'test_cert_renewal.sh'),
 ]
 
 # List of of tuples of tool dirs and its module subdirectories:
