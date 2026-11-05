@@ -2,7 +2,7 @@
 
 ## Installation
 
-Simple Python tools for managing websites. Tested with Python 3.10.12.
+Simple Python tools for managing websites. Used with Python 3.11 and 3.12.
 
 ### Manual installation
 
