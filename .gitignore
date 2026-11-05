@@ -1,14 +1,15 @@
 # Ignore local test directory
 /0test/
 # Ignore test inputs and outputs
+php_killswitch_config.ini
+switch_to_maintenance_config.ini
 website_manager_config.ini
+website_reporter_config.ini
 website_table.txt
 website_table_new.txt
 website_table_old.txt
-php_killswitch_config.ini
 show_ips_exampleDomains.txt
 show_dns_exampleDomains.txt
-website_reporter_config.ini
 *.log
 *.db
 report.txt
