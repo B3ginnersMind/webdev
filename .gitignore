@@ -17,3 +17,5 @@ report.txt
 __pycache__/
 *.py[cod]
 *$py.class
+# Claude Code: persönliche Projektregeln
+/CLAUDE.local.md
