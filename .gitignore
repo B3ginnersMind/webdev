@@ -10,6 +10,7 @@ website_table_new.txt
 website_table_old.txt
 show_ips_exampleDomains.txt
 show_dns_exampleDomains.txt
+archive_saver.conf
 *.log
 *.db
 report.txt
