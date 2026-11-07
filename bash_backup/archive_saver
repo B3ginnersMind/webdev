@@ -1,0 +1,169 @@
+#!/usr/local/bin/bash
+#----------------------------------------------------------------------------
+# - Pull current backup archives from a webserver and store them temporarily.
+# - Rename their weekday timestamps to the current date.
+# - Upload them to another storage device.
+# - Keep the number of archives for each website below a threshold
+#   by deleting the oldest archives on the storage device.
+# - Create a listing of all backup archives currently on the webserver.
+# - Tidy up all the temporary data.
+# Script developed for FreeBSD 14
+# Note that FreeBSD 14 moved /usr/home to /home as it is in Linux
+# Written by Manfred Feodor Kroekel, 2024, July 17
+#----------------------------------------------------------------------------
+doit="true"     # production
+#doit="false"   # debugging
+
+# Without an argument the input is taken from "./archive_saver.conf".
+# If the argument is missing or empty, use the entered file name.
+# "-": the following is the  fallback value if the argument is missing
+# ":": use the fallback also if the argument is existing but empty
+# In any case the conf file is assumed as trustworthy, 
+# since it should never come from an external source.
+source "${1:-./archive_saver.conf}"
+
+# Define further variables
+weekday="wd"$(date "+%w")        # current weekday wd0, wd1 ...
+fileMask=".*$weekday.tar.gz"     # regular expression of archives to be saved
+tmpFileListing=$(mktemp)         # temporary listing file
+tmpDownloadDir=$(mktemp -d)      # temporary archive cache folder
+# Abbreviated month (%b) and day of the month (%d) with leading zeros:
+monthDay=$(date +"%b %d")        # current month & day, e.g. "Nov 07"
+month=$(date +"%b")              # current month , e.g. "Nov"
+day=$(date +"%d")                # current day, e.g. "07"
+currentDate=$(date +"%Y-%m-%d")  # current YYYY-mm-dd, e.g. "2026-11-07"
+timeStart=$(date)                # current time, e.g. "Sat Nov 7 16:44:03 CET 2026"
+
+echo "=================================================================="
+# Create a listing of files in a folder of a reote host:
+# $1: sftp command
+# $2: user@host
+# $3: remote directory where the files to be listed are
+# $4: applied filtering file mask 
+# $5: file with resulting list of files
+function write_file_listing {
+    # Create a temporary file to save the sftp commands
+    # An ls command is applied to reveive a list of files.
+    local tmpSftpCommands=$(mktemp)
+    echo "cd $3" >> "$tmpSftpCommands"
+    echo "ls -lht" >> "$tmpSftpCommands"
+    echo "bye" >> "$tmpSftpCommands"
+    # Create a temporary file to save the sftp listing output
+    local tmpSftpOutput=$(mktemp)
+    # Run sftp and execute all the commands from the temporary file
+    eval "$1 -b $tmpSftpCommands $2" > $tmpSftpOutput
+    # Edit the sftp listing output to get a list of files with columns 5-9.
+    # Day of month needs a leading 0 for values from 1-9.
+    # This is achieved using the format %02d.
+    eval grep "$4" $tmpSftpOutput | awk '{printf"%7s %s %02d %s %s\n",$5,$6,$7,$8,$9}' > $5
+    # remove the temporary files
+    rm $tmpSftpCommands $tmpSftpOutput
+}
+
+echo "Get list of backups from $userAtWebsrv in $websrvDir"
+echo "Look for backups which match ${fileMask}"
+write_file_listing "$sftpFromWebsrv" $userAtWebsrv $websrvDir $fileMask $tmpFileListing
+
+cd $tmpDownloadDir
+siteList=()         # define indexed array, aka vector
+uploadList=()
+echo "Download and rename these backups if they are from ${month} ${day}:"
+echo "------------------------------------------------------------------"
+while read line; do
+    # Extract the 5th column containing the file name.
+    filename=$(echo $line | cut -d " " -f 5)
+    if ! $doit; then echo "does '$line' contain '$month[\t ]+$day'?"; fi
+    regex="$month[\t ]+$day"
+    # 0 if found, 1 if not found. The if block is executed at 0!
+    if [[ $line =~ $regex ]] ; then
+        siteName=$(echo "$filename" | sed "s/.$weekday.tar.gz//")
+        echo "download: $siteName"
+        siteList+=($siteName)
+        if $doit; then
+            eval ${sftpFromWebsrv} ${userAtWebsrv}:${websrvDir}$filename $filename
+        fi
+        newFilename=$(echo "$filename" | sed "s/$weekday/$currentDate/")
+        uploadList+=($newFilename)
+        echo "Rename from $filename to $newFilename"
+        if $doit; then mv $filename $newFilename; fi
+    fi
+done < $tmpFileListing
+timeAfterDownload=$(date)
+
+# Get names of already stored archives
+fileMask=".*tar.gz"       # regular expression to obtain all archives
+echo "------------------------------------------------------------------"
+echo "Get list of backups from $userAtStorage in ${storageDir}:"
+write_file_listing "sftp" $userAtStorage $storageDir $fileMask $tmpFileListing
+
+# The file names are in the 5th column. Sort the file names in 
+# descending order so that the oldest backups are at the bottom.
+tmp=$(mktemp)
+cat $tmpFileListing | sort -r -k5,5 > $tmp
+rm "$tmpFileListing"
+tmpFileListing=$tmp
+if ! $doit; then cat $tmpFileListing; fi
+
+echo "------------------------------------------------------------------"
+echo "Count already uploaded backups and remember the oldest if too many:"
+echo "Maximum number of archives per website: $maxStoredArchives"
+declare -A numberOfGz   # define associative array, aka dict or map
+removeList=()
+for site in ${siteList[@]}; do
+    num=0
+    while read line; do
+        regex="[\t ]+$site"
+        if [[ $line =~ $regex ]] ; then
+            ((num++))
+            if ((num >= maxStoredArchives)); then
+                #echo "to be removed: $line"
+                filename=$(echo $line | cut -d " " -f 5)
+                removeList+=($filename)
+            fi
+        fi
+    done < $tmpFileListing
+    numberOfGz["$site"]=$num
+    echo "Number of archives for $site: ${numberOfGz["$site"]}"
+done
+echo "------------------------------------------------------------------"
+tmpSftpCommands=$(mktemp)
+echo "cd $storageDir" >> "$tmpSftpCommands"
+echo "Number of backup archives to be removed: ${#removeList[@]}"
+for file in ${removeList[@]}; do
+    #echo "Remove file $file"
+    echo "rm $file" >> "$tmpSftpCommands"
+done
+for file in ${uploadList[@]}; do
+    #echo "Upload file $file"
+    echo "put $file" >> "$tmpSftpCommands"
+done
+echo "bye" >> "$tmpSftpCommands"
+echo "------------------------------------------------------------------"
+cat $tmpSftpCommands
+echo "------------------------------------------------------------------"
+echo "Start the upload:"
+if $doit; then sftp -b $tmpSftpCommands $userAtStorage; fi
+
+# Get updated filelist from storage
+write_file_listing "sftp" $userAtStorage $storageDir $fileMask $tmpFileListing
+listing="${backupListDir}${pullBackupList}"
+echo "$(date):" > "$listing"
+echo "daily backups on $userAtStorage at $storageDir" >> "$listing"
+echo " " >> $listing
+cat $tmpFileListing >> $listing
+
+# Upload listing to webserver
+listingTargetLocation="${userAtWebsrv}:${websrvListingDir}${pullBackupList}"
+echo "Upload ${pullBackupList} to ${listingTargetLocation}"
+if $doit; then eval "${scpWebsrv} $listing ${listingTargetLocation}"; fi
+
+echo "Clean temporary download directory"
+cd /
+rm "$tmpSftpCommands"
+rm "$tmpFileListing"
+rm -rf "$tmpDownloadDir"
+echo "------------------------------------------------------------------"
+echo "Start operation:    $timeStart"
+echo "Download finished:  $timeAfterDownload"
+echo "Upload finished:    $(date)"
+echo "=================================================================="
