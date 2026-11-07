@@ -7,6 +7,11 @@
 #   by deleting the oldest archives on the storage device.
 # - Create a listing of all backup archives currently on the webserver.
 # - Tidy up all the temporary data.
+#
+# Prerequisites: On the server on which this script is to be run, SSH login 
+# using a private and public key must be set up for the web server and the 
+# external storage device.
+#
 # Script developed for FreeBSD 14
 # Note that FreeBSD 14 moved /usr/home to /home as it is in Linux
 # Written by Manfred Feodor Kroekel, 2024, July 17
