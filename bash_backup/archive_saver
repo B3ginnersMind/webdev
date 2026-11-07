@@ -24,7 +24,7 @@ source "${1:-./archive_saver.conf}"
 
 # Define further variables
 weekday="wd"$(date "+%w")        # current weekday wd0, wd1 ...
-fileMask=".*${weekday}.tar.gz"     # regular expression of archives to be saved
+fileMask=".*${weekday}.tar.gz"   # regular expression of archives to be saved
 tmpFileListing=$(mktemp)         # temporary listing file
 tmpDownloadDir=$(mktemp -d)      # temporary archive cache folder
 # Abbreviated month (%b) and day of the month (%d) with leading zeros:
@@ -90,7 +90,7 @@ while read line; do
 done < ${tmpFileListing}
 timeAfterDownload=$(date)
 
-# Get names of already stored archives
+# Get names of already stored archives on external device
 fileMask=".*tar.gz"       # regular expression to obtain all archives
 echo "------------------------------------------------------------------"
 echo "Get list of backups from ${userAtStorage} in ${storageDir}:"
@@ -125,6 +125,9 @@ for site in ${siteList[@]}; do
     numberOfGz["${site}"]=${num}
     echo "Number of archives for ${site}: ${numberOfGz["${site}"]}"
 done
+
+# Create temporary file with the sftp commands to be carried out.
+# Remove archives if there are too many and upload the new archives.
 echo "------------------------------------------------------------------"
 tmpSftpCommands=$(mktemp)
 echo "cd ${storageDir}" >> "${tmpSftpCommands}"
@@ -138,13 +141,15 @@ for file in ${uploadList[@]}; do
     echo "put ${file}" >> "${tmpSftpCommands}"
 done
 echo "bye" >> "${tmpSftpCommands}"
+
+# Perform the sftp commands on the external storage device.
 echo "------------------------------------------------------------------"
 cat ${tmpSftpCommands}
 echo "------------------------------------------------------------------"
 echo "Start the upload:"
 if ${doit}; then sftp -b ${tmpSftpCommands} ${userAtStorage}; fi
 
-# Get updated filelist from storage
+# Get an updated filelist from external storage device.
 write_file_listing "sftp" ${userAtStorage} ${storageDir} ${fileMask} ${tmpFileListing}
 listing="${backupListDir}${pullBackupList}"
 echo "$(date):" > "${listing}"
@@ -152,12 +157,12 @@ echo "daily backups on ${userAtStorage} at ${storageDir}" >> "${listing}"
 echo " " >> ${listing}
 cat ${tmpFileListing} >> ${listing}
 
-# Upload listing to webserver
+# Upload this listing to web server.
 listingTargetLocation="${userAtWebsrv}:${websrvListingDir}${pullBackupList}"
 echo "Upload ${pullBackupList} to ${listingTargetLocation}"
 if ${doit}; then eval "${scpWebsrv} ${listing} ${listingTargetLocation}"; fi
 
-echo "Clean temporary download directory"
+echo "Clear temporary caching directory and files"
 cd /
 rm "${tmpSftpCommands}"
 rm "${tmpFileListing}"
