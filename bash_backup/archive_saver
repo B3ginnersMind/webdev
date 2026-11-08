@@ -8,11 +8,11 @@
 # - Create a listing of all backup archives currently on the webserver.
 # - Tidy up all the temporary data.
 #
-# Usage: 
+# Usage without any argument: 
 #   archive_saver
 # expects input file archive_saver.conf in the same folder.
 #   archive_saver /path/to/another.conf
-# reads input file another.conf instead.
+# reads input file another.conf from argument instead.
 # Input file format see "demo_archive_saver.conf".
 # 
 # Prerequisites: On the server on which this script is to be run, SSH login 
@@ -21,13 +21,12 @@
 #
 # Script developed for FreeBSD 14
 # Note that FreeBSD 14 moved /usr/home to /home as it is in Linux
-# Written by Manfred Feodor Kroekel, 2024, July 17
+# Created by Manfred Feodor Koerkel, 2024, July 17
 #----------------------------------------------------------------------------
+version="1.1.0"
 doit="true"     # production
 #doit="false"   # debugging
 
-# Without an argument the input is taken from "./archive_saver.conf".
-# If the argument is missing or empty, use the entered file name.
 # "-": the following is the  fallback value if the argument is missing
 # ":": use the fallback also if the argument is existing but empty
 # In any case the conf file is assumed as trustworthy, 
@@ -72,6 +71,7 @@ function write_file_listing {
     rm ${tmpSftpCommands} ${tmpSftpOutput}
 }
 
+echo "This is archive_saver ${version}"
 echo "Get list of backups from ${userAtWebsrv} in ${websrvDir}"
 echo "Look for backups which match ${fileMask}"
 write_file_listing "${sftpFromWebsrv}" ${userAtWebsrv} ${websrvDir} ${fileMask} ${tmpFileListing}
