@@ -8,6 +8,13 @@
 # - Create a listing of all backup archives currently on the webserver.
 # - Tidy up all the temporary data.
 #
+# Usage: 
+#   archive_saver
+# expects input file archive_saver.conf in the same folder.
+#   archive_saver /path/to/another.conf
+# reads input file another.conf instead.
+# Input file format see "demo_archive_saver.conf".
+# 
 # Prerequisites: On the server on which this script is to be run, SSH login 
 # using a private and public key must be set up for the web server and the 
 # external storage device.

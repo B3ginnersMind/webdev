@@ -1,3 +1,11 @@
+## archive_saver
+
+Bash script "archive_saver" pulls archives from another server
+and pushes them to an external storage device.
+See the commnet in the script.
+
+## Bash versions
+
 Bash scripts should run with
 
 * GNU bash, version 5.3.20(0)-release (Freebsd 14.4)
