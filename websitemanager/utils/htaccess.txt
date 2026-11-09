@@ -1,0 +1,12 @@
+#----------------------------------------------------------------------------
+# Template .htaccess file for websites switched to a static maintenance page:
+#----------------------------------------------------------------------------
+# Temporary redirection (302) of all requests to /index.html
+RewriteEngine On
+# Do not redirect index.html itself (otherwise infinite loop)
+RewriteCond %{REQUEST_URI} !^/index\.html$
+# Do not redirect '/.well-known/' (e.g. for Let's Encrypt validation)
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+# Optional: Continue to serve images, CSS and JS (remove comment mark)
+# RewriteCond %{REQUEST_URI} !\.(css|js|png|jpe?g|gif|svg|ico|webp|woff2?)$ [NC]
+RewriteRule ^ /index.html [R=302,L]
