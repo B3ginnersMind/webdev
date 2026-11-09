@@ -41,4 +41,5 @@ fi
 echo ">>> Pushing '$main_branch' to GitHub"
 git push
 
-echo "Done. You are now on '$main_branch'. Run g_clean_feature.sh to delete the feature branch."
+echo "Done. You are now on '$main_branch'."
+echo "Run 'g_clean_feature.sh $current_branch' to delete the feature branch."
