@@ -31,7 +31,10 @@ doit="true"     # production
 # ":": use the fallback also if the argument is existing but empty
 # In any case the conf file is assumed as trustworthy, 
 # since it should never come from an external source.
-source "${1:-./archive_saver.conf}"
+# "./" would refer to the current working directory (e.g. $HOME under cron),
+# so resolve the directory of this script itself (symlinks included).
+scriptDir=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+source "${1:-${scriptDir}/archive_saver.conf}"
 
 # Define further variables
 weekday="wd"$(date "+%w")        # current weekday wd0, wd1 ...

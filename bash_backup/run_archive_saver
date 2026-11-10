@@ -1,0 +1,11 @@
+#!/usr/local/bin/bash
+#--------------------------------------------------------------------------
+# Example runner script for FreeBSD 14 and later
+# The shebang will not work on Linux.
+#--------------------------------------------------------------------------
+# Run the archive_saver script and redirect its output to a log file.
+# The archive_saver file must be in the same folder as this script.
+#--------------------------------------------------------------------------
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+"$SCRIPT_DIR/archive_saver" >> /var/log/archive_saver.log 2>&1
