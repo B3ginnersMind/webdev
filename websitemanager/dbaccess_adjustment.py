@@ -65,7 +65,7 @@ def main():
 
     # ensure that working dir is the source dir
     os.chdir(script_folder)
-    print('Current working directory:', os. getcwd())
+    print('Current working directory:', os.getcwd())
     # create congiguration table objects
     websites = WebSiteTable(websitesfile)
     numSites = websites.getNumWebsites()
