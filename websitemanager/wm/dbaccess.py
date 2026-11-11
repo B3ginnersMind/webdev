@@ -119,6 +119,10 @@ def get_config_cms(
     elif opt.verbose == 1:
         print(f"Treating website '{site.siteName}' ...")
     siteComment = site.comment.lower()
+    # Look for a known CMS name in the comment column of the website table.
+    # The known CMS names are stored in CMS_LIST. If the CMS is not mentioned
+    # in the comment or the CMS is not configured in CMS_LIST and CMS_DICT,
+    # the configuration file will not be found.
     found = [cms for cms in CMS_LIST if cms in siteComment]
     if len(found) == 0:
         return (False, "no config due to unknown_cms", "none")
@@ -309,11 +313,12 @@ def adjust_value(
 
 def has_database_access(
         params: Parameters, 
-        site: WebSiteData, 
+        site: WebSiteData,   # data from the website table
         opt: Options
         ) -> DatabaseAccess:
     """
     Check whether the database "dbName" of webite "site" is accessible by "dbUser".
+    If yes, the database is accessible with the user and pw from the website table.
     """
     if opt.verbose > 1:
         site.show("Website configuration from config file")

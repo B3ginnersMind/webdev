@@ -7,15 +7,16 @@ The current database credentials for each website are taken from the
 website_table.txt file. These credentials are then used to test
 - whether access to the corresponding database ist possible and
 - whether they match the corresponding credentials in the CMS config.
+
+This is only possible if the CMS type is specified in the comment column 
+of website_table.txt. Possible CMS types are:
+- Joomla, Mediawiki and WordPress.
+
 Without options nothing is changed; only problems are reported.
 If the option --change is set, the credentials within the database software
 and the configuration files are updated to match the values in the website table.
 In the database software only the passowrd of a database user can be updated.
 In a configfile the database name, user, password and host can be adjusted.
-This feature is available for the CMS
-- Joomla, 
-- Mediawiki and 
-- WordPress.
 -------------------------------------------------------------------------------
 """
 import argparse, os
