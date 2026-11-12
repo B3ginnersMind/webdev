@@ -98,9 +98,9 @@ p.add_argument("--remoteSiteName", required=True,
 p.add_argument("--localSiteName", required=True,
                help="local site name of the downloaded archive")
 
-p.add_argument('-c', '--config', type=str,
+p.add_argument('--configSaved', type=str,
                help='relative path of local website config file to be preserved')
-p.add_argument('-t', '--timestamp', type=str,
+p.add_argument('--timestamp', type=str,
                help='timestamp (date) of archive to be downloaded')
 p.add_argument("-v", "--version", action='version', 
                version='%(prog)s version {version}'.format(version=__version__))
@@ -128,11 +128,11 @@ local_archive_path = os.path.join(local_snapshot_dir, local_archive_site_name)
 config_path = 'none'
 tempdir = 'none'
 config_temp_path = 'none'
-if args.config:
-    config_path = os.path.join(wwwroot, wwwsubdir, args.config)
+if args.configSaved:
+    config_path = os.path.join(wwwroot, wwwsubdir, args.configSaved)
     tempdir = tempfile.mkdtemp()
     print('Temporäres Verzeichnis erstellt:', tempdir)
-    config_temp_path = os.path.join(tempdir, args.config)
+    config_temp_path = os.path.join(tempdir, args.configSaved)
 
 u.print_line()
 print('hostname:', hostname)
@@ -156,13 +156,13 @@ u.is_file_or_abort(config_path)
 
 download(hostname, port, username, remote_archive_path, local_archive_path)
 
-if args.config:
-    print('save', args.config, 'to temp directory')
+if args.configSaved:
+    print('save', args.configSaved, 'to temp directory')
     shutil.copy2(config_path, config_temp_path)
 
 subprocess.run(['python', 'website_manager.py', local_site_name, '--timestamp', tag])
 
-if args.config:
+if args.configSaved:
     print('restore local config file')
     os.remove(config_path)
     shutil.move(config_temp_path, config_path)
