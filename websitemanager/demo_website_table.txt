@@ -17,7 +17,8 @@ mysite.net    1  myfiles     none        none        default  none      none    
 # siteName    an identifier of the website
 # save        0: omit website from bulk backup, 1: include it
 # wwwSubdir   subdirectory (path) under webroot folder containing all web files
-# comment     a brief comment on the website
+# comment     a brief comment on the website, to be able to adjust the DB credentials
+#             (possible for Joomla, Mediawiki, Wordpress) the CMS has to be specified
 #
 # The columns below refer to a database. Without a database, the entries must be "none".
 # dbName      name of the CMS database

@@ -4,6 +4,7 @@ Load backup archive from server and overwrite local website with it.
 Optionally, preserve a local configuration file during the process.
 Optionally, a time stamp can be given to load an older archive.
 Requires paramiko module for SFTP transfer.
+The downloaded archive is stored in the local snapshot folder.
 Depends on website_manager.py to restore the website from the downloaded archive.
 """
 # =====================================================================
@@ -22,12 +23,11 @@ __version__ = "1.0.1"
 
 def get_names(siteName : str):
     """
-    Get important names and paths from parameter and website table files.
-    Returns:
-    wwwroot from the parameter file 
-    site.wwwSubdir from the website table file suing siteName
+    Get important names and paths from parameter and website table files. Returns:
+    wwwroot            from the parameter file 
+    site.wwwSubdir     from the website table file using siteName
     local_snapshot_dir from the parameter file
-    www_user_group from the parameter file
+    www_user_group     from the parameter file
     """
     script_folder = os.path.dirname(os.path.realpath(__file__))
     os.chdir(script_folder)
@@ -37,7 +37,7 @@ def get_names(siteName : str):
     wwwroot = params.get('wwwroot')
     local_snapshot_dir = params.get('snapshotdir')
     # www_user_group == 'none': do nothing    
-    www_user_group  = params.get('wwwusergroup') 
+    www_user_group = params.get('wwwusergroup') 
 
     websitesfile = script_folder + '/website_table.txt'
     u.is_file_or_abort(websitesfile)
@@ -85,17 +85,17 @@ p = argparse.ArgumentParser(description=__doc__,
                # formatter used to preserve the raw doc format
                formatter_class=argparse.RawTextHelpFormatter)
 
-p.add_argument("host",
+p.add_argument("--host", required=True,
                help="name of remote ssh and sftp host")
-p.add_argument("user",
+p.add_argument("--user", required=True,
                help="sftp and ssh user on remote host")
-p.add_argument("sshPort",
+p.add_argument("--sshPort", required=True,
                help="ssh port on remote host")
-p.add_argument("remoteDir",
+p.add_argument("--remoteDir", required=True,
                help="remote directory")
-p.add_argument("remoteSiteName",
+p.add_argument("--remoteSiteName", required=True,
                help="remote site name of the downloaded archive")
-p.add_argument("localSiteName",
+p.add_argument("--localSiteName", required=True,
                help="local site name of the downloaded archive")
 
 p.add_argument('-c', '--config', type=str,
@@ -166,7 +166,8 @@ if args.config:
     print('restore local config file')
     os.remove(config_path)
     shutil.move(config_temp_path, config_path)
-    os.system('chown -R ' + www_user_group + ' ' + config_path)
+    subprocess.run(['chown -R', www_user_group, config_path])    
+    # os.system('chown -R ' + www_user_group + ' ' + config_path)
     shutil.rmtree(tempdir)
 
 print('... finished')
