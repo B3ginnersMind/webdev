@@ -19,7 +19,7 @@ from wm.config import Parameters
 from wm.timeutils import get_date_tag
 import wm.utils as u
 import subprocess
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 def get_names(siteName : str):
     """
@@ -166,7 +166,7 @@ if args.configSaved:
     print('restore local config file')
     os.remove(config_path)
     shutil.move(config_temp_path, config_path)
-    subprocess.run(['chown -R', www_user_group, config_path])    
+    subprocess.run(['chown', '-R', www_user_group, config_path], check=True)
     # os.system('chown -R ' + www_user_group + ' ' + config_path)
     shutil.rmtree(tempdir)
 
